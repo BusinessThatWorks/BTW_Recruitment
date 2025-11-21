@@ -21,6 +21,7 @@
   "standard_fee_value",
   "payment_terms",
   "notes",
+  "upload_contractagreement",
   "section_break_wsxr",
   "spoc_name",
   "spoc_email",
@@ -92,6 +93,7 @@
   {
    "fieldname": "section_break_wsxr",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "SPOC"
   },
   {
@@ -158,12 +160,17 @@
    "fieldname": "head_office",
    "fieldtype": "Heading",
    "label": "Head Office"
+  },
+  {
+   "fieldname": "upload_contractagreement",
+   "fieldtype": "Attach",
+   "label": "Upload Contract/Agreement"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-21 11:28:50.245086",
+ "modified": "2025-11-21 16:56:35.740569",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Company",
@@ -179,6 +186,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "BTW Recruiter",
    "share": 1,
    "write": 1
   }
