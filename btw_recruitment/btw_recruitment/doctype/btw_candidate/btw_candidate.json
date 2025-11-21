@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "{candidate_name}.####",
  "creation": "2025-11-15 11:17:22.152657",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -191,10 +192,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-19 14:49:18.871687",
+ "modified": "2025-11-21 12:30:03.447667",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Candidate",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

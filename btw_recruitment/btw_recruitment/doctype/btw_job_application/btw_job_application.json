@@ -46,7 +46,7 @@
    "fieldname": "stage",
    "fieldtype": "Select",
    "label": "Stage",
-   "options": "Screening\nInterview\nOffered\nRejected"
+   "options": "In Review\nScreening\nInterview\nOffered\nRejected\nOffer Drop"
   },
   {
    "fieldname": "recruiter",
@@ -86,7 +86,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-19 16:22:34.284520",
+ "modified": "2025-11-21 11:05:20.108952",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Job_Application",

@@ -13,24 +13,23 @@
   "industry",
   "no_poach_flag",
   "replacement_policy_days",
+  "head_office",
+  "state",
+  "city",
   "column_break_izwc",
   "standard_fee_type",
   "standard_fee_value",
   "payment_terms",
   "notes",
-  "section_break_nocm",
-  "table_knls",
-  "section_break_oxty",
-  "billing_address",
-  "billing_mail",
-  "billing_number",
-  "head_office_section",
-  "state",
-  "city",
   "section_break_wsxr",
   "spoc_name",
   "spoc_email",
-  "spoc_phone"
+  "spoc_phone",
+  "billing_details_tab",
+  "section_break_oxty",
+  "billing_address",
+  "billing_mail",
+  "billing_number"
  ],
  "fields": [
   {
@@ -54,11 +53,6 @@
    "fieldname": "industry",
    "fieldtype": "Data",
    "label": "Industry"
-  },
-  {
-   "fieldname": "head_office_section",
-   "fieldtype": "Section Break",
-   "label": "Head Office"
   },
   {
    "fieldname": "state",
@@ -156,20 +150,20 @@
    "label": "Notes"
   },
   {
-   "fieldname": "section_break_nocm",
-   "fieldtype": "Section Break",
-   "label": "Job Description Lists"
+   "fieldname": "billing_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Billing Details"
   },
   {
-   "fieldname": "table_knls",
-   "fieldtype": "Table",
-   "options": "BTW_Company_JD"
+   "fieldname": "head_office",
+   "fieldtype": "Heading",
+   "label": "Head Office"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-19 15:16:53.155655",
+ "modified": "2025-11-21 11:28:50.245086",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Company",
