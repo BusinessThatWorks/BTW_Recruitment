@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "{company_name}{job_title__profile}.####",
+ "autoname": "{job_title__profile}.####",
  "creation": "2025-11-15 11:43:20.822307",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -258,7 +258,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-19 15:21:32.539644",
+ "modified": "2025-11-21 12:33:30.552519",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Job_Opening",

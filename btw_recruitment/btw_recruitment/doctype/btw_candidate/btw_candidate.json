@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "{candidate_name}.####",
  "creation": "2025-11-15 11:17:22.152657",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -180,6 +181,7 @@
   {
    "fieldname": "job_applications_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Job Applications"
   },
   {
@@ -191,10 +193,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-19 14:49:18.871687",
+ "modified": "2025-11-25 12:32:30.315903",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Candidate",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -206,6 +209,30 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "BTW Recruitment User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "BTW Recruiter",
    "share": 1,
    "write": 1
   }

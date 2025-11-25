@@ -241,13 +241,13 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-doc_events = {
-    "BTW_Job_Opening": {
-        "after_insert": "btw_recruitment.btw_recruitment.doctype.btw_job_opening.btw_job_opening.after_insert"
-    },
-    "BTW_Job_Application": {
-        "after_insert": "btw_recruitment.btw_recruitment.doctype.btw_job_application.btw_job_application.after_insert"
-    }
-}
+# doc_events = {
+#     "BTW_Job_Opening": {
+#         "after_insert": "btw_recruitment.btw_recruitment.doctype.btw_job_opening.btw_job_opening.after_insert"
+#     },
+#     "BTW_Job_Application": {
+#         "after_insert": "btw_recruitment.btw_recruitment.doctype.btw_job_application.btw_job_application.after_insert"
+#     }
+# }
 
 
