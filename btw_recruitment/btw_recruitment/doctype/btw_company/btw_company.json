@@ -9,19 +9,17 @@
   "company_details_section",
   "company_name",
   "client_type",
-  "is_active_client",
   "industry",
   "no_poach_flag",
   "replacement_policy_days",
+  "client_status",
+  "column_break_wmab",
   "head_office",
+  "address",
   "state",
   "city",
-  "column_break_izwc",
-  "standard_fee_type",
-  "standard_fee_value",
-  "payment_terms",
+  "pin",
   "notes",
-  "upload_contractagreement",
   "section_break_wsxr",
   "spoc_name",
   "spoc_email",
@@ -29,20 +27,27 @@
   "billing_details_tab",
   "section_break_oxty",
   "billing_address",
+  "billing_email",
+  "billing_phone",
   "billing_mail",
-  "billing_number"
+  "billing_email_to",
+  "billing_email_cc",
+  "billing_poc",
+  "billing_poc_name",
+  "billing_poc_email",
+  "billing_number",
+  "column_break_izwc",
+  "standard_fee_type",
+  "standard_fee_value",
+  "gstin",
+  "upload_contractagreement",
+  "payment_terms"
  ],
  "fields": [
   {
    "fieldname": "company_name",
    "fieldtype": "Data",
    "label": "Company Name"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_active_client",
-   "fieldtype": "Check",
-   "label": "Is Active Client?"
   },
   {
    "fieldname": "client_type",
@@ -67,8 +72,7 @@
   },
   {
    "fieldname": "section_break_oxty",
-   "fieldtype": "Section Break",
-   "label": "Billing Address"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "billing_address",
@@ -78,12 +82,12 @@
   {
    "fieldname": "billing_mail",
    "fieldtype": "Data",
-   "label": "Billing Email"
+   "label": "Billing Address"
   },
   {
    "fieldname": "billing_number",
    "fieldtype": "Data",
-   "label": "Billing Phone"
+   "label": "Billing POC Phone"
   },
   {
    "fieldname": "company_details_section",
@@ -124,8 +128,9 @@
   {
    "default": "60",
    "fieldname": "replacement_policy_days",
-   "fieldtype": "Int",
-   "label": "Replacement Policy (Days)"
+   "fieldtype": "Select",
+   "label": "Replacement Policy (Days)",
+   "options": "30\n60\n90"
   },
   {
    "fieldname": "standard_fee_type",
@@ -165,12 +170,72 @@
    "fieldname": "upload_contractagreement",
    "fieldtype": "Attach",
    "label": "Upload Contract/Agreement"
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "client_status",
+   "fieldtype": "Select",
+   "label": "Client Status",
+   "options": "Active\nInactive"
+  },
+  {
+   "fieldname": "column_break_wmab",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "pin",
+   "fieldtype": "Int",
+   "label": "PIN"
+  },
+  {
+   "fieldname": "billing_poc",
+   "fieldtype": "Heading",
+   "label": "Billing POC"
+  },
+  {
+   "fieldname": "billing_email_to",
+   "fieldtype": "Data",
+   "label": "Billing Email (To)"
+  },
+  {
+   "fieldname": "billing_email_cc",
+   "fieldtype": "Data",
+   "label": "Billing Email (CC)"
+  },
+  {
+   "fieldname": "billing_poc_name",
+   "fieldtype": "Data",
+   "label": "Billing POC Name"
+  },
+  {
+   "fieldname": "billing_poc_email",
+   "fieldtype": "Data",
+   "label": "Billing POC Email "
+  },
+  {
+   "fieldname": "billing_email",
+   "fieldtype": "Data",
+   "label": "Billing Email"
+  },
+  {
+   "fieldname": "billing_phone",
+   "fieldtype": "Data",
+   "label": "Billing Phone"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-21 16:56:35.740569",
+ "modified": "2025-11-25 10:39:19.461597",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Company",
