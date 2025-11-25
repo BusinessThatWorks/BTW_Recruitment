@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class BTW_Candidate(Document):
+class DKP_Candidate(Document):
 	pass

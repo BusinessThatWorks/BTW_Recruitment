@@ -250,4 +250,5 @@ app_license = "mit"
 #     }
 # }
 
+import btw_recruitment.btw_recruitment.api.resume_parser
 

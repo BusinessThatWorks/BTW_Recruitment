@@ -34,7 +34,7 @@
    "fieldname": "candidate_id",
    "fieldtype": "Link",
    "label": "Candidate ID",
-   "options": "BTW_Candidate"
+   "options": "DKP_Candidate"
   },
   {
    "fetch_from": "candidate_id.candidate_name",
@@ -86,7 +86,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-21 11:05:20.108952",
+ "modified": "2025-11-25 17:45:58.034119",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "BTW_Job_Application",
