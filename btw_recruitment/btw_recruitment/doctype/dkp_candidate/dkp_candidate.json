@@ -187,13 +187,13 @@
   {
    "fieldname": "table_nxdk",
    "fieldtype": "Table",
-   "options": "BTW_Candidate_Job_Applications"
+   "options": "DKP_Candidate_Job_Applications"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-25 12:32:30.315903",
+ "modified": "2025-11-26 10:23:00.198932",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class BTW_Recruiter(Document):
+class DKP_Company_JD(Document):
 	pass

@@ -23,7 +23,7 @@
    "fieldname": "job_application_id",
    "fieldtype": "Link",
    "label": "Job Application ID",
-   "options": "BTW_Job_Application"
+   "options": "DKP_Job_Application"
   },
   {
    "fetch_from": "job_application_id.candidate_name",
@@ -91,10 +91,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-21 11:12:33.897037",
+ "modified": "2025-11-26 10:22:09.363970",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
- "name": "BTW_Interview",
+ "name": "DKP_Interview",
  "owner": "Administrator",
  "permissions": [
   {

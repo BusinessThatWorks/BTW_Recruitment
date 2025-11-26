@@ -51,7 +51,7 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company ID(System)",
-   "options": "BTW_Company"
+   "options": "DKP_Company"
   },
   {
    "fetch_from": "company.company_name",
@@ -258,10 +258,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-21 12:33:30.552519",
+ "modified": "2025-11-26 10:16:07.287353",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
- "name": "BTW_Job_Opening",
+ "name": "DKP_Job_Opening",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [

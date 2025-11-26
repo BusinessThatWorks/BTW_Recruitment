@@ -22,7 +22,7 @@
    "fieldname": "job_opening_id",
    "fieldtype": "Link",
    "label": "Job Opening ID",
-   "options": "BTW_Job_Opening"
+   "options": "DKP_Job_Opening"
   },
   {
    "fetch_from": "job_opening_id.job_title__profile",
@@ -52,7 +52,7 @@
    "fieldname": "recruiter",
    "fieldtype": "Link",
    "label": "Recruiter ID",
-   "options": "BTW_Recruiter"
+   "options": "DKP_Recruiter"
   },
   {
    "fieldname": "datetime_tisc",
@@ -86,10 +86,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-25 17:45:58.034119",
+ "modified": "2025-11-26 10:23:16.643991",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
- "name": "BTW_Job_Application",
+ "name": "DKP_Job_Application",
  "owner": "Administrator",
  "permissions": [
   {

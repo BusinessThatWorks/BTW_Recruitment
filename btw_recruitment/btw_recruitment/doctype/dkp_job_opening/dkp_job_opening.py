@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 import frappe
 
-class BTW_Job_Opening(Document):
+class DKP_Job_Opening(Document):
 	pass
 
 

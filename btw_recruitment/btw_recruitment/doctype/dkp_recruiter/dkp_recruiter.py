@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class BTW_Interview(Document):
+class DKP_Recruiter(Document):
 	pass
