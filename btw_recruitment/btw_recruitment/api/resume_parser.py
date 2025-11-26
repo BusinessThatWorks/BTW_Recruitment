@@ -5,7 +5,7 @@ import os
 @frappe.whitelist()
 def process_resume(docname):
     # fetch the document
-    doc = frappe.get_doc("BTW_Candidate", docname)
+    doc = frappe.get_doc("DKP_Candidate", docname)
 
     if not doc.resume_attachment:
         frappe.throw("Please upload a resume before parsing.")
@@ -15,7 +15,7 @@ def process_resume(docname):
 
     # ---- FIXED : Build actual filesystem path ----
     file_url = file_doc.file_url                  # "/files/resume.pdf"
-    file_path = frappe.get_site_path("public", file_url.lstrip("/"))
+    file_path = frappe.get_site_path(file_url.lstrip("/"))
 
     # if not os.path.exists(file_path):
     #     frappe.throw(f"File not found at path: {file_path}")
