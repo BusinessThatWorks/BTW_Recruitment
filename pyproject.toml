@@ -13,7 +13,7 @@ dependencies = [
     "python-docx",
     "pillow",
     "pytesseract",
-    "anthropic"
+    "anthropic",
     "mammoth"
 ]
 
