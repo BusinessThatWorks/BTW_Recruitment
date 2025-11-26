@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestBTW_Interview(FrappeTestCase):
+class TestDKP_Job_Application(FrappeTestCase):
 	pass

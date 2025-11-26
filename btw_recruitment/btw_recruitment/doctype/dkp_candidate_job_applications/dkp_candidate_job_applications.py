@@ -5,7 +5,7 @@ import frappe
 from frappe.model.document import Document
 
 
-class BTW_Candidate_Job_Applications(Document):
+class DKP_Candidate_Job_Applications(Document):
 	pass
 
 

@@ -5,5 +5,6 @@
 from frappe.model.document import Document
 
 
-class BTW_Company_JD(Document):
+class DKP_Company(Document):
 	pass
+
