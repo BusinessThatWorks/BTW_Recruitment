@@ -14,6 +14,7 @@ dependencies = [
     "pillow",
     "pytesseract",
     "anthropic"
+    "mammoth"
 ]
 
 [build-system]
