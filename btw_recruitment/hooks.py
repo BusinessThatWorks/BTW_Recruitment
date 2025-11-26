@@ -249,5 +249,4 @@ app_license = "mit"
 #         "after_insert": "btw_recruitment.btw_recruitment.doctype.btw_job_application.btw_job_application.after_insert"
 #     }
 # }
-
-
+# hi
