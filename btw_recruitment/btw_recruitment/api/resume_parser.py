@@ -365,7 +365,7 @@ Return JSON with these fields:
         for f in list_fields:
             if isinstance(data.get(f), list):
                 data[f] = ", ".join(data[f])
-
+                # comment
     except:
         frappe.throw("Unable to read structured details from the resume.")
 
