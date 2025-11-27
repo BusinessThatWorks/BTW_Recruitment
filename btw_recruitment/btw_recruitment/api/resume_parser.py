@@ -146,12 +146,12 @@ import frappe
 import PyPDF2
 import zipfile
 import mimetypes
-# from docx import Document
 from anthropic import Anthropic
-import pytesseract
-# from PIL import Image
+# import pytesseract
 import os
 import mammoth
+import easyocr
+
 
 
 def debug(msg):
@@ -234,13 +234,19 @@ def extract_text_from_file(file_path):
 
     # -----------------------------------------
    # 4️⃣ IMAGES (JPG/PNG → STRONG OCR)
+    # if mime and mime.startswith("image/"):
+    #     try:
+    #         text = ocr_image_strong(file_path)
+    #         return text.strip()
+    #     except Exception:
+    #         raise Exception("Unable to extract text from image resume (OCR failed).")
+
     if mime and mime.startswith("image/"):
         try:
-            text = ocr_image_strong(file_path)
+            text = ocr_image_easy(file_path)
             return text.strip()
-        except Exception:
+        except Exception as e:
             raise Exception("Unable to extract text from image resume (OCR failed).")
-
 
     # -----------------------------------------
     # 5️⃣ ZIP → Extract → Find first PDF/DOCX
@@ -306,7 +312,15 @@ def process_resume(docname):
     # -----------------------------------------
     # AI Parsing (your original part continues)
     # -----------------------------------------
-    api_key = os.getenv("anthropic_api_key")
+    api_key = (
+    os.getenv("ANTHROPIC_API_KEY")
+    or os.getenv("anthropic_api_key")
+    or frappe.conf.get("anthropic_api_key")
+)
+
+    if not api_key:
+     frappe.throw("Anthropic API key missing: please set it in environment vars or site_config.")
+
     client = Anthropic(api_key=api_key)
 
     prompt = f"""
@@ -330,6 +344,7 @@ Return JSON with these fields:
 - certifications
 - highest_qualification
 - institute
+- languages_known
 """
 
     response = client.messages.create(
@@ -369,6 +384,7 @@ Return JSON with these fields:
         "key_certifications": "certifications",
         "highest_qualification": "highest_qualification",
         "institute__university": "institute",
+        "languages": "languages_known"
     }
 
     for field, key in mapping.items():
@@ -379,29 +395,44 @@ Return JSON with these fields:
     frappe.db.commit()
 
     return {"status": "ok", "data": data}
-def ocr_image_strong(file_path):
-    from PIL import Image, ImageFilter, ImageOps
+# def ocr_image_strong(file_path):
+#     from PIL import Image, ImageFilter, ImageOps
 
-    img = Image.open(file_path)
+#     img = Image.open(file_path)
 
-    # Convert to grayscale
-    img = img.convert("L")
+#     # Convert to grayscale
+#     img = img.convert("L")
 
-    # Increase contrast
-    img = ImageOps.autocontrast(img)
+#     # Increase contrast
+#     img = ImageOps.autocontrast(img)
 
-    # Sharpen the text
-    img = img.filter(ImageFilter.SHARPEN)
+#     # Sharpen the text
+#     img = img.filter(ImageFilter.SHARPEN)
 
-    # Upscale (improves OCR drastically)
-    w, h = img.size
-    img = img.resize((w*2, h*2), Image.LANCZOS)
+#     # Upscale (improves OCR drastically)
+#     w, h = img.size
+#     img = img.resize((w*2, h*2), Image.LANCZOS)
 
-    # Convert to pure black/white
-    img = img.point(lambda x: 0 if x < 150 else 255, '1')
+#     # Convert to pure black/white
+#     img = img.point(lambda x: 0 if x < 150 else 255, '1')
 
-    # Strong Tesseract config for documents
-    config = r"--oem 3 --psm 6 -l eng"
+#     # Strong Tesseract config for documents
+#     config = r"--oem 3 --psm 6 -l eng"
 
-    text = pytesseract.image_to_string(img, config=config)
-    return text.strip()
+#     text = pytesseract.image_to_string(img, config=config)
+#     return text.strip()
+
+def ocr_image_easy(file_path):
+    try:
+        # Create EasyOCR reader (English language)
+        reader = easyocr.Reader(['en'], gpu=False)
+
+        # Read text from image
+        results = reader.readtext(file_path, detail=0)
+
+        # Combine lines into single string
+        text = "\n".join(results)
+
+        return text
+    except Exception as e:
+        raise Exception(f"EasyOCR failed: {e}")
