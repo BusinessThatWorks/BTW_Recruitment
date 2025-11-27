@@ -24,6 +24,7 @@
   "expected_ctc",
   "notice_period_days",
   "serving_notice",
+  "languages",
   "last_working_day",
   "resume_source",
   "resume_attachment",
@@ -188,12 +189,17 @@
    "fieldname": "table_nxdk",
    "fieldtype": "Table",
    "options": "DKP_Candidate_Job_Applications"
+  },
+  {
+   "fieldname": "languages",
+   "fieldtype": "Data",
+   "label": "Languages"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 10:23:00.198932",
+ "modified": "2025-11-27 15:09:24.739488",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

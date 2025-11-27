@@ -14,7 +14,11 @@ dependencies = [
     "pillow",
     "pytesseract",
     "anthropic",
-    "mammoth"
+    "mammoth",
+    "easyocr",
+    "torch",
+    "torchvision",
+    "torchaudio"
 ]
 
 [build-system]
