@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": ".####",
  "creation": "2025-11-19 14:08:10.582951",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -86,10 +87,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 10:23:16.643991",
+ "modified": "2025-11-28 14:50:38.704544",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Application",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
