@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "company_details_section",
+  "company_details",
   "company_name",
   "client_type",
   "industry",
@@ -21,16 +22,17 @@
   "pin",
   "notes",
   "section_break_gnpc",
+  "shift_and_working_hours",
   "shift_type",
   "working_hours",
   "week_off_policy",
   "break_duration",
   "column_break_hpcv",
   "leave_policies",
+  "leave_pay_type",
   "annual_leave_days",
   "sick_leave_days",
   "casual_leave_days",
-  "leave_pay_type",
   "billing_details_tab",
   "section_break_oxty",
   "billing_address",
@@ -98,8 +100,7 @@
   },
   {
    "fieldname": "company_details_section",
-   "fieldtype": "Section Break",
-   "label": "Company Details"
+   "fieldtype": "Section Break"
   },
   {
    "default": "0",
@@ -224,8 +225,7 @@
   },
   {
    "fieldname": "section_break_gnpc",
-   "fieldtype": "Section Break",
-   "label": "Employment Policies"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "shift_type",
@@ -272,12 +272,22 @@
    "fieldname": "leave_pay_type",
    "fieldtype": "Select",
    "label": "Leave Pay Type"
+  },
+  {
+   "fieldname": "shift_and_working_hours",
+   "fieldtype": "Heading",
+   "label": "Shift and Working Hours"
+  },
+  {
+   "fieldname": "company_details",
+   "fieldtype": "Heading",
+   "label": "Company Details"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-28 12:15:14.123485",
+ "modified": "2025-11-28 14:31:52.435523",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",

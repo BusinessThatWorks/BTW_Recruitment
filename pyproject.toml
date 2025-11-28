@@ -17,9 +17,9 @@ dependencies = [
     "anthropic",
     "mammoth",
     "easyocr==1.7.2",
-    "torch==2.9.1+cpu",
-    "torchvision==0.24.1+cpu",
-    "torchaudio==2.9.1+cpu"
+    "torch",
+    "torchvision",
+    "torchaudio"
 ]
 [tool.bench.pip]
 extra-index-url = "https://download.pytorch.org/whl/cpu"
