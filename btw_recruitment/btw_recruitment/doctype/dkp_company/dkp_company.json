@@ -20,10 +20,17 @@
   "city",
   "pin",
   "notes",
-  "section_break_wsxr",
-  "spoc_name",
-  "spoc_email",
-  "spoc_phone",
+  "section_break_gnpc",
+  "shift_type",
+  "working_hours",
+  "week_off_policy",
+  "break_duration",
+  "column_break_hpcv",
+  "leave_policies",
+  "annual_leave_days",
+  "sick_leave_days",
+  "casual_leave_days",
+  "leave_pay_type",
   "billing_details_tab",
   "section_break_oxty",
   "billing_address",
@@ -93,27 +100,6 @@
    "fieldname": "company_details_section",
    "fieldtype": "Section Break",
    "label": "Company Details"
-  },
-  {
-   "fieldname": "section_break_wsxr",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "SPOC"
-  },
-  {
-   "fieldname": "spoc_name",
-   "fieldtype": "Data",
-   "label": "SPOC Name"
-  },
-  {
-   "fieldname": "spoc_email",
-   "fieldtype": "Data",
-   "label": "SPOC Email"
-  },
-  {
-   "fieldname": "spoc_phone",
-   "fieldtype": "Data",
-   "label": "SPOC Phone"
   },
   {
    "default": "0",
@@ -230,12 +216,68 @@
    "fieldname": "billing_phone",
    "fieldtype": "Data",
    "label": "Billing Phone"
+  },
+  {
+   "fieldname": "working_hours",
+   "fieldtype": "Data",
+   "label": "Working Hours"
+  },
+  {
+   "fieldname": "section_break_gnpc",
+   "fieldtype": "Section Break",
+   "label": "Employment Policies"
+  },
+  {
+   "fieldname": "shift_type",
+   "fieldtype": "Select",
+   "label": "Shift Type",
+   "options": "General Shift\nDay Shift\nNight Shift\nRotational Shift\nHybrid Shift"
+  },
+  {
+   "fieldname": "week_off_policy",
+   "fieldtype": "Select",
+   "label": "Week Off Policy",
+   "options": "5 Days (Sat-Sun Off)\n6 Days (Sunday Off)\nAlternate Saturdays\nRoster Based"
+  },
+  {
+   "fieldname": "break_duration",
+   "fieldtype": "Data",
+   "label": "Break Duration (e.g., 45 mins)"
+  },
+  {
+   "fieldname": "column_break_hpcv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "leave_policies",
+   "fieldtype": "Heading",
+   "label": "Leave Policies"
+  },
+  {
+   "fieldname": "annual_leave_days",
+   "fieldtype": "Int",
+   "label": "Annual Leave (Days)"
+  },
+  {
+   "fieldname": "sick_leave_days",
+   "fieldtype": "Int",
+   "label": "Sick Leave (Days)"
+  },
+  {
+   "fieldname": "casual_leave_days",
+   "fieldtype": "Int",
+   "label": "Casual Leave (Days)"
+  },
+  {
+   "fieldname": "leave_pay_type",
+   "fieldtype": "Select",
+   "label": "Leave Pay Type"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-25 10:39:19.461597",
+ "modified": "2025-11-28 12:15:14.123485",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",
