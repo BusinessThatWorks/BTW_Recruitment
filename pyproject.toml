@@ -4,7 +4,7 @@ authors = [
     { name = "Sarim", email = "sarim.khan@clapgrow.com"}
 ]
 description = "An app designed to solve HR recruitment problems"
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.10"
 
 readme = "README.md"
 dynamic = ["version"]
