@@ -177,7 +177,7 @@
    "fieldname": "resume_source",
    "fieldtype": "Select",
    "label": "Resume Source",
-   "options": "Naukri\nLinkedIn\nReferral\nJob Portal\nWalk-in\nInternal DB\nOther"
+   "options": "Naukri\nLinkedIn\nIndeed\nReferral\nWalk-in\nInternal DB\nOther"
   },
   {
    "fieldname": "job_applications_section",
@@ -199,7 +199,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-27 15:09:24.739488",
+ "modified": "2025-11-29 10:34:27.595514",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

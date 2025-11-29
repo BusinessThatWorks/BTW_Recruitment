@@ -14,6 +14,7 @@
   "no_poach_flag",
   "replacement_policy_days",
   "client_status",
+  "pf_compliance",
   "column_break_wmab",
   "head_office",
   "address",
@@ -25,14 +26,10 @@
   "shift_and_working_hours",
   "shift_type",
   "working_hours",
+  "working_hoursend",
   "week_off_policy",
   "break_duration",
-  "column_break_hpcv",
-  "leave_policies",
-  "leave_pay_type",
   "annual_leave_days",
-  "sick_leave_days",
-  "casual_leave_days",
   "billing_details_tab",
   "section_break_oxty",
   "billing_address",
@@ -221,7 +218,7 @@
   {
    "fieldname": "working_hours",
    "fieldtype": "Data",
-   "label": "Working Hours"
+   "label": "Working Hours(Start)"
   },
   {
    "fieldname": "section_break_gnpc",
@@ -245,33 +242,9 @@
    "label": "Break Duration (e.g., 45 mins)"
   },
   {
-   "fieldname": "column_break_hpcv",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "leave_policies",
-   "fieldtype": "Heading",
-   "label": "Leave Policies"
-  },
-  {
    "fieldname": "annual_leave_days",
    "fieldtype": "Int",
-   "label": "Annual Leave (Days)"
-  },
-  {
-   "fieldname": "sick_leave_days",
-   "fieldtype": "Int",
-   "label": "Sick Leave (Days)"
-  },
-  {
-   "fieldname": "casual_leave_days",
-   "fieldtype": "Int",
-   "label": "Casual Leave (Days)"
-  },
-  {
-   "fieldname": "leave_pay_type",
-   "fieldtype": "Select",
-   "label": "Leave Pay Type"
+   "label": "Total Annual Leave (Days)"
   },
   {
    "fieldname": "shift_and_working_hours",
@@ -282,12 +255,23 @@
    "fieldname": "company_details",
    "fieldtype": "Heading",
    "label": "Company Details"
+  },
+  {
+   "fieldname": "pf_compliance",
+   "fieldtype": "Select",
+   "label": "PF Compliance",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "working_hoursend",
+   "fieldtype": "Data",
+   "label": "Working Hours(End)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-28 14:31:52.435523",
+ "modified": "2025-11-29 10:33:34.771713",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",
