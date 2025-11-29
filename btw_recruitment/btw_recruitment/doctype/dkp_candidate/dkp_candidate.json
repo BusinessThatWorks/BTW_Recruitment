@@ -17,6 +17,7 @@
   "institute__university",
   "gender",
   "key_certifications",
+  "resume_parsed",
   "column_break_cjpe",
   "current_company",
   "current_designation",
@@ -119,16 +120,19 @@
   {
    "fieldname": "current_ctc",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Current CTC"
   },
   {
    "fieldname": "expected_ctc",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Expected CTC"
   },
   {
    "fieldname": "notice_period_days",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Notice Period (Days)"
   },
   {
@@ -165,6 +169,7 @@
   {
    "fieldname": "gender",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Gender",
    "options": "Male\nFemale\nNot Disclosed"
   },
@@ -194,12 +199,18 @@
    "fieldname": "languages",
    "fieldtype": "Data",
    "label": "Languages"
+  },
+  {
+   "fieldname": "resume_parsed",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Resume Parsed"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-29 10:34:27.595514",
+ "modified": "2025-11-29 17:29:24.666421",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

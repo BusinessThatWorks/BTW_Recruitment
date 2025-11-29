@@ -337,9 +337,6 @@ Return JSON with these fields:
 - total_experience_years
 - current_company
 - current_designation
-- current_ctc
-- expected_ctc
-- notice_period_days
 - skills
 - certifications
 - highest_qualification
@@ -377,9 +374,6 @@ Return JSON with these fields:
         "total_experience_years": "total_experience_years",
         "current_company": "current_company",
         "current_designation": "current_designation",
-        "current_ctc": "current_ctc",
-        "expected_ctc": "expected_ctc",
-        "notice_period_days": "notice_period_days",
         "skills_tags": "skills",
         "key_certifications": "certifications",
         "highest_qualification": "highest_qualification",
@@ -390,6 +384,7 @@ Return JSON with these fields:
     for field, key in mapping.items():
         if key in data:
             doc.set(field, data[key])
+    doc.resume_parsed = 1
 
     doc.save()
     frappe.db.commit()
