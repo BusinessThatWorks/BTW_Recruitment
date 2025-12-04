@@ -1,43 +1,38 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "{candidate_name}.####",
  "creation": "2025-11-15 11:17:22.152657",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "candidate_details_section",
+  "resume_attachment",
   "candidate_name",
   "email",
   "mobile_number",
   "alternate_phone",
+  "gender",
   "current_location",
   "total_experience_years",
   "highest_qualification",
   "institute__university",
-  "gender",
-  "key_certifications",
-  "resume_parsed",
   "column_break_cjpe",
+  "currently_employed",
   "current_company",
   "current_designation",
+  "languages",
+  "skills_tags",
+  "key_certifications",
+  "preferred_locationselect_upto_3_section",
   "current_ctc",
   "expected_ctc",
-  "notice_period_days",
-  "serving_notice",
-  "languages",
-  "last_working_day",
-  "resume_source",
-  "resume_attachment",
-  "skills_tags",
-  "preferred_locationselect_upto_3_section",
-  "select_zopc",
   "column_break_xcop",
-  "select_ysto",
+  "resume_source",
+  "last_working_day",
   "column_break_lczr",
-  "select_fclr",
+  "official_notice_period_days",
+  "serving_notice",
   "job_applications_section",
-  "table_nxdk"
+  "resume_parsed"
  ],
  "fields": [
   {
@@ -71,33 +66,17 @@
    "label": "Current Location"
   },
   {
-   "fieldname": "select_zopc",
-   "fieldtype": "Select",
-   "options": "Kolkata\nBangalore\nHyderabad\nDelhi\nMumbai\nChennai"
-  },
-  {
    "fieldname": "preferred_locationselect_upto_3_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Preferred Location(select upto 3)"
+   "label": "Additional Details"
   },
   {
    "fieldname": "column_break_xcop",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "select_ysto",
-   "fieldtype": "Select",
-   "options": "Kolkata\nBangalore\nHyderabad\nDelhi\nMumbai\nChennai"
-  },
-  {
    "fieldname": "column_break_lczr",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "select_fclr",
-   "fieldtype": "Select",
-   "options": "Kolkata\nBangalore\nHyderabad\nDelhi\nMumbai\nChennai"
   },
   {
    "fieldname": "column_break_cjpe",
@@ -129,18 +108,6 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Expected CTC"
-  },
-  {
-   "fieldname": "notice_period_days",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Notice Period (Days)"
-  },
-  {
-   "default": "0",
-   "fieldname": "serving_notice",
-   "fieldtype": "Check",
-   "label": "Serving Notice?"
   },
   {
    "fieldname": "last_working_day",
@@ -189,12 +156,7 @@
    "fieldname": "job_applications_section",
    "fieldtype": "Section Break",
    "hidden": 1,
-   "label": "Job Applications"
-  },
-  {
-   "fieldname": "table_nxdk",
-   "fieldtype": "Table",
-   "options": "DKP_Candidate_Job_Applications"
+   "label": "Hidden Fields"
   },
   {
    "fieldname": "languages",
@@ -206,16 +168,33 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Resume Parsed"
+  },
+  {
+   "fieldname": "currently_employed",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Currently Employed",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "official_notice_period_days",
+   "fieldtype": "Data",
+   "label": "Official Notice Period (Days)"
+  },
+  {
+   "fieldname": "serving_notice",
+   "fieldtype": "Select",
+   "label": "Serving Notice",
+   "options": "\nYes\nNo"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-02 12:51:22.013929",
+ "modified": "2025-12-04 14:55:23.036991",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
- "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
