@@ -20,12 +20,9 @@
   "min_ctc",
   "max_ctc",
   "column_break_ttxn",
-  "ageing_days",
   "priority",
   "status",
-  "reason_for_closure",
   "required_certifications",
-  "job_description",
   "must_have_skills",
   "good_to_have_skills",
   "notes",
@@ -57,11 +54,7 @@
    "label": "Designation"
   },
   {
-   "fieldname": "job_description",
-   "fieldtype": "Small Text",
-   "label": "Job Description"
-  },
-  {
+   "fetch_from": "company.city",
    "fieldname": "location",
    "fieldtype": "Data",
    "label": "Location"
@@ -188,11 +181,6 @@
    "options": "Open\nOn Hold\nClosed \u2013 Hired\nClosed \u2013 Cancelled"
   },
   {
-   "fieldname": "reason_for_closure",
-   "fieldtype": "Data",
-   "label": "Reason for Closure"
-  },
-  {
    "fieldname": "profiles_sent_count",
    "fieldtype": "Int",
    "hidden": 1,
@@ -217,14 +205,9 @@
    "label": "Joins (Count)"
   },
   {
-   "fieldname": "ageing_days",
-   "fieldtype": "Int",
-   "label": "Ageing (Days)"
-  },
-  {
    "fieldname": "notes",
    "fieldtype": "Small Text",
-   "label": "notes"
+   "label": "Notes"
   },
   {
    "fieldname": "hidden_fields_section",
@@ -251,18 +234,19 @@
   },
   {
    "fieldname": "section_break_scrx",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "table_dmjx",
    "fieldtype": "Table",
-   "options": "DKP_JobOpening_Child"
+   "options": "DKP_JobApplication_Child"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-09 12:15:36.135294",
+ "modified": "2025-12-09 17:20:11.114938",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
