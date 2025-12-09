@@ -29,6 +29,8 @@
   "must_have_skills",
   "good_to_have_skills",
   "notes",
+  "section_break_scrx",
+  "table_dmjx",
   "hidden_fields_section",
   "working_days",
   "working_hours",
@@ -246,12 +248,21 @@
    "fieldtype": "Link",
    "label": "Department",
    "options": "DKP_Department"
+  },
+  {
+   "fieldname": "section_break_scrx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "table_dmjx",
+   "fieldtype": "Table",
+   "options": "DKP_JobOpening_Child"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-08 13:19:55.588367",
+ "modified": "2025-12-09 12:15:36.135294",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

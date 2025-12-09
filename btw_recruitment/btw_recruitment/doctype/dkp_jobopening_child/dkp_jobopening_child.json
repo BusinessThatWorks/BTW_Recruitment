@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-09 12:05:08.850202",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "job_application",
+  "candidate_name",
+  "stage",
+  "interview_date",
+  "interview_feedback"
+ ],
+ "fields": [
+  {
+   "fieldname": "job_application",
+   "fieldtype": "Link",
+   "label": "Job Application",
+   "options": "DKP_Job_Application"
+  },
+  {
+   "fieldname": "candidate_name",
+   "fieldtype": "Link",
+   "label": "Candidate Name",
+   "options": "DKP_Candidate"
+  },
+  {
+   "fieldname": "stage",
+   "fieldtype": "Data",
+   "label": "Stage"
+  },
+  {
+   "fieldname": "interview_date",
+   "fieldtype": "Data",
+   "label": "Interview Date"
+  },
+  {
+   "fieldname": "interview_feedback",
+   "fieldtype": "Data",
+   "label": "Interview Feedback"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-09 13:04:49.833746",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "DKP_JobOpening_Child",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
