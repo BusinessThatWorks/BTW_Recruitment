@@ -250,10 +250,10 @@ app_license = "mit"
 #     }
 # }
 # hi
-doc_events = {
-    "DKP_Job_Application": {
-        "after_insert": "btw_recruitment.btw_recruitment.doctype.dkp_job_application.dkp_job_application.update_job_opening_child",
-        "on_update": "btw_recruitment.btw_recruitment.doctype.dkp_job_application.dkp_job_application.update_job_opening_child"
-    }
-}
+# doc_events = {
+#     "DKP_Job_Application": {
+#         "after_insert": "btw_recruitment.btw_recruitment.doctype.dkp_job_application.dkp_job_application.update_job_opening_child",
+#         "on_update": "btw_recruitment.btw_recruitment.doctype.dkp_job_application.dkp_job_application.update_job_opening_child"
+#     }
+# }
 

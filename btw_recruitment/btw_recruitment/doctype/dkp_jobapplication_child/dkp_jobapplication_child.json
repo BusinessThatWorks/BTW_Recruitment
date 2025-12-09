@@ -6,19 +6,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "job_application",
   "candidate_name",
   "stage",
   "interview_date",
   "interview_feedback"
  ],
  "fields": [
-  {
-   "fieldname": "job_application",
-   "fieldtype": "Link",
-   "label": "Job Application",
-   "options": "DKP_Job_Application"
-  },
   {
    "fieldname": "candidate_name",
    "fieldtype": "Link",
@@ -27,12 +20,13 @@
   },
   {
    "fieldname": "stage",
-   "fieldtype": "Data",
-   "label": "Stage"
+   "fieldtype": "Select",
+   "label": "Stage",
+   "options": "\nIn Review\nScreening\nInterview\nOffered\nRejected\nOffer Drop"
   },
   {
    "fieldname": "interview_date",
-   "fieldtype": "Data",
+   "fieldtype": "Datetime",
    "label": "Interview Date"
   },
   {
@@ -45,10 +39,10 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-09 13:04:49.833746",
+ "modified": "2025-12-09 17:24:48.110184",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
- "name": "DKP_JobOpening_Child",
+ "name": "DKP_JobApplication_Child",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
