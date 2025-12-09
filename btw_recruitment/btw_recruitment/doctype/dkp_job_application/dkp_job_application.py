@@ -9,30 +9,35 @@ from frappe.model.document import Document
 class DKP_Job_Application(Document):
 	pass
 
-import frappe
+def update_job_opening_child(doc, method):
+    if not doc.job_opening_title:
+        return
 
-# def after_insert(self, method=None):
+    # Load Job Opening document
+    job_opening = frappe.get_doc("DKP_Job_Opening", doc.job_opening_title)
 
-#     # Safety check
-#     if not self.candidate_id:
-#         return
+    # Check if row for this candidate already exists
+    existing_row = None
+    for row in job_opening.table_dmjx:
+        if row.job_application == doc.name:
+            existing_row = row
+            break
 
-#     try:
-#         candidate_doc = frappe.get_doc("BTW_Candidate", self.candidate_id)
+    if existing_row:
+        # Update existing row
+        existing_row.candidate_name = doc.candidate_name
+        existing_row.stage = doc.stage
+        existing_row.interview_date = doc.datetime_tisc
+        existing_row.interview_feedback = doc.interview_feedback
+    else:
+        # Add new row
+        job_opening.append("table_dmjx", {
+            "job_application": doc.name,
+            "candidate_name": doc.candidate_name,
+            "stage": doc.stage,
+            "interview_date": doc.datetime_tisc,
+            "interview_feedback": doc.interview_feedback
+        })
 
-#         # Prevent duplicates
-#         exists = any(
-#             row.job_application_id == self.name
-#             for row in candidate_doc.table_nxdk
-#         )
-#         if exists:
-#             return
+    job_opening.save(ignore_permissions=True)
 
-#         # Append child row
-#         row = candidate_doc.append("table_nxdk", {})
-#         row.job_application_id = self.name  # Other fields auto-fetch
-
-#         candidate_doc.save(ignore_permissions=True)
-
-#     except Exception:
-#         frappe.log_error(frappe.get_traceback(), "Auto Add Candidate Job Application Failed")
