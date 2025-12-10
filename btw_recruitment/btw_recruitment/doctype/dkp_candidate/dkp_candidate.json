@@ -11,13 +11,16 @@
   "email",
   "mobile_number",
   "alternate_phone",
+  "date_of_birth",
   "gender",
   "current_location",
+  "marital_status",
   "total_experience_years",
-  "highest_qualification",
-  "institute__university",
+  "address",
   "languages",
   "column_break_cjpe",
+  "highest_qualification",
+  "institute__university",
   "current_designation",
   "current_company",
   "currently_employed",
@@ -226,12 +229,28 @@
    "fieldtype": "Link",
    "label": "Added By",
    "options": "DKP_Recruiter"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date Of Birth"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "marital_status",
+   "fieldtype": "Select",
+   "label": "Marital Status",
+   "options": "\nSingle / Unmarried\nMarried\nDivorced\nWidowed"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-09 15:59:31.692769",
+ "modified": "2025-12-10 14:36:03.471847",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

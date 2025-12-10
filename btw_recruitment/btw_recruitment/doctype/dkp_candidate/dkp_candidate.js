@@ -62,7 +62,12 @@ frappe.ui.form.on("DKP_Candidate", {
             "resume_source",
             "currently_employed",
             "official_notice_period_days",
-            "serving_notice"
+            "serving_notice",
+            "marital_status",
+            "primary_skill_set",
+            "secondary_skill_set",
+            "communication_skill",
+            "remarks"
         ];
 
         manual_fields.forEach(fieldname => {
@@ -106,4 +111,19 @@ function removeHighlights(frm) {
     });
 }
     
-
+frappe.ui.form.on("DKP_Candidate", {
+    after_save(frm) {
+        // Only run rename logic when resume is NOT parsed
+        if (!frm.doc.resume_parsed) {
+            frappe.call({
+                method: "btw_recruitment.btw_recruitment.api.naming.rename_candidate_after_parse",
+                args: { docname: frm.doc.name },
+            }).then(res => {
+                const payload = res.message || {};
+                if (payload.renamed && payload.new_name) {
+                    frappe.set_route("Form", "DKP_Candidate", payload.new_name);
+                }
+            });
+        }
+    }
+});

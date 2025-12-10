@@ -140,7 +140,7 @@ Return JSON with these fields:
 - candidate_name
 - email
 - mobile_number
--alternate_mobile_number
+- alternate_mobile_number
 - current_location
 - total_experience_years
 - current_company
@@ -150,6 +150,8 @@ Return JSON with these fields:
 - highest_qualification
 - institute
 - languages_known
+- date_of_birth (format: YYYY-MM-DD)
+- address
 """
 
     response = client.messages.create(
@@ -187,7 +189,9 @@ Return JSON with these fields:
         "key_certifications": "certifications",
         "highest_qualification": "highest_qualification",
         "institute__university": "institute",
-        "languages": "languages_known"
+        "languages": "languages_known",
+        "date_of_birth": "date_of_birth",
+        "address": "address",
     }
 
     for field, key in mapping.items():
