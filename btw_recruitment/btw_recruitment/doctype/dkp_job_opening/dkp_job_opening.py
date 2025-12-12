@@ -6,7 +6,7 @@ from frappe.model.document import Document
 import frappe
 
 class DKP_Job_Opening(Document):
-	pass
+	# pass
 
 
 # def after_insert(self, method=None):

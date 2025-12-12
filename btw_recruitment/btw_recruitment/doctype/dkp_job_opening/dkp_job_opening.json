@@ -13,13 +13,13 @@
   "location",
   "gender_preference",
   "work_mode",
-  "requirement_source",
   "travel_required",
   "min_experience_years",
   "max_experience_years",
   "min_ctc",
   "max_ctc",
   "column_break_ttxn",
+  "job_description",
   "priority",
   "status",
   "required_certifications",
@@ -30,6 +30,7 @@
   "section_break_scrx",
   "table_dmjx",
   "hidden_fields_section",
+  "requirement_source",
   "working_days",
   "working_hours",
   "sla_due_date",
@@ -75,7 +76,9 @@
   {
    "fieldname": "min_experience_years",
    "fieldtype": "Float",
-   "label": "Min Experience (Years)"
+   "in_list_view": 1,
+   "label": "Min Experience (Years)",
+   "reqd": 1
   },
   {
    "fieldname": "max_experience_years",
@@ -85,12 +88,14 @@
   {
    "fieldname": "min_ctc",
    "fieldtype": "Currency",
-   "label": "Min CTC"
+   "in_list_view": 1,
+   "label": "Min CTC Monthly"
   },
   {
    "fieldname": "max_ctc",
    "fieldtype": "Currency",
-   "label": "Max CTC"
+   "in_list_view": 1,
+   "label": "Max CTC Monthly"
   },
   {
    "fieldname": "working_days",
@@ -132,6 +137,7 @@
   {
    "fieldname": "requirement_source",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Requirement Source",
    "options": "Existing Client Team\nRecruiter Direct\nLinkedIn\nWhatsApp\nReference\nOther"
   },
@@ -208,7 +214,7 @@
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
-   "label": "Notes"
+   "label": "Additional Information"
   },
   {
    "fieldname": "hidden_fields_section",
@@ -248,12 +254,17 @@
    "fieldtype": "Link",
    "label": "Assign Recruiter",
    "options": "User"
+  },
+  {
+   "fieldname": "job_description",
+   "fieldtype": "Small Text",
+   "label": "Job Description"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-12 11:10:39.243247",
+ "modified": "2025-12-12 16:38:31.130736",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
