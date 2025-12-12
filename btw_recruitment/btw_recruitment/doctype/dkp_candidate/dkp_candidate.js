@@ -128,23 +128,25 @@ frappe.ui.form.on("DKP_Candidate", {
     }
 });
 frappe.ui.form.on("DKP_Candidate", {
-    onload_post_render(frm) {
+    onload(frm) {
         if (!frm.doc.added_by) {
             frm.set_value("added_by", frappe.session.user);
         }
-    }
-});
-frappe.ui.form.on('DKP_Candidate', {
+    },
+
     refresh(frm) {
 
-       frm.set_query("blacklisted_by", function() {
-            return {
-                filters: {
-                    "role_profile_name": "DKP Recruiter"
-                }
-            };
+        ["added_by", "blacklisted_by"].forEach(field => {
+            frm.set_query(field, function() {
+                return {
+                    filters: {
+                        role_profile_name: "DKP Recruiter"
+                    }
+                };
+            });
         });
 
     }
 });
+
 
