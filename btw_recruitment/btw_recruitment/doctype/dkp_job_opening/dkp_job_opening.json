@@ -59,7 +59,8 @@
    "fetch_from": "company.city",
    "fieldname": "location",
    "fieldtype": "Data",
-   "label": "Location"
+   "label": "Location",
+   "reqd": 1
   },
   {
    "fieldname": "work_mode",
@@ -89,13 +90,15 @@
    "fieldname": "min_ctc",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Min CTC Monthly"
+   "label": "Min CTC Monthly",
+   "reqd": 1
   },
   {
    "fieldname": "max_ctc",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Max CTC Monthly"
+   "label": "Max CTC Monthly",
+   "reqd": 1
   },
   {
    "fieldname": "working_days",
@@ -132,7 +135,8 @@
    "fieldname": "gender_preference",
    "fieldtype": "Select",
    "label": "Gender Preference",
-   "options": "No Preference\nMale\nFemale\nOther"
+   "options": "\nMale\nFemale\nOther",
+   "reqd": 1
   },
   {
    "fieldname": "requirement_source",
@@ -264,7 +268,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-12 16:38:31.130736",
+ "modified": "2025-12-12 17:21:03.377987",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
