@@ -28,4 +28,16 @@ class DKP_Job_Opening(Document):
 
 #     except Exception:
 #         frappe.log_error(frappe.get_traceback(), "Job Opening Auto Add Failed")
+# not working
+	# def after_save(self):
+	# 	if self.has_value_changed("assign_recruiter") and self.assign_recruiter:
 
+	# 		frappe.assign_to.add({
+	# 			"doctype": self.doctype,
+	# 			"name": self.name,
+	# 			"assign_to": [self.assign_recruiter],
+	# 			"description": f"You have been assigned a Job Opening: {self.name}"
+	# 		})
+
+	# 		message = f"📌 <b>{frappe.session.user}</b> assigned this Job Opening to <b>{self.assign_recruiter}</b>."
+	# 		self.add_comment("Comment", message)

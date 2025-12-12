@@ -24,6 +24,7 @@
   "status",
   "required_certifications",
   "must_have_skills",
+  "assign_recruiter",
   "good_to_have_skills",
   "notes",
   "section_break_scrx",
@@ -241,12 +242,18 @@
    "fieldname": "table_dmjx",
    "fieldtype": "Table",
    "options": "DKP_JobApplication_Child"
+  },
+  {
+   "fieldname": "assign_recruiter",
+   "fieldtype": "Link",
+   "label": "Assign Recruiter",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-09 17:20:11.114938",
+ "modified": "2025-12-12 11:10:39.243247",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

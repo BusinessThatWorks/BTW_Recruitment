@@ -9,37 +9,45 @@ from frappe.model.document import Document
 class DKP_Job_Application(Document):
 	pass
 
-# def update_job_opening_child(doc, method):
-#     if not doc.job_opening_title:
-#         return
-
-#     # Load Job Opening document
-#     job_opening = frappe.get_doc("DKP_Job_Opening", doc.job_opening_title)
-
-#     # Check if row for this candidate already exists
-#     existing_row = None
-#     for row in job_opening.table_dmjx:
-#         if row.job_application == doc.name:
-#             existing_row = row
-#             break
-
-#     if existing_row:
-#         # Update existing row
-#         existing_row.candidate_name = doc.candidate_name
-#         existing_row.stage = doc.stage
-#         existing_row.interview_date = doc.datetime_tisc
-#         existing_row.interview_feedback = doc.interview_feedback
-#     else:
-#         # Add new row
-#         job_opening.append("table_dmjx", {
-#             "job_application": doc.name,
-#             "candidate_name": doc.candidate_name,
-#             "stage": doc.stage,
-#             "interview_date": doc.datetime_tisc,
-#             "interview_feedback": doc.interview_feedback
-#         })
-
-#     job_opening.save(ignore_permissions=True)
 
 
+# calling from client side job application js to check candidate status 
+@frappe.whitelist()
+def get_candidate_status(candidate):
+    out = {
+        "blacklisted": False,
+        "cooling": False,
+        "remaining_days": 0
+    }
 
+    # --------- BLACKLIST CHECK ---------
+    is_blacklisted = frappe.db.get_value("DKP_Candidate", candidate, "blacklisted")
+
+    if is_blacklisted:
+        out["blacklisted"] = True
+        return out
+
+    # --------- COOLING PERIOD CHECK ---------
+    last_rejected = frappe.db.sql("""
+        SELECT parent.modified
+        FROM `tabDKP_JobApplication_Child` child
+        JOIN `tabDKP_Job_Application` parent
+        ON child.parent = parent.name
+        WHERE child.candidate_name = %s
+        AND child.stage = 'Rejected'
+        ORDER BY parent.modified DESC
+        LIMIT 1
+    """, (candidate,), as_dict=True)
+
+    if last_rejected:
+        from datetime import datetime, timedelta
+
+        last_date = last_rejected[0].modified
+        cooling_period = timedelta(days=180)
+        remaining = (last_date + cooling_period) - datetime.now()
+
+        if remaining.total_seconds() > 0:
+            out["cooling"] = True
+            out["remaining_days"] = remaining.days
+
+    return out

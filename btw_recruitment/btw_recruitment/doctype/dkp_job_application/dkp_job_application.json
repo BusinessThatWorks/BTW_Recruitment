@@ -1,25 +1,18 @@
 {
  "actions": [],
- "autoname": "{job_opening_title}.-.{candidate_name}.-.##",
+ "autoname": "{job_opening_title}.-.##",
  "creation": "2025-11-19 14:08:10.582951",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "company_name",
   "job_opening_title",
-  "recruiter",
   "joining_date",
   "invoice_date",
   "section_break_rqlz",
   "table_akka"
  ],
  "fields": [
-  {
-   "fieldname": "recruiter",
-   "fieldtype": "Link",
-   "label": "Recruiter Name",
-   "options": "DKP_Recruiter"
-  },
   {
    "fieldname": "joining_date",
    "fieldtype": "Datetime",
@@ -55,7 +48,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-09 17:33:19.764628",
+ "modified": "2025-12-12 15:42:34.780160",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Application",

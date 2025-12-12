@@ -41,7 +41,16 @@
   "added_by",
   "remarks",
   "job_applications_section",
-  "resume_parsed"
+  "resume_parsed",
+  "test_tab",
+  "eq_test_score",
+  "eq_test_upload",
+  "blacklist_tab",
+  "blacklisted",
+  "blacklist_reason",
+  "blacklist_attachment",
+  "blacklisted_on",
+  "blacklisted_by"
  ],
  "fields": [
   {
@@ -148,7 +157,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Gender",
-   "options": "Male\nFemale\nNot Disclosed",
+   "options": "\nMale\nFemale\nNot Disclosed",
    "placeholder": " "
   },
   {
@@ -181,10 +190,10 @@
   },
   {
    "fieldname": "currently_employed",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Currently Employed",
-   "options": "DKP_YesNo_Options"
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "official_notice_period_days",
@@ -245,13 +254,60 @@
    "fieldname": "marital_status",
    "fieldtype": "Select",
    "label": "Marital Status",
-   "options": "--select--\nSingle / Unmarried\nMarried\nDivorced\nWidowed"
+   "options": "\nSingle / Unmarried\nMarried\nDivorced\nWidowed"
+  },
+  {
+   "fieldname": "test_tab",
+   "fieldtype": "Tab Break",
+   "label": "Test"
+  },
+  {
+   "fieldname": "eq_test_score",
+   "fieldtype": "Float",
+   "label": "EQ test Score"
+  },
+  {
+   "fieldname": "eq_test_upload",
+   "fieldtype": "Attach",
+   "label": "EQ Test Upload"
+  },
+  {
+   "fieldname": "blacklist_tab",
+   "fieldtype": "Tab Break",
+   "label": "Blacklist"
+  },
+  {
+   "default": "0",
+   "fieldname": "blacklisted",
+   "fieldtype": "Check",
+   "label": "Blacklisted"
+  },
+  {
+   "fieldname": "blacklist_reason",
+   "fieldtype": "Data",
+   "label": "Blacklist Reason"
+  },
+  {
+   "fieldname": "blacklist_attachment",
+   "fieldtype": "Attach",
+   "label": "Blacklist Attachment"
+  },
+  {
+   "fieldname": "blacklisted_on",
+   "fieldtype": "Datetime",
+   "label": "Blacklisted On"
+  },
+  {
+   "fieldname": "blacklisted_by",
+   "fieldtype": "Link",
+   "label": "Blacklisted By",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-11 11:36:51.062856",
+ "modified": "2025-12-12 15:38:38.495747",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

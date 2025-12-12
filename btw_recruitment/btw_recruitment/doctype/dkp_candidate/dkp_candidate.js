@@ -134,5 +134,17 @@ frappe.ui.form.on("DKP_Candidate", {
         }
     }
 });
+frappe.ui.form.on('DKP_Candidate', {
+    refresh(frm) {
 
+       frm.set_query("blacklisted_by", function() {
+            return {
+                filters: {
+                    "role_profile_name": "DKP Recruiter"
+                }
+            };
+        });
+
+    }
+});
 
