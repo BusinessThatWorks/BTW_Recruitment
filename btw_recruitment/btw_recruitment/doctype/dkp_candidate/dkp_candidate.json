@@ -202,9 +202,9 @@
   },
   {
    "fieldname": "serving_notice",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "label": "Serving Notice",
-   "options": "DKP_YesNo_Options"
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "primary_skill_set",
@@ -307,7 +307,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-12 15:38:38.495747",
+ "modified": "2025-12-12 16:56:21.205710",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
