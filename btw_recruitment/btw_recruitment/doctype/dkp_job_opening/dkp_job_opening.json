@@ -18,6 +18,7 @@
   "max_experience_years",
   "min_ctc",
   "max_ctc",
+  "variableincentive",
   "column_break_ttxn",
   "job_description",
   "priority",
@@ -54,7 +55,6 @@
    "label": "Designation"
   },
   {
-   "fetch_from": "company.city",
    "fieldname": "location",
    "fieldtype": "Data",
    "label": "Location"
@@ -85,14 +85,14 @@
   },
   {
    "fieldname": "min_ctc",
-   "fieldtype": "Currency",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Min CTC Monthly",
    "reqd": 1
   },
   {
    "fieldname": "max_ctc",
-   "fieldtype": "Currency",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Max CTC Monthly",
    "reqd": 1
@@ -249,12 +249,17 @@
    "fieldname": "job_description",
    "fieldtype": "Small Text",
    "label": "Job Description"
+  },
+  {
+   "fieldname": "variableincentive",
+   "fieldtype": "Data",
+   "label": "Variable/Incentive"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-16 13:12:24.836034",
+ "modified": "2025-12-16 18:30:17.377992",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

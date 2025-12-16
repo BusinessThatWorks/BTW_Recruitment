@@ -32,6 +32,7 @@
   "current_ctc",
   "expected_ctc",
   "communication_skill",
+  "variableincentive",
   "column_break_xcop",
   "resume_source",
   "official_notice_period_days",
@@ -301,12 +302,17 @@
    "fieldtype": "Link",
    "label": "Blacklisted By",
    "options": "User"
+  },
+  {
+   "fieldname": "variableincentive",
+   "fieldtype": "Int",
+   "label": "Variable/Incentive"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-12 20:52:37.501141",
+ "modified": "2025-12-16 18:32:41.796622",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

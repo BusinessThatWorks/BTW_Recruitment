@@ -1,0 +1,23 @@
+{
+ "content": null,
+ "creation": "2025-12-16 14:58:54.274157",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2025-12-16 14:58:54.274157",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "hr-recruitment-jobs",
+ "owner": "Administrator",
+ "page_name": "hr-recruitment-jobs",
+ "roles": [
+  {
+   "role": "Administrator"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 1,
+ "title": "HR Recruitment Jobs Dashboard"
+}
