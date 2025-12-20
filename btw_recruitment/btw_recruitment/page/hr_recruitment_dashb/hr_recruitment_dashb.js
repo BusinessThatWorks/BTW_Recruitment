@@ -1,7 +1,10 @@
 let dashboard_filters = {
     from_date: null,
-    to_date: null
+    to_date: null,
+    stage: null 
 };
+const stageOptions = ["In Review", "Screening", "Interview", "Offered", "No Assigned Stage"];
+
 let applications_pagination = {
     limit: 10,
     offset: 0,
@@ -49,6 +52,30 @@ page.add_field({
         refresh_dashboard();
     }
 });
+
+// When Stage filter changes
+$(document).on("change", "#filter-stage", function() {
+    dashboard_filters.stage = $(this).val() || null;
+
+    // Reset pagination
+    applications_pagination.offset = 0;
+    applications_pagination.current_page = 1;
+
+    // Reload table
+    load_applications_table();
+});
+
+// Clear filters button
+$(document).on("click", "#clear-application-filters", function() {
+    $("#filter-stage").val("");
+    dashboard_filters.stage = null;
+
+    applications_pagination.offset = 0;
+    applications_pagination.current_page = 1;
+
+    load_applications_table();
+});
+
 
     // KPI container
        $(`
@@ -210,7 +237,7 @@ function render_department_pie_chart() {
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidates_by_department",
         args: {
             from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date
+            to_date: dashboard_filters.to_date,
         },
         callback: function(r) {
             if (!r.message || r.message.length === 0) {
@@ -252,7 +279,7 @@ function render_applications_table() {
     const table_container = $(`
         <div class="card" id="applications-table-wrapper" style="margin-top: 20px; padding: 16px; margin-bottom: 40px;">
             <h4>Active Applications</h4>
-
+            <div id="applications-table-filters"></div>
             <div id="applications-table-container">
                 <table class="table table-bordered">
                     <thead>
@@ -275,6 +302,25 @@ function render_applications_table() {
         </div>
     `);
 
+// Create filter row
+const filterRow = $(`
+    <div class="row mb-2 justify-content-end">
+        <div class="col-md-3">
+            <select class="form-control" id="filter-stage">
+                <option value="">All Stages</option>
+                ${stageOptions.map(stage => `<option value="${stage}">${stage}</option>`).join('')}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-sm btn-secondary" id="clear-application-filters">
+                Clear Filters
+            </button>
+        </div>
+    </div>
+`);
+
+
+    table_container.find("#applications-table-filters").append(filterRow);
     $section.append(table_container);
 
     load_applications_table();
@@ -288,7 +334,8 @@ function load_applications_table() {
             limit: applications_pagination.limit,
             offset: applications_pagination.offset,
             from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date
+            to_date: dashboard_filters.to_date,
+            stage: dashboard_filters.stage 
         },
         callback: function(r) {
 			 console.log("APPLICATION API RESPONSE:", r);

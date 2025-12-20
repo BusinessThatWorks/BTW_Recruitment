@@ -1,20 +1,33 @@
 import frappe
 from frappe.utils import add_days
 @frappe.whitelist()
-def get_active_applications(limit=10, offset=0,from_date=None, to_date=None):
+def get_active_applications(limit=10, offset=0,from_date=None, to_date=None,stage=None):
     limit = int(limit)
     offset = int(offset)
 
+    # Default stages
+    default_stages = ["", "In Review", "Screening", "Interview", "Offered"]
+
+    # Base filters
     active_filters = [
         ["parenttype", "=", "DKP_Job_Application"],
-        ["stage", "in", ["", "In Review", "Screening", "Interview", "Offered"]]
+        ["stage", "in", default_stages]
     ]
+
+    # Apply date filter if provided
     if from_date and to_date:
         active_filters.append([
             "creation",
             "between",
             [from_date, add_days(to_date, 1)]
         ])
+
+    # Apply Stage filter if selected
+    if stage:
+        if stage == "No Assigned Stage":
+            active_filters.append(["stage", "=", ""])  # blank stage
+        else:
+            active_filters.append(["stage", "=", stage])
     data = frappe.get_all(
         "DKP_JobApplication_Child",
         fields=[
