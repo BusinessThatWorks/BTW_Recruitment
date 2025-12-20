@@ -181,7 +181,7 @@ sla_status=None):
                 {
                     "parent": ["in", job_applications],
                     "parenttype": "DKP_Job_Application",
-                    "stage": ["in", ["In Review", "Screening", "Interview", "Offered"]]
+                    "stage": ["in", ["In Review", "Screening", "Interview", "Offered","","Rejected","Offer Drop"]]
                 }
             )
 

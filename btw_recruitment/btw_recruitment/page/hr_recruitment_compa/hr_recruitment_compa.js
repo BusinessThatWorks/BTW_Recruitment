@@ -3,7 +3,7 @@ let company_dashboard_filters = {
     to_date: null
 };
 let company_table_state = {
-    limit: 20,
+    limit: 10,
     offset: 0,
     total: 0
 };
