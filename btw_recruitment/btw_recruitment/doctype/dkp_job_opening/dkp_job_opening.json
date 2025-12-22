@@ -259,9 +259,9 @@
    "label": "Variable/Incentive"
   },
   {
+   "depends_on": "eval:doc.status == \"Closed \u2013 Cancelled\"",
    "fieldname": "closed_reason",
    "fieldtype": "Select",
-   "hidden": 1,
    "label": "Reason for Closed",
    "options": "\nRequirement Cancelled\nFulfilled from Other Source"
   }
@@ -269,7 +269,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-22 12:31:53.229319",
+ "modified": "2025-12-22 17:24:15.547474",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
