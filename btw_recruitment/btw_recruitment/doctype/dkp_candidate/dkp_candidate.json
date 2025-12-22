@@ -24,6 +24,7 @@
   "institute__university",
   "current_designation",
   "current_company",
+  "current_company_master",
   "currently_employed",
   "skills_tags",
   "primary_skill_set",
@@ -312,12 +313,18 @@
    "fieldname": "added_by",
    "fieldtype": "Data",
    "label": "Added By"
+  },
+  {
+   "fieldname": "current_company_master",
+   "fieldtype": "Link",
+   "label": "Current Company Master",
+   "options": "DKP_Company"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-20 16:02:23.259735",
+ "modified": "2025-12-22 17:50:43.760958",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

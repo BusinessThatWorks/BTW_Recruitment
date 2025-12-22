@@ -48,6 +48,15 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
                     row.candidate_name = "";
                     frm.refresh_field("table_akka");
                 }
+                if (r.message.no_poach) {
+                    frappe.msgprint({
+                        title: "🚫 No-Poach Restriction",
+                        message: `This candidate is currently employed at <b>${r.message.no_poach_company}</b>, which is marked as <b>No-Poach</b>.`,
+                        indicator: "red"
+                    });
+                    row.candidate_name = "";
+                    frm.refresh_field("table_akka");
+                }
             }
         });
     }

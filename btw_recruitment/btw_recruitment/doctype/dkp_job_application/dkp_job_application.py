@@ -12,36 +12,80 @@ class DKP_Job_Application(Document):
 
 
 # calling from client side job application js to check candidate status 
+# @frappe.whitelist()
+# def get_candidate_status(candidate):
+#     out = {
+#         "blacklisted": False,
+#         "cooling": False,
+#         "remaining_days": 0
+#     }
+
+#     # --------- BLACKLIST CHECK ---------
+#     is_blacklisted = frappe.db.get_value("DKP_Candidate", candidate, "blacklisted")
+
+#     if is_blacklisted:
+#         out["blacklisted"] = True
+#         return out
+
+#     # --------- COOLING PERIOD CHECK ---------
+#     last_rejected = frappe.db.sql("""
+#         SELECT parent.modified
+#         FROM `tabDKP_JobApplication_Child` child
+#         JOIN `tabDKP_Job_Application` parent
+#         ON child.parent = parent.name
+#         WHERE child.candidate_name = %s
+#         AND child.stage = 'Rejected'
+#         ORDER BY parent.modified DESC
+#         LIMIT 1
+#     """, (candidate,), as_dict=True)
+
+#     if last_rejected:
+#         from datetime import datetime, timedelta
+
+#         last_date = last_rejected[0].modified
+#         cooling_period = timedelta(days=180)
+#         remaining = (last_date + cooling_period) - datetime.now()
+
+#         if remaining.total_seconds() > 0:
+#             out["cooling"] = True
+#             out["remaining_days"] = remaining.days
+
+#     return out
+import frappe
+from datetime import datetime, timedelta
+
 @frappe.whitelist()
 def get_candidate_status(candidate):
     out = {
         "blacklisted": False,
         "cooling": False,
-        "remaining_days": 0
+        "remaining_days": 0,
+        "no_poach": False,
+        "no_poach_company": ""
     }
 
-    # --------- BLACKLIST CHECK ---------
-    is_blacklisted = frappe.db.get_value("DKP_Candidate", candidate, "blacklisted")
+    # ---------------- BLACKLIST CHECK ----------------
+    is_blacklisted = frappe.db.get_value(
+        "DKP_Candidate", candidate, "blacklisted"
+    )
 
     if is_blacklisted:
         out["blacklisted"] = True
-        return out
+        return out   # HARD STOP
 
-    # --------- COOLING PERIOD CHECK ---------
+    # ---------------- COOLING PERIOD CHECK ----------------
     last_rejected = frappe.db.sql("""
         SELECT parent.modified
         FROM `tabDKP_JobApplication_Child` child
         JOIN `tabDKP_Job_Application` parent
-        ON child.parent = parent.name
+            ON child.parent = parent.name
         WHERE child.candidate_name = %s
-        AND child.stage = 'Rejected'
+          AND child.stage = 'Rejected'
         ORDER BY parent.modified DESC
         LIMIT 1
     """, (candidate,), as_dict=True)
 
     if last_rejected:
-        from datetime import datetime, timedelta
-
         last_date = last_rejected[0].modified
         cooling_period = timedelta(days=180)
         remaining = (last_date + cooling_period) - datetime.now()
@@ -49,5 +93,22 @@ def get_candidate_status(candidate):
         if remaining.total_seconds() > 0:
             out["cooling"] = True
             out["remaining_days"] = remaining.days
+            return out   # HARD STOP
+
+    # ---------------- NO POACH CHECK ----------------
+    current_company = frappe.db.get_value(
+        "DKP_Candidate", candidate, "current_company_master"
+    )
+
+    if current_company:
+        no_poach = frappe.db.get_value(
+            "DKP_Company", current_company, "no_poach_flag"
+        )
+
+        if no_poach:
+            out["no_poach"] = True
+            out["no_poach_company"] = current_company
+            return out   # HARD STOP
 
     return out
+
