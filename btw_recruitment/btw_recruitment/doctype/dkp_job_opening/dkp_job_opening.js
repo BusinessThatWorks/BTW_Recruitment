@@ -34,3 +34,35 @@ frappe.ui.form.on('DKP_Job_Opening', {
 
     }
 });
+frappe.ui.form.on("Job Opening", {
+    refresh(frm) {
+        toggle_closed_cancel_reason(frm);
+    },
+    status(frm) {
+        toggle_closed_cancel_reason(frm);
+    }
+});
+
+function toggle_closed_cancel_reason(frm) {
+    const show_field = frm.doc.status === "Closed – Cancelled";
+
+    // show / hide
+    frm.set_df_property(
+        "closed_cancel_reason",
+        "hidden",
+        !show_field
+    );
+
+    // mandatory only when visible
+    frm.set_df_property(
+        "closed_cancel_reason",
+        "reqd",
+        show_field
+    );
+
+    // cleanup when status changes back
+    if (!show_field) {
+        frm.set_value("closed_cancel_reason", null);
+    }
+}
+

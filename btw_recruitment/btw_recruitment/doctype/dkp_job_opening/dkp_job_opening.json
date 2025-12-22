@@ -23,6 +23,7 @@
   "job_description",
   "priority",
   "status",
+  "closed_reason",
   "sla_due_date",
   "required_certifications",
   "must_have_skills",
@@ -76,12 +77,14 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Min Experience (Years)",
+   "precision": "1",
    "reqd": 1
   },
   {
    "fieldname": "max_experience_years",
    "fieldtype": "Float",
-   "label": "Max Experience (Years)"
+   "label": "Max Experience (Years)",
+   "precision": "1"
   },
   {
    "fieldname": "min_ctc",
@@ -132,7 +135,7 @@
    "fieldname": "gender_preference",
    "fieldtype": "Select",
    "label": "Gender Preference",
-   "options": "\nMale\nFemale\nOther",
+   "options": "\nMale\nFemale\nNA",
    "reqd": 1
   },
   {
@@ -254,12 +257,19 @@
    "fieldname": "variableincentive",
    "fieldtype": "Data",
    "label": "Variable/Incentive"
+  },
+  {
+   "fieldname": "closed_reason",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Reason for Closed",
+   "options": "\nRequirement Cancelled\nFulfilled from Other Source"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-16 18:30:17.377992",
+ "modified": "2025-12-22 12:31:53.229319",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

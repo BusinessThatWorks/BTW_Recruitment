@@ -79,7 +79,7 @@ def execute(filters=None):
     }]
 
     # ---------------- CHART DATA ----------------
-    stages = ["In Review", "Screening", "Interview", "Offered", "Rejected", "Offer Drop"]
+    stages = ["In Review", "Shortlisted For Interview", "Interview in Progress","Selected", "Offered", "Offer Drop","Joined"]
     stage_counts = []
 
     for stage in stages:

@@ -159,44 +159,153 @@ function load_job_kpis() {
         }
     });
 }
+// function render_job_kpi_cards(data) {
+//     const cards = [
+//         { label: "Total Job Openings", value: data.total_jobs },
+//         { label: "Active Jobs", value: data.active_jobs },
+//         { label: "Total Open Positions", value: data.total_positions },
+//         { label: "High / Critical Jobs", value: data.priority_jobs },
+//         { label: "SLA Breached Jobs", value: data.sla_breached_jobs }
+//     ];
+
+//     const $row = $("#job-kpi-cards");
+//     $row.empty();
+
+//     cards.forEach(card => {
+//         $(`
+//             <div class="kpi-col">
+//                 <div class="card kpi-card">
+//                     <div class="kpi-value">${card.value}</div>
+//                     <div class="kpi-label">${card.label}</div>
+//                 </div>
+//             </div>
+//         `).appendTo($row);
+//     });
+
+//     // Add styles if not already added
+//     if (!$("#job-kpi-card-style").length) {
+//         $("<style>")
+//             .prop("type", "text/css")
+//             .attr("id", "job-kpi-card-style")
+//             .html(`
+// 				#job-kpi-cards {
+//             display: flex;
+//             gap: 12px;
+//             padding:16px;
+//         }
+//         .kpi-col {
+//             flex: 1;
+
+//         }
+//                 .kpi-card {
+//                     padding: 14px;
+//                     text-align: center;
+//                     border-radius: 8px;
+//                     background: #ffffff;
+//                     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+//                     height: 100%;
+//                 }
+//                 .kpi-value {
+//                     font-size: 20px;
+//                     font-weight: 600;
+//                 }
+//                 .kpi-label {
+//                     margin-top: 6px;
+//                     font-size: 13px;
+//                     color: #6c7680;
+//                 }
+//             `)
+//             .appendTo("head");
+//     }
+// }
 function render_job_kpi_cards(data) {
     const cards = [
-        { label: "Total Job Openings", value: data.total_jobs },
-        { label: "Active Jobs", value: data.active_jobs },
-        { label: "Total Open Positions", value: data.total_positions },
-        { label: "High / Critical Jobs", value: data.priority_jobs },
-        { label: "SLA Breached Jobs", value: data.sla_breached_jobs }
+        {
+            label: "Total Job Openings",
+            value: data.total_jobs,
+            link: "/app/dkp_job_opening"
+        },
+        {
+            label: "Active Jobs",
+            value: data.active_jobs,
+            link: "/app/dkp_job_opening?status=Open"
+        },
+        
+        {
+            label: "Critical Jobs",
+            value: data.priority_jobs,
+            link: "/app/dkp_job_opening?priority=Critical"
+        },
+        {
+            label: "Total Open Positions",
+            value: data.total_positions,
+            clickable: false,
+            // link: "/app/dkp_job_opening?status=Open"
+
+        },
+        {
+            label: "SLA Breached Jobs",
+            value: data.sla_breached_jobs,
+            clickable: false
+        }
     ];
 
     const $row = $("#job-kpi-cards");
     $row.empty();
 
+    // cards.forEach(card => {
+    //     $(`
+    //         <div class="kpi-col">
+    //             <a href="${card.link}" class="kpi-link">
+    //                 <div class="card kpi-card">
+    //                     <div class="kpi-value">${card.value}</div>
+    //                     <div class="kpi-label">${card.label}</div>
+    //                 </div>
+    //             </a>
+    //         </div>
+    //     `).appendTo($row);
+    // });
     cards.forEach(card => {
-        $(`
+        const cardHtml = `
             <div class="kpi-col">
-                <div class="card kpi-card">
-                    <div class="kpi-value">${card.value}</div>
-                    <div class="kpi-label">${card.label}</div>
-                </div>
+                ${card.link ? `
+                    <a href="${card.link}" class="kpi-link">
+                        <div class="card kpi-card">
+                            <div class="kpi-value">${card.value}</div>
+                            <div class="kpi-label">${card.label}</div>
+                        </div>
+                    </a>
+                ` : `
+                    <div class="card kpi-card kpi-card-disabled">
+                        <div class="kpi-value">${card.value}</div>
+                        <div class="kpi-label">${card.label}</div>
+                    </div>
+                `}
             </div>
-        `).appendTo($row);
+        `;
+        $(cardHtml).appendTo($row);
     });
 
-    // Add styles if not already added
+    // Add styles once
     if (!$("#job-kpi-card-style").length) {
         $("<style>")
             .prop("type", "text/css")
             .attr("id", "job-kpi-card-style")
             .html(`
-				#job-kpi-cards {
-            display: flex;
-            gap: 12px;
-            padding:16px;
-        }
-        .kpi-col {
-            flex: 1;
-
-        }
+                #job-kpi-cards {
+                    display: flex;
+                    gap: 12px;
+                    padding: 16px;
+                }
+                .kpi-col {
+                    flex: 1;
+                }
+                .kpi-link {
+                    text-decoration: none;
+                    color: inherit;
+                    display: block;
+                    height: 100%;
+                }
                 .kpi-card {
                     padding: 14px;
                     text-align: center;
@@ -204,6 +313,16 @@ function render_job_kpi_cards(data) {
                     background: #ffffff;
                     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
                     height: 100%;
+                    cursor: pointer;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                }
+                .kpi-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+                }
+                    .kpi-card-disabled {
+                    cursor: default;
+                    opacity: 0.85;
                 }
                 .kpi-value {
                     font-size: 20px;
@@ -218,6 +337,7 @@ function render_job_kpi_cards(data) {
             .appendTo("head");
     }
 }
+
 function normalize_status(status) {
     if (!status) return "";
 
@@ -273,28 +393,34 @@ function render_job_charts(chart) {
             to_date: job_dashboard_filters.to_date
         },
         callback(r) {
-            if(r.message) {
-                const dept_data = r.message;
-                new frappe.Chart("#job-department-chart", {
-                    title: "Department-wise Job Openings",
-                    data: {
-                        labels: dept_data.map(d => d.department),
-                        datasets: [
-                            {
-                                name: "Jobs",
-                                values: dept_data.map(d => d.count)
-                            }
-                        ]
-                    },
-                    type: "bar",
-                    height: 250,
-                    colors: ['#857be7'],
-                    barOptions: {
-                        spaceRatio: 0.75
-                    }
-                });
+        if (!r.message || !r.message.length) return;
+
+        const dept_data = r.message;
+
+        const labels = dept_data.map(d => d.department);
+        const values = dept_data.map(d => d.count);
+
+        const datasets = labels.map((label, index) => ({
+            name: label,
+            values: labels.map((_, i) => i === index ? values[index] : 0),
+            chartType: "bar"
+            // color optional – frappe will auto assign if omitted
+        }));
+
+        new frappe.Chart("#job-department-chart", {
+            title: "Department-wise Job Openings",
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            type: "bar",
+            height: 250,
+            barOptions: {
+                stacked: true,      // important (same as pipeline chart)
+                spaceRatio: 0.7
             }
-        }
+        });
+    }
     });
 }
 let job_health_offset = 0;
@@ -320,33 +446,33 @@ function load_job_health() {
     });
 }
 
-function render_priority_badge(priority) {
-    const p = (priority || "").toLowerCase();
+// function render_priority_badge(priority) {
+//     const p = (priority || "").toLowerCase();
 
-    const color_map = {
-        low: "#6c757d",       // grey
-        medium: "#5bc0de",    // blue
-        high: "#f0ad4e",      // amber
-        critical: "#d9534f"   // red
-    };
+//     // const color_map = {
+//     //     low: "#6c757d",       // grey
+//     //     medium: "#6c757d",    // blue
+//     //     high: "#6c757d",       // amber
+//     //     critical: "#6c757d",    // red
+//     // };
 
-    const color = color_map[p] || "#cccccc";
+//     const color = color_map[p] || "#cccccc";
 
-    return `
-        <span style="
-            background:${color};
-            color:#fff;
-            padding:4px 10px;
-            border-radius:999px;
-            font-size:12px;
-            font-weight:500;
-            white-space:nowrap;
-            display:inline-block;
-        ">
-            ${priority || "-"}
-        </span>
-    `;
-}
+//     return `
+//         <span style="
+//             background:${color};
+//             color:#fff;
+//             padding:4px 10px;
+//             border-radius:999px;
+//             font-size:12px;
+//             font-weight:500;
+//             white-space:nowrap;
+//             display:inline-block;
+//         ">
+//             ${priority || "-"}
+//         </span>
+//     `;
+// }
 function render_sla_badge(status) {
     const s = (status || "").toLowerCase();
 
@@ -405,7 +531,7 @@ function render_job_health_table(data, total) {
 				<td>${d.designation || '-'}</td>
                 <td>${d.positions}</td>
                 <td>${d.candidates}</td>
-				<td>${render_priority_badge(d.priority)}</td>
+				<td>${d.priority}</td>
                 <td>${d.sla_due_date || '-'}</td>
                 <td>${render_sla_badge(d.sla_status)}</td>
 

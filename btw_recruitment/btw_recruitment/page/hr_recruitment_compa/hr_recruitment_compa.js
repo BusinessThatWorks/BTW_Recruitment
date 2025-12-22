@@ -160,20 +160,40 @@ function load_company_kpis() {
 }
 
 function render_company_kpi_cards(data) {
+    const kpiLinks = {
+        "Total Companies": "/app/dkp_company",
+        "Active Clients": "/app/dkp_company?client_status=Active",
+        "Inactive Clients": "/app/dkp_company?client_status=Inactive",
+        "Companies with Open Jobs": "/app/dkp_job_opening?status=Open",
+        "Companies with Active Applications": "/app/dkp_job_application"
+    };
+
     const $row = $("#company-kpi-cards");
     $row.empty();
 
     data.forEach(item => {
+        const link = kpiLinks[item.kpi];
+
         $(`
             <div class="kpi-col">
-                <div class="card kpi-card">
-                    <div class="kpi-value">${item.value}</div>
-                    <div class="kpi-label">${item.kpi}</div>
-                </div>
+                ${link ? `
+                    <a href="${link}" class="kpi-link">
+                        <div class="card kpi-card">
+                            <div class="kpi-value">${item.value}</div>
+                            <div class="kpi-label">${item.kpi}</div>
+                        </div>
+                    </a>
+                ` : `
+                    <div class="card kpi-card">
+                        <div class="kpi-value">${item.value}</div>
+                        <div class="kpi-label">${item.kpi}</div>
+                    </div>
+                `}
             </div>
         `).appendTo($row);
     });
 }
+
 if (!$("#company-kpi-cards").length) {
         $("<style>")
             .prop("type", "text/css")
@@ -188,6 +208,16 @@ if (!$("#company-kpi-cards").length) {
             flex: 1;
 
         }
+            .kpi-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.kpi-card {
+    cursor: pointer;
+}
 		.kpi-card {
 			padding: 12px;
 				text-align: center;
@@ -205,6 +235,10 @@ if (!$("#company-kpi-cards").length) {
 							font-size: 13px;
 							color: #6c7680;
 						}
+                            .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
 					`)							
 		.appendTo("head");                
     }
@@ -224,11 +258,11 @@ function load_client_type_chart() {
                 new frappe.Chart("#client-type-chart", {
                     title: "Client Type Distribution",
                     data: chart_data.data,
-                    type: "donut",
-                    height: 250,
-					legend: {
-						position: "top"
-					}
+                    type: "pie",
+                    height: 300,
+					// legend: {
+					// 	position: "top"
+					// }
                 });
             }
         }
@@ -247,21 +281,36 @@ function load_industry_chart() {
             }
         },
         callback(r) {
-            if(r.message) {
-                const chart_data = r.message.chart; // chart_industry from report
-                new frappe.Chart("#industry-chart", {
-                    title: "Industry-wise Client Count",
-                    data: chart_data.data,
-                    type: chart_data.type || "bar",
-                    height: 250,
-					barOptions: {
-                        spaceRatio: 0.75
-                    }
-                });
-            }
+            if (!r.message || !r.message.chart) return;
+
+            const chart = r.message.chart;
+            const labels = chart.data.labels;
+            const values = chart.data.datasets[0].values;
+
+            // ✅ Same proven pattern
+            const datasets = labels.map((label, index) => ({
+                name: label,
+                values: labels.map((_, i) => i === index ? values[index] : 0),
+                chartType: "bar"
+            }));
+
+            new frappe.Chart("#industry-chart", {
+                title: "Industry-wise Client Count",
+                data: {
+                    labels,
+                    datasets
+                },
+                type: "bar",
+                height: 250,
+                barOptions: {
+                    stacked: true,
+                    spaceRatio: 0.75
+                }
+            });
         }
     });
 }
+
 function load_company_table() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_company_table",

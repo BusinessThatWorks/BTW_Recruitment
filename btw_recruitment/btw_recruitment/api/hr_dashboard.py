@@ -103,6 +103,7 @@ def get_urgent_openings(from_date=None, to_date=None):
     )
 import frappe
 from frappe.utils import now_datetime, add_days
+from frappe.utils import format_datetime
 
 @frappe.whitelist()
 def get_job_health(from_date=None, to_date=None, limit=10, offset=0,department=None,
@@ -195,10 +196,14 @@ sla_status=None):
             sla_status = job.status
         else:
             if job.sla_due_date:
-                    if job.sla_due_date < now:
-                        sla_status = "Breached"
-                    elif job.sla_due_date <= add_days(now, 3):
-                        sla_status = "At Risk"
+                sla_due = get_datetime(job.sla_due_date)
+
+                if sla_due < now:
+                    sla_status = "Breached"
+                elif sla_due <= add_days(now, 3):
+                    sla_status = "At Risk"
+                else:
+                    sla_status = "On Track"
 
         job_applications = frappe.get_all(
             "DKP_Job_Application",
@@ -218,7 +223,11 @@ sla_status=None):
             "status": job.status,
             "priority": job.priority,
             "sla_status": sla_status,
-            "sla_due_date": job.sla_due_date,
+            "sla_due_date": format_datetime(
+            job.sla_due_date,
+            "dd-MM-yyyy hh:mm a"
+        ) if job.sla_due_date else None,
+
             "job_applications": application_links
         })
 

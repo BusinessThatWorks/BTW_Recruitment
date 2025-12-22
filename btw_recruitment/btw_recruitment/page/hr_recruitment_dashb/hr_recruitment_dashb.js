@@ -137,11 +137,31 @@ function load_kpis() {
 }
 function render_kpi_cards(data) {
     const cards = [
-        { label: "Total Candidates", value: data.total_candidates },
-        { label: "Blacklisted Candidates", value: data.blacklisted_candidates },
-        { label: "Active Applications", value: data.active_applications },
-        { label: "Jobs Offered", value: data.offers_released },
-        { label: "Total Job Openings", value: data.total_job_openings }
+        {
+            label: "Total Candidates",
+            value: data.total_candidates,
+            link: "/app/dkp_candidate"
+        },
+        {
+            label: "Blacklisted Candidates",
+            value: data.blacklisted_candidates,
+            link: "/app/dkp_candidate?blacklisted=1"
+        },
+        {
+            label: "Active Applications",
+            value: data.active_applications,
+            link: "/app/dkp_job_application"
+        },
+        {
+            label: "Jobs Offered",
+            value: data.offers_released,
+            link: "/app/dkp_job_application?stage=Offered"
+        },
+        {
+            label: "Total Job Openings",
+            value: data.total_job_openings,
+            link: "/app/dkp_job_opening"
+        }
     ];
 
     const $row = $("#hr-kpi-cards");
@@ -150,14 +170,34 @@ function render_kpi_cards(data) {
     cards.forEach(card => {
         $(`
             <div class="kpi-col">
-                <div class="card kpi-card">
-                    <div class="kpi-value">${card.value}</div>
-                    <div class="kpi-label">${card.label}</div>
-                </div>
+                <a href="${card.link}" class="kpi-link">
+                    <div class="card kpi-card">
+                        <div class="kpi-value">${card.value}</div>
+                        <div class="kpi-label">${card.label}</div>
+                    </div>
+                </a>
             </div>
         `).appendTo($row);
     });
+    // cards.forEach(card => {
+    // const $col = $(`
+    //     <div class="kpi-col">
+    //         <div class="card kpi-card">
+    //             <div class="kpi-value">${card.value}</div>
+    //             <div class="kpi-label">${card.label}</div>
+    //         </div>
+    //     </div>
+    // `);
+
+    // if (card.onClick) {
+    //     $col.find(".kpi-card").on("click", card.onClick);
+    // }
+
+//     $col.appendTo($row);
+// });
+
 }
+
 $("<style>")
     .prop("type", "text/css")
     .html(`
@@ -187,6 +227,23 @@ $("<style>")
             font-size: 13px;
             color: #6c7680;
         }
+            .kpi-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.kpi-card {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
     `)
     .appendTo("head");
 function render_stage_chart(chart_data) {

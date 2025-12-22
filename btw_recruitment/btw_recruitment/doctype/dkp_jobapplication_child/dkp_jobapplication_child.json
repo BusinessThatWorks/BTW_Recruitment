@@ -13,6 +13,7 @@
  ],
  "fields": [
   {
+   "fetch_from": "candidate_id.candidate_name",
    "fieldname": "candidate_name",
    "fieldtype": "Link",
    "label": "Candidate Name",
@@ -22,7 +23,7 @@
    "fieldname": "stage",
    "fieldtype": "Select",
    "label": "Stage",
-   "options": "\nIn Review\nScreening\nInterview\nOffered\nRejected\nOffer Drop"
+   "options": "\nIn Review\nShortlisted For Interview\nInterview in Progress\nSelected\nOffered\nOffer Drop\nJoined"
   },
   {
    "fieldname": "interview_date",
@@ -39,7 +40,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-16 12:52:55.980307",
+ "modified": "2025-12-22 12:11:23.926572",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
