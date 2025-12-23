@@ -32,26 +32,76 @@ frappe.pages['hr-recruitment-dashb'].on_page_load = function(wrapper) {
     });
 // Add Date Range filter
 // From Date
+// page.add_field({
+//     label: 'From Date',
+//     fieldtype: 'Date',
+//     fieldname: 'from_date',
+//     change() {
+//         dashboard_filters.from_date = this.value;
+//         refresh_dashboard();
+//     }
+// });
+
+// // To Date
+// page.add_field({
+//     label: 'To Date',
+//     fieldtype: 'Date',
+//     fieldname: 'to_date',
+//     change() {
+//         dashboard_filters.to_date = this.value;
+//         refresh_dashboard();
+//     }
+// });
 page.add_field({
     label: 'From Date',
     fieldtype: 'Date',
     fieldname: 'from_date',
     change() {
-        dashboard_filters.from_date = this.value;
-        refresh_dashboard();
+        dashboard_filters.from_date = this.value  || null;
+        on_global_date_change();
     }
 });
 
-// To Date
 page.add_field({
     label: 'To Date',
     fieldtype: 'Date',
     fieldname: 'to_date',
     change() {
-        dashboard_filters.to_date = this.value;
-        refresh_dashboard();
+        dashboard_filters.to_date = this.value  || null;
+        on_global_date_change();
     }
 });
+page.add_field({
+    label: 'Clear Date Filter', // No label, just a button
+    fieldtype: 'Button',
+    fieldname: 'clear_date_filter',
+    options: 'Clear Dates',
+    click() {
+        // Clear the input fields
+        $('input[data-fieldname="from_date"]').val('');
+        $('input[data-fieldname="to_date"]').val('');
+
+        // Reset the dashboard filter values
+        dashboard_filters.from_date = null;
+        dashboard_filters.to_date = null;
+
+        // Refresh the currently active tab
+        on_global_date_change();
+    }
+});
+
+function on_global_date_change() {
+    const active_tab = $("#hr-dashboard-tabs .nav-link.active").data("tab");
+
+    if (active_tab === "overall") {
+        refresh_dashboard();
+    }
+
+    if (active_tab === "candidates") {
+        candidate_table_state.offset = 0;
+        load_candidate_table();
+    }
+}
 
 // When Stage filter changes
 $(document).on("change", "#filter-stage", function() {
@@ -76,10 +126,26 @@ $(document).on("click", "#clear-application-filters", function() {
     load_applications_table();
 });
 
+    const $tabs = $(`
+    <div class="mt-3">
+        <ul class="nav nav-tabs" id="hr-dashboard-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-tab="overall">Overall</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-tab="candidates">Candidates</a>
+            </li>
+        </ul>
 
-    // KPI container
-       $(`
-    <div class="hr-kpi-section mt-3">
+        <div class="tab-content pt-3">
+            <div class="tab-pane active" id="tab-overall"></div>
+            <div class="tab-pane" id="tab-candidates"></div>
+        </div>
+    </div>
+`);
+$tabs.appendTo(page.body);
+$(`
+    <div class="hr-kpi-section">
         <div class="row" id="hr-kpi-cards"></div>
 
         <div id="pipeline-section"></div>
@@ -88,8 +154,121 @@ $(document).on("click", "#clear-application-filters", function() {
 
         <div id="applications-section"></div>
     </div>
-`).appendTo(page.body);
+`).appendTo($("#tab-overall"));
+$(`
+    <div id="candidates-filters" class="mb-2"></div>
+    <div id="candidates-table"></div>
+`).appendTo($("#tab-candidates"));
+$(`
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label>Search Candidate / Skills</label>
+            <input type="text" class="form-control" id="candidate-search"
+                placeholder="Name, skills, certifications">
+        </div>
 
+        <div class="col-md-2">
+            <label>Department</label>
+            <select class="form-control" id="filter-department">
+                <option value="">All</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label>Designation</label>
+            <input type="text" class="form-control" id="filter-designation"
+                placeholder="e.g. React Developer">
+        </div>
+
+        <div class="col-md-1">
+            <label>Min Exp</label>
+            <input type="number" class="form-control" id="filter-min-exp">
+        </div>
+
+        <div class="col-md-1">
+            <label>Max Exp</label>
+            <input type="number" class="form-control" id="filter-max-exp">
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" id="apply-candidate-filters">
+                Apply
+            </button>
+        </div>
+
+        <div class="col-md-1">
+            <button class="btn btn-secondary w-100" id="clear-candidate-filters">
+                Clear
+            </button>
+        </div>
+    </div>
+`).appendTo($("#candidates-filters"));
+
+    // KPI container
+//        $(`
+//     <div class="hr-kpi-section mt-3">
+//         <div class="row" id="hr-kpi-cards"></div>
+
+//         <div id="pipeline-section"></div>
+//         <div id="department-section"></div>
+//         <div id="urgent-openings-section"></div>
+
+//         <div id="applications-section"></div>
+//     </div>
+// `).appendTo(page.body);
+
+$(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
+    const tab = $(this).data("tab");
+
+    $("#hr-dashboard-tabs .nav-link").removeClass("active");
+    $(this).addClass("active");
+
+    $(".tab-pane").removeClass("active");
+    $(`#tab-${tab}`).addClass("active");
+
+    if (tab === "overall") {
+        refresh_dashboard();
+    }
+
+    if (tab === "candidates") {
+        load_candidates_tab();
+    }
+});
+$(document).on("click", "#apply-candidate-filters", function () {
+    candidate_table_filters.search_text =
+        $("#candidate-search").val() || null;
+
+    candidate_table_filters.department =
+        $("#filter-department").val() || null;
+
+    candidate_table_filters.current_designation =
+        $("#filter-designation").val() || null;
+
+    candidate_table_filters.min_experience =
+        $("#filter-min-exp").val() || null;
+
+    candidate_table_filters.max_experience =
+        $("#filter-max-exp").val() || null;
+
+    candidate_table_state.offset = 0;
+    load_candidate_table();
+});
+$(document).on("click", "#clear-candidate-filters", function () {
+    $("#candidate-search").val("");
+    $("#filter-department").val("");
+    $("#filter-designation").val("");
+    $("#filter-min-exp").val("");
+    $("#filter-max-exp").val("");
+
+    candidate_table_filters.search_text = null;
+    candidate_table_filters.department = null;
+    candidate_table_filters.current_designation = null;
+    candidate_table_filters.min_experience = null;
+    candidate_table_filters.max_experience = null;
+
+    candidate_table_state.offset = 0;
+    load_candidate_table();
+});
 
 
     load_kpis();
@@ -107,6 +286,14 @@ function refresh_dashboard() {
     load_kpis();
 }
 
+function load_candidates_tab() {
+    $("#candidates-table").empty();
+
+    candidate_table_state.offset = 0;
+
+    load_candidate_department_options();
+    load_candidate_table();
+}
 
 function load_kpis() {
     frappe.call({
@@ -132,6 +319,9 @@ function load_kpis() {
             render_department_pie_chart();
             render_applications_table();
             render_urgent_openings_table();
+            // load_candidate_department_options();
+            // render_candidate_table();
+            load_candidate_table()
         }
     });
 }
@@ -573,6 +763,144 @@ function render_urgent_openings_table(callback) {
             if (callback) callback();
         }
     });
+}
+// adding candidate table state and filters
+const candidate_table_state = {
+    limit: 20,
+    offset: 0
+};
+
+const candidate_table_filters = {
+    department: null,
+    current_designation: null,
+    min_experience: null,
+    max_experience: null,
+    search_text: null
+};
+function load_candidate_department_options() {
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+            doctype: "DKP_Department",
+            fields: ["name"],
+            limit_page_length: 1000
+        },
+        callback(r) {
+            if (r.message) {
+                const $dept = $("#filter-department");
+                r.message.forEach(d => {
+                    $dept.append(
+                        `<option value="${d.name}">${d.name}</option>`
+                    );
+                });
+            }
+        }
+    });
+}
+function load_candidate_table() {
+    frappe.call({
+        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidate_table",
+        args: {
+            from_date: dashboard_filters.from_date,
+            to_date: dashboard_filters.to_date,
+            limit: candidate_table_state.limit,
+            offset: candidate_table_state.offset,
+
+            department: candidate_table_filters.department,
+            current_designation: candidate_table_filters.current_designation,
+            min_experience: candidate_table_filters.min_experience,
+            max_experience: candidate_table_filters.max_experience,
+            search_text: candidate_table_filters.search_text
+        },
+        callback(r) {
+            if (r.message) {
+                render_candidate_table(r.message.data, r.message.total);
+            }
+        }
+    });
+}
+function render_candidate_table(data, total) {
+    const $container = $("#candidates-table");
+    $container.empty();
+
+    // ---------------- Table ----------------
+    const table = $(`
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Candidate</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Experience (Yrs)</th>
+                    <th>Primary Skill</th>
+                    <th>Secondary Skill</th>
+                    <th>Certifications</th>
+                    <th>Created On</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    `);
+
+    if (!data || data.length === 0) {
+        table.find("tbody").append(`
+            <tr>
+                <td colspan="8" class="text-center text-muted">
+                    No candidates found
+                </td>
+            </tr>
+        `);
+    } else {
+        data.forEach(d => {
+            table.find("tbody").append(`
+                <tr>
+                    <td>
+                        <a href="/app/dkp_candidate/${d.name}">
+                            ${d.candidate_name || d.name}
+                        </a>
+                    </td>
+                    <td>${d.department || "-"}</td>
+                    <td>${d.current_designation || "-"}</td>
+                    <td>${d.total_experience_years ?? "-"}</td>
+                    <td>${d.primary_skill_set || "-"}</td>
+                    <td>${d.secondary_skill_set || "-"}</td>
+                    <td>${d.key_certifications || "-"}</td>
+                    <td>${frappe.datetime.str_to_user(d.creation)}</td>
+                </tr>
+            `);
+        });
+    }
+
+    $container.append(table);
+
+    // ---------------- Pagination ----------------
+    const total_pages = Math.ceil(total / candidate_table_state.limit);
+    const current_page =
+        Math.floor(candidate_table_state.offset / candidate_table_state.limit) + 1;
+
+    const pagination = $(`
+        <div class="mt-2 d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-primary" id="candidate-prev">Prev</button>
+            <span>Page ${current_page} of ${total_pages || 1}</span>
+            <button class="btn btn-sm btn-primary" id="candidate-next">Next</button>
+        </div>
+    `);
+
+    $container.append(pagination);
+
+    $("#candidate-prev")
+        .prop("disabled", candidate_table_state.offset === 0)
+        .click(() => {
+            candidate_table_state.offset -= candidate_table_state.limit;
+            load_candidate_table();
+        });
+
+    $("#candidate-next")
+        .prop("disabled", current_page >= total_pages)
+        .click(() => {
+            candidate_table_state.offset += candidate_table_state.limit;
+            load_candidate_table();
+        });
 }
 
 

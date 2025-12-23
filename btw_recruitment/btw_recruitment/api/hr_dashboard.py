@@ -437,3 +437,104 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
     total = frappe.db.count("DKP_Company", filters)
 
     return {"total": total, "data": result}
+
+# candidate table tab structured queries and functions
+import frappe
+from frappe.utils import get_datetime, add_days
+
+@frappe.whitelist()
+def get_candidate_table(
+    from_date=None,
+    to_date=None,
+    limit=20,
+    offset=0,
+
+    department=None,
+    current_designation=None,
+    min_experience=None,
+    max_experience=None,
+
+    search_text=None
+):
+    limit = int(limit)
+    offset = int(offset)
+
+    filters = []
+
+    # ---------------- Date Filter (GLOBAL) ----------------
+    if from_date and to_date:
+        filters.append([
+            "creation",
+            "between",
+            [get_datetime(from_date), get_datetime(add_days(to_date, 1))]
+        ])
+
+    # ---------------- Structured Filters ----------------
+    if department:
+        filters.append(["department", "=", department])
+
+    if current_designation:
+        filters.append(["current_designation", "=", current_designation])
+
+    if min_experience not in (None, "", "null"):
+        filters.append(
+            ["total_experience_years", ">=", float(min_experience)]
+        )
+
+    if max_experience not in (None, "", "null"):
+        filters.append(
+            ["total_experience_years", "<=", float(max_experience)]
+        )
+
+
+    # ---------------- Search Conditions ----------------
+    or_filters = []
+    if search_text:
+        search_text = f"%{search_text}%"
+        or_filters = [
+            ["candidate_name", "like", search_text],
+            ["skills_tags", "like", search_text],
+            ["primary_skill_set", "like", search_text],
+            ["secondary_skill_set", "like", search_text],
+            ["key_certifications", "like", search_text],
+        ]
+
+    # ---------------- Fetch Data ----------------
+    candidates = frappe.get_all(
+        "DKP_Candidate",
+        fields=[
+            "name",
+            "candidate_name",
+            "email",
+            "mobile_number",
+            "department",
+            "current_designation",
+            "total_experience_years",
+            "skills_tags",
+            "primary_skill_set",
+            "secondary_skill_set",
+            "key_certifications",
+            "creation"
+        ],
+        filters=filters,
+        or_filters=or_filters,
+        order_by="creation desc",
+        limit_start=offset,
+        limit_page_length=limit
+    )
+
+    # ---------------- Total Count ----------------
+    total = len(
+    frappe.get_all(
+        "DKP_Candidate",
+        filters=filters,
+        or_filters=or_filters,
+        pluck="name"
+    )
+)
+
+
+    return {
+        "total": total,
+        "data": candidates
+    }
