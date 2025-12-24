@@ -454,7 +454,8 @@ def get_candidate_table(
     min_experience=None,
     max_experience=None,
 
-    search_text=None
+    search_text=None,
+    candidate_name_search=None 
 ):
     limit = int(limit)
     offset = int(offset)
@@ -488,11 +489,16 @@ def get_candidate_table(
 
 
     # ---------------- Search Conditions ----------------
+    if candidate_name_search:
+        filters.append([
+            "candidate_name",
+            "like",
+            f"%{candidate_name_search}%"
+        ])
     or_filters = []
     if search_text:
         search_text = f"%{search_text}%"
         or_filters = [
-            ["candidate_name", "like", search_text],
             ["skills_tags", "like", search_text],
             ["primary_skill_set", "like", search_text],
             ["secondary_skill_set", "like", search_text],
@@ -524,15 +530,29 @@ def get_candidate_table(
     )
 
     # ---------------- Total Count ----------------
-    total = len(
-    frappe.get_all(
-        "DKP_Candidate",
-        filters=filters,
-        or_filters=or_filters,
-        pluck="name"
-    )
-)
-
+#     total = len(
+#     frappe.get_all(
+#         "DKP_Candidate",
+#         filters=filters,
+#         or_filters=or_filters,
+#         pluck="name"
+#     )
+# ) 
+    # ---------------- Total Count ----------------
+    if or_filters:
+        total = len(
+            frappe.get_all(
+                "DKP_Candidate",
+                filters=filters,
+                or_filters=or_filters,
+                pluck="name"
+            )
+        )
+    else:
+        total = frappe.db.count(
+            "DKP_Candidate",
+            filters=filters
+        )
 
     return {
         "total": total,

@@ -163,11 +163,17 @@ $(`
 `).appendTo($("#tab-candidates"));
 $(`
     <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-            <label>Search Candidate / Skills</label>
-            <input type="text" class="form-control" id="candidate-search"
-                placeholder="Name, skills, certifications">
-        </div>
+            <div class="col-md-2">
+        <label>Name Search</label>
+        <input type="text" class="form-control" id="candidate-name-search"
+            placeholder="Candidate name">
+    </div>
+
+    <div class="col-md-2">
+        <label>Skills / Certifications</label>
+        <input type="text" class="form-control" id="candidate-search"
+            placeholder="Skills, certifications">
+    </div>
 
         <div class="col-md-2">
             <label>Department</label>
@@ -192,7 +198,7 @@ $(`
             <input type="number" class="form-control" id="filter-max-exp">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-1">
             <button class="btn btn-primary w-100" id="apply-candidate-filters">
                 Apply
             </button>
@@ -237,6 +243,9 @@ $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
     }
 });
 $(document).on("click", "#apply-candidate-filters", function () {
+    candidate_table_filters.candidate_name_search =
+    $("#candidate-name-search").val() || null;
+
     candidate_table_filters.search_text =
         $("#candidate-search").val() || null;
 
@@ -256,12 +265,14 @@ $(document).on("click", "#apply-candidate-filters", function () {
     load_candidate_table();
 });
 $(document).on("click", "#clear-candidate-filters", function () {
+    $("#candidate-name-search").val("");
     $("#candidate-search").val("");
     $("#filter-department").val("");
     $("#filter-designation").val("");
     $("#filter-min-exp").val("");
     $("#filter-max-exp").val("");
 
+    candidate_table_filters.candidate_name_search = null;
     candidate_table_filters.search_text = null;
     candidate_table_filters.department = null;
     candidate_table_filters.current_designation = null;
@@ -814,7 +825,8 @@ function load_candidate_table() {
             current_designation: candidate_table_filters.current_designation,
             min_experience: candidate_table_filters.min_experience,
             max_experience: candidate_table_filters.max_experience,
-            search_text: candidate_table_filters.search_text
+            search_text: candidate_table_filters.search_text,
+            candidate_name_search: candidate_table_filters.candidate_name_search
         },
         callback(r) {
             if (r.message) {
@@ -836,6 +848,7 @@ function render_candidate_table(data, total) {
                     <th>Department</th>
                     <th>Designation</th>
                     <th>Experience (Yrs)</th>
+                    <th>Skills(tags)</th>
                     <th>Primary Skill</th>
                     <th>Secondary Skill</th>
                     <th>Certifications</th>
@@ -866,6 +879,7 @@ function render_candidate_table(data, total) {
                     <td>${d.department || "-"}</td>
                     <td>${d.current_designation || "-"}</td>
                     <td>${d.total_experience_years ?? "-"}</td>
+                    <td>${d.skills_tags || "-"}</td>
                     <td>${d.primary_skill_set || "-"}</td>
                     <td>${d.secondary_skill_set || "-"}</td>
                     <td>${d.key_certifications || "-"}</td>
