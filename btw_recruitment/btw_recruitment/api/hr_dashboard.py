@@ -558,3 +558,105 @@ def get_candidate_table(
         "total": total,
         "data": candidates
     }
+
+from frappe.utils import cint
+
+@frappe.whitelist()
+def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
+                   designation=None, department=None, recruiter=None, status=None):
+
+    conditions = []
+    values = []
+
+    if from_date:
+        conditions.append("creation >= %s")
+        values.append(from_date + " 00:00:00")
+    if to_date:
+        conditions.append("creation <= %s")
+        values.append(to_date + " 23:59:59")
+    if designation:
+        conditions.append("designation LIKE %s")
+        values.append(f"%{designation}%")
+    if department:
+        conditions.append("department = %s")
+        values.append(department)
+    if recruiter:
+        conditions.append("assign_recruiter LIKE %s")
+        values.append(f"%{recruiter}%")
+    if status:
+        conditions.append("status = %s")
+        values.append(status)
+
+    where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+
+    # Filtered total
+    total = frappe.db.sql(f"""
+        SELECT COUNT(*) 
+        FROM `tabDKP_Job_Opening`
+        {where_clause}
+    """, values)[0][0]
+
+    # Get paged data
+    data = frappe.db.sql(f"""
+        SELECT name, designation, company, department, assign_recruiter AS recruiter, 
+               status, number_of_positions, creation
+        FROM `tabDKP_Job_Opening`
+        {where_clause}
+        ORDER BY creation DESC
+        LIMIT {cint(limit)} OFFSET {cint(offset)}
+    """, values, as_dict=1)
+
+    return {"data": data, "total": total}
+
+import frappe
+
+@frappe.whitelist()
+def get_companies(from_date=None, to_date=None, company_name=None, client_type=None,
+                  industry=None, state=None, city=None, client_status=None,
+                  limit_start=0, limit_page_length=50):
+
+    filters = {}
+
+    # ---- Text Filters ----
+    if company_name:
+        filters["company_name"] = ["like", f"%{company_name}%"]
+
+    if client_type:
+        filters["client_type"] = client_type
+
+    if industry:
+        filters["industry"] = ["like", f"%{industry}%"]
+
+    if state:
+        filters["state"] = ["like", f"%{state}%"]
+
+    if city:
+        filters["city"] = ["like", f"%{city}%"]
+
+    if client_status:
+        filters["client_status"] = client_status
+
+    # ---- Date Filter: (global filter) ----
+    if from_date and to_date:
+        filters["creation"] = ["between", [from_date, to_date]]  # can switch to "modified"
+
+    # ---- Fetch Total Rows for Pagination ----
+    total = frappe.db.count("DKP_Company", filters=filters)
+
+    # ---- Fetch Company Records ----
+    data = frappe.db.get_list(
+        "DKP_Company",
+        filters=filters,
+        fields=[
+            "name", "company_name", "client_type", "industry",
+            "state", "city", "billing_address", "billing_mail",
+            "billing_number", "client_status", "replacement_policy_days",
+            "standard_fee_type", "creation"
+        ],
+        limit_start=limit_start,
+        limit_page_length=limit_page_length,
+        order_by="creation desc"
+    )
+
+    return {"data": data, "total": total}
+
