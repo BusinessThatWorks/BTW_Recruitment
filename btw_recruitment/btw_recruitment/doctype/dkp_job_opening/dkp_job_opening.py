@@ -1,43 +1,36 @@
-# Copyright (c) 2025, Sarim and contributors
-# For license information, please see license.txt
-
-# import frappe
-from frappe.model.document import Document
 import frappe
+from frappe.model.document import Document
 
 class DKP_Job_Opening(Document):
-	pass
 
+    def on_update(self):
+        self.send_job_opening_email()
 
-# def after_insert(self, method=None):
-#     if not self.company:
-#         return
-    
-#     try:
-#         company_doc = frappe.get_doc("BTW_Company", self.company)
+    def send_job_opening_email(self):
+        if not self.assign_recruiter:
+            return
 
-#         # avoid duplicates
-#         exists = any(row.job_opening_link == self.name for row in company_doc.table_knls)
-#         if exists:
-#             return
+        recruiter_email = self.assign_recruiter  # 👈 already email
 
-#         row = company_doc.append("table_knls", {})
-#         row.job_opening_link = self.name  # rest fetches automatically
+        subject = f"New Job Opening Assigned – {self.name}"
 
-#         company_doc.save(ignore_permissions=True)
+        html_content = f"""
+        <p>Hello,</p>
 
-#     except Exception:
-#         frappe.log_error(frappe.get_traceback(), "Job Opening Auto Add Failed")
-# not working
-	# def after_save(self):
-	# 	if self.has_value_changed("assign_recruiter") and self.assign_recruiter:
+        <p>A new job opening has been assigned to you.</p>
 
-	# 		frappe.assign_to.add({
-	# 			"doctype": self.doctype,
-	# 			"name": self.name,
-	# 			"assign_to": [self.assign_recruiter],
-	# 			"description": f"You have been assigned a Job Opening: {self.name}"
-	# 		})
+        <ul>
+            <li><b>Company:</b> {self.company}</li>
+            <li><b>Designation:</b> {self.designation}</li>
+            <li><b>Department:</b> {self.department or "-"}</li>
+            <li><b>Location:</b> {self.location or "-"}</li>
+        </ul>
 
-	# 		message = f"📌 <b>{frappe.session.user}</b> assigned this Job Opening to <b>{self.assign_recruiter}</b>."
-	# 		self.add_comment("Comment", message)
+        <p>Regards,<br>HR Team</p>
+        """
+
+        frappe.sendmail(
+            recipients=[recruiter_email],
+            subject=subject,
+            content=html_content
+        )
