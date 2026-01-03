@@ -117,3 +117,62 @@ function load_job_openings(frm) {
         }
     });
 }
+frappe.ui.form.on("DKP_JobApplication_Child", {
+    candidate_name(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (!row.candidate_name) return;
+
+        check_candidate_mapping(frm, row.candidate_name);
+    }
+});
+function check_candidate_mapping(frm, candidate) {
+    frappe.call({
+        method: "btw_recruitment.btw_recruitment.api.job_application.check_candidate_existing_applications",
+        args: {
+            candidate: candidate,
+            current_application: frm.doc.name
+        },
+        callback(r) {
+            if (!r.message || !r.message.length) return;
+
+            show_candidate_popover(candidate, r.message);
+        }
+    });
+}
+function show_candidate_popover(candidate, data) {
+    let html = `
+        <div style="line-height:1.6">
+            <b>${candidate}</b> is already mapped in:
+            <ul style="margin-top:8px">
+    `;
+
+    data.forEach(d => {
+        let badge = "secondary";
+
+        if (d.stage === "Joined") badge = "danger";
+        else badge = "warning";
+
+        html += `
+            <li>
+                <b>${d.company_name}</b>
+                <span class="badge badge-${badge}" style="margin-left:6px">
+                    ${d.stage}
+                </span>
+            </li>
+        `;
+    });
+
+    html += `
+            </ul>
+            <div style="margin-top:10px;font-size:12px;color:#666">
+                Please verify before proceeding.
+            </div>
+        </div>
+    `;
+
+    frappe.msgprint({
+        title: "Candidate Already Mapped",
+        message: html,
+        indicator: "orange"
+    });
+}
