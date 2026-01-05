@@ -24,7 +24,6 @@
   "priority",
   "status",
   "closed_reason",
-  "sla_due_date",
   "required_certifications",
   "must_have_skills",
   "assign_recruiter",
@@ -41,7 +40,9 @@
   "sla_status",
   "sla_hours",
   "urgency",
-  "received_on"
+  "received_on",
+  "candidates_tab",
+  "candidates_table"
  ],
  "fields": [
   {
@@ -159,11 +160,6 @@
    "label": "SLA (Hours)"
   },
   {
-   "fieldname": "sla_due_date",
-   "fieldtype": "Datetime",
-   "label": "SLA Due Date"
-  },
-  {
    "fieldname": "sla_status",
    "fieldtype": "Select",
    "hidden": 1,
@@ -264,12 +260,23 @@
    "fieldtype": "Select",
    "label": "Reason for Closed",
    "options": "\nRequirement Cancelled\nFulfilled from Other Source"
+  },
+  {
+   "fieldname": "candidates_tab",
+   "fieldtype": "Tab Break",
+   "label": "Candidates"
+  },
+  {
+   "fieldname": "candidates_table",
+   "fieldtype": "Table",
+   "label": "Candidates Table",
+   "options": "DKP_JobApplication_Child"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-02 12:14:35.009514",
+ "modified": "2026-01-05 17:27:55.783630",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

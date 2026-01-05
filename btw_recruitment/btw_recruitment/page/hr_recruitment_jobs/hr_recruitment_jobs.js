@@ -514,8 +514,6 @@ function render_job_health_table(data, total) {
                     <th>Positions</th>
                     <th>Candidates</th>
                     <th>Priority</th>
-					<th>SLA Due Date</th>
-                    <th>SLA Status</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -532,8 +530,6 @@ function render_job_health_table(data, total) {
                 <td>${d.positions}</td>
                 <td>${d.candidates}</td>
 				<td>${d.priority}</td>
-                <td>${d.sla_due_date || '-'}</td>
-                <td>${render_sla_badge(d.sla_status)}</td>
 
             </tr>
         `).appendTo(table.find("tbody"));
@@ -588,86 +584,3 @@ function load_department_filter_options() {
         }
     });
 }
-
-// let urgent_jobs_offset = 0;
-// const urgent_jobs_limit = 10; // 2 rows per page
-
-// function load_urgent_jobs() {
-//     frappe.call({
-//         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_urgent_openings_jobs",
-//         args: {
-//             from_date: job_dashboard_filters.from_date,
-//             to_date: job_dashboard_filters.to_date,
-//             limit: urgent_jobs_limit,
-//             offset: urgent_jobs_offset
-//         },
-//         callback(r) {
-//             if (r.message) {
-//                 render_urgent_jobs_table(r.message.data, r.message.total);
-//             }
-//         }
-//     });
-// }
-
-// function render_urgent_jobs_table(data, total) {
-//     const $container = $("#urgent-jobs-table");
-//     $container.empty();
-
-//     const table = $(`
-//         <table class="table table-bordered table-striped">
-//             <thead>
-//                 <tr>
-//                     <th>Job Opening</th>
-// 					<th>Designation</th>
-//                     <th>Company</th>
-//                     <th>Assign Recruiter</th>
-//                     <th>Priority</th>
-//                     <th>Positions</th>
-//                     <th>Status</th>
-//                 </tr>
-//             </thead>
-//             <tbody></tbody>
-//         </table>
-//     `);
-
-//     data.forEach(d => {
-//         $(`
-//             <tr>
-//                 <td><a href="/app/dkp_job_opening/${d.name}">${d.name || '-'}</a></td>
-//                 <td>${d.designation || '-'}</td>
-
-//                 <td>${d.company || '-'}</td>
-//                 <td>${d.assign_recruiter || '-'}</td>
-//                 <td>${d.priority || '-'}</td>
-//                 <td>${d.number_of_positions || 0}</td>
-//                 <td>${d.status || '-'}</td>
-//             </tr>
-//         `).appendTo(table.find("tbody"));
-//     });
-
-//     $container.append(table);
-
-//     // Pagination
-//     const total_pages = Math.ceil(total / urgent_jobs_limit);
-//     const current_page = Math.floor(urgent_jobs_offset / urgent_jobs_limit) + 1;
-
-//     const pagination = $(`
-//         <div class="mt-2">
-//             <button class="btn btn-sm btn-primary" id="urgent-prev-page">Prev</button>
-//             Page ${current_page} of ${total_pages}
-//             <button class="btn btn-sm btn-primary" id="urgent-next-page">Next</button>
-//         </div>
-//     `);
-
-//     $container.append(pagination);
-
-//     $("#urgent-prev-page").prop("disabled", urgent_jobs_offset === 0).click(() => {
-//         urgent_jobs_offset -= urgent_jobs_limit;
-//         load_urgent_jobs();
-//     });
-
-//     $("#urgent-next-page").prop("disabled", current_page >= total_pages).click(() => {
-//         urgent_jobs_offset += urgent_jobs_limit;
-//         load_urgent_jobs();
-//     });
-// }

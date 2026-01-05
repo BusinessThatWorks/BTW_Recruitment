@@ -7,18 +7,11 @@
  "field_order": [
   "company_name",
   "job_opening_title",
-  "joining_date",
-  "designation",
   "show_candidate_suggestions",
   "section_break_rqlz",
   "table_akka"
  ],
  "fields": [
-  {
-   "fieldname": "joining_date",
-   "fieldtype": "Datetime",
-   "label": "Joining Date"
-  },
   {
    "fieldname": "job_opening_title",
    "fieldtype": "Select",
@@ -40,12 +33,6 @@
    "options": "DKP_JobApplication_Child"
   },
   {
-   "fetch_from": "job_opening_title.designation",
-   "fieldname": "designation",
-   "fieldtype": "Data",
-   "label": "Designation"
-  },
-  {
    "fieldname": "show_candidate_suggestions",
    "fieldtype": "Button",
    "label": "Show Candidate Suggestions"
@@ -54,7 +41,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-05 12:16:35.017781",
+ "modified": "2026-01-05 13:16:46.217049",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Application",
