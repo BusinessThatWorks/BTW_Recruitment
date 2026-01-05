@@ -12,6 +12,9 @@
             <a class="nav-link" data-tab="jobs">Jobs</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" data-tab="job-applications">Job Applications</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" data-tab="company">Company</a>
         </li>
     </ul>
@@ -127,6 +130,43 @@
 
             <!-- Jobs table -->
             <div id="jobs-table"></div>
+
+        </div>
+        <!-- Job Applications Tab -->
+        <div class="tab-pane" id="tab-job-applications">
+
+            <!-- Filters -->
+            <div id="job-applications-filters" class="mb-2">
+                <div class="row g-2 align-items-end">
+
+                    <div class="col-md-3">
+                        <label>Company Name</label>
+                        <input type="text" class="form-control" id="filter-application-company" placeholder="Company name">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Job Opening Title</label>
+                        <input type="text" class="form-control" id="filter-application-opening" placeholder="Job opening">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Designation</label>
+                        <input type="text" class="form-control" id="filter-application-designation" placeholder="e.g. React Developer">
+                    </div>
+
+                    <div class="col-md-1">
+                        <button class="btn btn-primary w-100" id="apply-application-filters">Apply</button>
+                    </div>
+
+                    <div class="col-md-1">
+                        <button class="btn btn-secondary w-100" id="clear-application-filters">Clear</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Job Applications table -->
+            <div id="job-applications-table"></div>
 
         </div>
         <!-- Company Tab -->
@@ -252,6 +292,62 @@
 #applications-pagination-container {
     display: flex;
     justify-content: flex-end;
+}
+
+/* Job Applications Card Styles */
+.application-card {
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    border-radius: 8px;
+}
+
+.application-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.application-card .card-header {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 16px 20px;
+}
+
+.application-card .card-header:hover {
+    background: #f0f0f0 !important;
+}
+
+.candidate-item {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.candidate-item:hover {
+    background: #f5f5f5 !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.toggle-icon {
+    color: #6c757d;
+}
+
+.candidates-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.candidates-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.candidates-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.candidates-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.candidates-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 </style>
