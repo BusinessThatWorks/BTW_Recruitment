@@ -38,23 +38,6 @@ function show_opening_candidate_suggestions(frm) {
             .map(row => row.candidate_name);
     }
 
-    // Also get from database if needed (child rows already saved)
-    frappe.call({
-        method: "frappe.client.get_list",
-        args: {
-            doctype: "DKP_JobApplication_Child",
-            filters: { parent: job_opening_name },
-            fields: ["candidate_name"]
-        },
-        async: false,
-        callback(r) {
-            if (r.message) {
-                const db_candidates = r.message.map(row => row.candidate_name);
-                existing_candidates = [...new Set([...existing_candidates, ...db_candidates])];
-            }
-        }
-    });
-
     // Fetch matching candidates - use the exact name of the Job Opening
     frappe.call({
         method: "btw_recruitment.btw_recruitment.doctype.dkp_job_opening.dkp_job_opening.get_matching_candidates",

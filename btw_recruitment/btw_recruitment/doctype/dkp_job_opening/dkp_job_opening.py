@@ -300,3 +300,4 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         "criteria": criteria,
     }
 
+
