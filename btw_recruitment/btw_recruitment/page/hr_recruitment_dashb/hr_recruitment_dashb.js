@@ -956,6 +956,18 @@ function render_candidate_table(data, total) {
 }
 
 
+function get_ageing_days(creation) {
+    if (!creation) return "-";
+
+    const created_on = frappe.datetime.str_to_obj(creation);
+    const today = frappe.datetime.now_date(); // yyyy-mm-dd
+    const today_obj = frappe.datetime.str_to_obj(today);
+
+    const diff_ms = today_obj - created_on;
+    const diff_days = Math.floor(diff_ms / (1000 * 60 * 60 * 24));
+
+    return diff_days >= 0 ? diff_days : 0;
+}
 
 function load_jobs_table() {
     console.log("Loading Jobs Table...", jobs_table_filters, jobs_table_state);
@@ -1001,6 +1013,8 @@ function render_jobs_table(data, total) {
                     <th>Status</th>
                     <th>No. of Positions</th>
                     <th>Created On</th>
+                    <th>Ageing (Days)</th>
+
                 </tr>
             </thead>
             <tbody></tbody>
@@ -1013,6 +1027,7 @@ function render_jobs_table(data, total) {
         `);
     } else {
         data.forEach(d => {
+            const ageing = get_ageing_days(d.creation);
             table.find("tbody").append(`
                 <tr>
                     <td><a href="/app/dkp_job_opening/${d.name}">${d.name || "-"}</a></td>
@@ -1022,7 +1037,9 @@ function render_jobs_table(data, total) {
                     <td>${d.recruiter || "-"}</td>
                     <td>${d.status || "-"}</td>
                     <td>${d.number_of_positions || "-"}</td>
-                    <td>${frappe.datetime.str_to_user(d.creation)}</td>
+                    <td>${moment(d.creation).format("DD-MM-YYYY hh:mm A")}</td>
+
+                    <td>${ageing}</td>
                 </tr>
             `);
         });
@@ -1059,187 +1076,187 @@ function render_jobs_table(data, total) {
         });
 }
 
-function load_job_applications_table() {
-    console.log("Loading Job Applications Table...", job_applications_table_filters, job_applications_table_state);
+// function load_job_applications_table() {
+//     console.log("Loading Job Applications Table...", job_applications_table_filters, job_applications_table_state);
 
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_job_applications_table",
-        args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date,
-            limit: job_applications_table_state.limit,
-            offset: job_applications_table_state.offset,
-            company_name: job_applications_table_filters.company_name,
-            job_opening_title: job_applications_table_filters.job_opening_title,
-            designation: job_applications_table_filters.designation
-        },
-        callback(r) {
-            console.log("Job Applications API Response:", r);
+//     frappe.call({
+//         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_job_applications_table",
+//         args: {
+//             from_date: dashboard_filters.from_date,
+//             to_date: dashboard_filters.to_date,
+//             limit: job_applications_table_state.limit,
+//             offset: job_applications_table_state.offset,
+//             company_name: job_applications_table_filters.company_name,
+//             job_opening_title: job_applications_table_filters.job_opening_title,
+//             designation: job_applications_table_filters.designation
+//         },
+//         callback(r) {
+//             console.log("Job Applications API Response:", r);
 
-            if (r.message) {
-                render_job_applications_table(r.message.data, r.message.total);
-            } else {
-                render_job_applications_table([], 0);
-            }
-        }
-    });
-}
+//             if (r.message) {
+//                 render_job_applications_table(r.message.data, r.message.total);
+//             } else {
+//                 render_job_applications_table([], 0);
+//             }
+//         }
+//     });
+// }
 
-function render_job_applications_table(data, total) {
-    console.log("render_job_applications_table called with data:", data);
-    const $container = $("#job-applications-table");
-    $container.empty();
+// function render_job_applications_table(data, total) {
+//     console.log("render_job_applications_table called with data:", data);
+//     const $container = $("#job-applications-table");
+//     $container.empty();
 
-    if (!data || !data.length) {
-        $container.append(`
-            <div class="card p-4 text-center text-muted">
-                <p>No job applications found</p>
-            </div>
-        `);
-        return;
-    }
+//     if (!data || !data.length) {
+//         $container.append(`
+//             <div class="card p-4 text-center text-muted">
+//                 <p>No job applications found</p>
+//             </div>
+//         `);
+//         return;
+//     }
 
-    // Create cards for each application
-    data.forEach((app, index) => {
-        const cardId = `app-card-${index}`;
-        const candidatesId = `candidates-${index}`;
-        const candidates = app.candidates || [];
-        const candidatesCount = app.candidates_count || 0;
+//     // Create cards for each application
+//     data.forEach((app, index) => {
+//         const cardId = `app-card-${index}`;
+//         const candidatesId = `candidates-${index}`;
+//         const candidates = app.candidates || [];
+//         const candidatesCount = app.candidates_count || 0;
         
-        const card = $(`
-            <div class="card mb-3 application-card" style="border-left: 4px solid #4A90E2;">
-                <div class="card-header" style="background: #f8f9fa; cursor: pointer;" data-toggle="collapse" data-target="#${candidatesId}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1" style="color: #2c3e50;">
-                                <a href="/app/dkp_job_application/${app.name}" style="color: #2c3e50; text-decoration: none;">
-                                    ${app.name}
-                                </a>
-                            </h5>
-                            <div class="d-flex flex-wrap gap-3 mt-2" style="font-size: 0.9em; color: #6c757d;">
-                                <span><strong>Company:</strong> ${app.company_name || "-"}</span>
-                                <span><strong>Opening:</strong> ${app.job_opening_title || "-"}</span>
-                                <span><strong>Designation:</strong> ${app.designation || "-"}</span>
-                                ${app.joining_date ? `<span><strong>Joining:</strong> ${frappe.datetime.str_to_user(app.joining_date)}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="badge badge-primary" style="font-size: 0.9em; padding: 6px 12px;">
-                                ${candidatesCount} Candidate${candidatesCount !== 1 ? 's' : ''}
-                            </span>
-                            <i class="fa fa-chevron-down ml-2 toggle-icon" style="transition: transform 0.3s;"></i>
-                        </div>
-                    </div>
-                </div>
-                <div id="${candidatesId}" class="collapse">
-                    <div class="card-body" style="background: #ffffff;">
-                        ${candidates.length > 0 ? `
-                            <div class="candidates-list">
-                                ${candidates.map((candidate, cIndex) => {
-                                    const stageText = candidate.stage?.trim() || "No Stage";
-                                    const stageColor = stageColors[candidate.stage?.trim()] || "#6c757d";
-                                    return `
-                                        <div class="candidate-item mb-3 p-3" style="border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa;">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-2">
-                                                        <a href="/app/dkp_candidate/${candidate.candidate_name}" style="color: #2c3e50; text-decoration: none; font-weight: 600;">
-                                                            ${candidate.candidate_name || "-"}
-                                                        </a>
-                                                    </h6>
-                                                    <div class="d-flex flex-wrap gap-3" style="font-size: 0.85em;">
-                                                        ${candidate.interview_date ? `
-                                                            <span style="color: #495057;">
-                                                                <i class="fa fa-calendar"></i> 
-                                                                Interview: ${frappe.datetime.str_to_user(candidate.interview_date)}
-                                                            </span>
-                                                        ` : ''}
-                                                        ${candidate.interview_feedback ? `
-                                                            <span style="color: #495057;">
-                                                                <i class="fa fa-comment"></i> 
-                                                                Feedback: ${candidate.interview_feedback}
-                                                            </span>
-                                                        ` : ''}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <span class="badge" style="
-                                                        background-color: ${stageColor};
-                                                        color: #fff;
-                                                        padding: 6px 12px;
-                                                        border-radius: 12px;
-                                                        font-weight: 500;
-                                                        font-size: 0.85em;
-                                                    ">
-                                                        ${stageText}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        ` : `
-                            <div class="text-center text-muted py-3">
-                                <p class="mb-0">No candidates added to this application yet</p>
-                            </div>
-                        `}
-                    </div>
-                </div>
-            </div>
-        `);
+//         const card = $(`
+//             <div class="card mb-3 application-card" style="border-left: 4px solid #4A90E2;">
+//                 <div class="card-header" style="background: #f8f9fa; cursor: pointer;" data-toggle="collapse" data-target="#${candidatesId}">
+//                     <div class="d-flex justify-content-between align-items-center">
+//                         <div class="flex-grow-1">
+//                             <h5 class="mb-1" style="color: #2c3e50;">
+//                                 <a href="/app/dkp_job_application/${app.name}" style="color: #2c3e50; text-decoration: none;">
+//                                     ${app.name}
+//                                 </a>
+//                             </h5>
+//                             <div class="d-flex flex-wrap gap-3 mt-2" style="font-size: 0.9em; color: #6c757d;">
+//                                 <span><strong>Company:</strong> ${app.company_name || "-"}</span>
+//                                 <span><strong>Opening:</strong> ${app.job_opening_title || "-"}</span>
+//                                 <span><strong>Designation:</strong> ${app.designation || "-"}</span>
+//                                 ${app.joining_date ? `<span><strong>Joining:</strong> ${frappe.datetime.str_to_user(app.joining_date)}</span>` : ''}
+//                             </div>
+//                         </div>
+//                         <div class="text-right">
+//                             <span class="badge badge-primary" style="font-size: 0.9em; padding: 6px 12px;">
+//                                 ${candidatesCount} Candidate${candidatesCount !== 1 ? 's' : ''}
+//                             </span>
+//                             <i class="fa fa-chevron-down ml-2 toggle-icon" style="transition: transform 0.3s;"></i>
+//                         </div>
+//                     </div>
+//                 </div>
+//                 <div id="${candidatesId}" class="collapse">
+//                     <div class="card-body" style="background: #ffffff;">
+//                         ${candidates.length > 0 ? `
+//                             <div class="candidates-list">
+//                                 ${candidates.map((candidate, cIndex) => {
+//                                     const stageText = candidate.stage?.trim() || "No Stage";
+//                                     const stageColor = stageColors[candidate.stage?.trim()] || "#6c757d";
+//                                     return `
+//                                         <div class="candidate-item mb-3 p-3" style="border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa;">
+//                                             <div class="d-flex justify-content-between align-items-start">
+//                                                 <div class="flex-grow-1">
+//                                                     <h6 class="mb-2">
+//                                                         <a href="/app/dkp_candidate/${candidate.candidate_name}" style="color: #2c3e50; text-decoration: none; font-weight: 600;">
+//                                                             ${candidate.candidate_name || "-"}
+//                                                         </a>
+//                                                     </h6>
+//                                                     <div class="d-flex flex-wrap gap-3" style="font-size: 0.85em;">
+//                                                         ${candidate.interview_date ? `
+//                                                             <span style="color: #495057;">
+//                                                                 <i class="fa fa-calendar"></i> 
+//                                                                 Interview: ${frappe.datetime.str_to_user(candidate.interview_date)}
+//                                                             </span>
+//                                                         ` : ''}
+//                                                         ${candidate.interview_feedback ? `
+//                                                             <span style="color: #495057;">
+//                                                                 <i class="fa fa-comment"></i> 
+//                                                                 Feedback: ${candidate.interview_feedback}
+//                                                             </span>
+//                                                         ` : ''}
+//                                                     </div>
+//                                                 </div>
+//                                                 <div>
+//                                                     <span class="badge" style="
+//                                                         background-color: ${stageColor};
+//                                                         color: #fff;
+//                                                         padding: 6px 12px;
+//                                                         border-radius: 12px;
+//                                                         font-weight: 500;
+//                                                         font-size: 0.85em;
+//                                                     ">
+//                                                         ${stageText}
+//                                                     </span>
+//                                                 </div>
+//                                             </div>
+//                                         </div>
+//                                     `;
+//                                 }).join('')}
+//                             </div>
+//                         ` : `
+//                             <div class="text-center text-muted py-3">
+//                                 <p class="mb-0">No candidates added to this application yet</p>
+//                             </div>
+//                         `}
+//                     </div>
+//                 </div>
+//             </div>
+//         `);
         
-        $container.append(card);
-    });
+//         $container.append(card);
+//     });
 
-    // Add toggle icon rotation on collapse/expand
-    $container.find('.card-header').on('click', function() {
-        const icon = $(this).find('.toggle-icon');
-        const collapse = $(this).next('.collapse');
+//     // Add toggle icon rotation on collapse/expand
+//     $container.find('.card-header').on('click', function() {
+//         const icon = $(this).find('.toggle-icon');
+//         const collapse = $(this).next('.collapse');
         
-        // Use setTimeout to check state after Bootstrap animation
-        setTimeout(() => {
-            if (collapse.hasClass('show')) {
-                icon.css('transform', 'rotate(180deg)');
-            } else {
-                icon.css('transform', 'rotate(0deg)');
-            }
-        }, 100);
-    });
+//         // Use setTimeout to check state after Bootstrap animation
+//         setTimeout(() => {
+//             if (collapse.hasClass('show')) {
+//                 icon.css('transform', 'rotate(180deg)');
+//             } else {
+//                 icon.css('transform', 'rotate(0deg)');
+//             }
+//         }, 100);
+//     });
 
-    // Pagination
-    const total_pages = Math.ceil(total / job_applications_table_state.limit);
-    const current_page = Math.floor(job_applications_table_state.offset / job_applications_table_state.limit) + 1;
+//     // Pagination
+//     const total_pages = Math.ceil(total / job_applications_table_state.limit);
+//     const current_page = Math.floor(job_applications_table_state.offset / job_applications_table_state.limit) + 1;
 
-    const pagination = $(`
-        <div class="mt-3 d-flex align-items-center justify-content-between">
-            <div>
-                <span class="text-muted">Showing ${job_applications_table_state.offset + 1} to ${Math.min(job_applications_table_state.offset + job_applications_table_state.limit, total)} of ${total} applications</span>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm btn-primary" id="job-applications-prev">Prev</button>
-                <span>Page ${current_page} of ${total_pages || 1}</span>
-                <button class="btn btn-sm btn-primary" id="job-applications-next">Next</button>
-            </div>
-        </div>
-    `);
+//     const pagination = $(`
+//         <div class="mt-3 d-flex align-items-center justify-content-between">
+//             <div>
+//                 <span class="text-muted">Showing ${job_applications_table_state.offset + 1} to ${Math.min(job_applications_table_state.offset + job_applications_table_state.limit, total)} of ${total} applications</span>
+//             </div>
+//             <div class="d-flex align-items-center gap-2">
+//                 <button class="btn btn-sm btn-primary" id="job-applications-prev">Prev</button>
+//                 <span>Page ${current_page} of ${total_pages || 1}</span>
+//                 <button class="btn btn-sm btn-primary" id="job-applications-next">Next</button>
+//             </div>
+//         </div>
+//     `);
 
-    $container.append(pagination);
+//     $container.append(pagination);
 
-    $("#job-applications-prev")
-        .prop("disabled", job_applications_table_state.offset === 0)
-        .click(() => {
-            job_applications_table_state.offset -= job_applications_table_state.limit;
-            load_job_applications_table();
-        });
+//     $("#job-applications-prev")
+//         .prop("disabled", job_applications_table_state.offset === 0)
+//         .click(() => {
+//             job_applications_table_state.offset -= job_applications_table_state.limit;
+//             load_job_applications_table();
+//         });
 
-    $("#job-applications-next")
-        .prop("disabled", current_page >= total_pages)
-        .click(() => {
-            job_applications_table_state.offset += job_applications_table_state.limit;
-            load_job_applications_table();
-        });
-}
+//     $("#job-applications-next")
+//         .prop("disabled", current_page >= total_pages)
+//         .click(() => {
+//             job_applications_table_state.offset += job_applications_table_state.limit;
+//             load_job_applications_table();
+//         });
+// }
 
 function load_company_table() {
     console.log("Loading Company Table...", company_filters, company_table_state);
