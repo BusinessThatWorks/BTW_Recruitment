@@ -18,7 +18,7 @@
  "list_columns": [],
  "login_required": 0,
  "max_attachment_size": 0,
- "modified": "2026-01-07 17:38:01.148134",
+ "modified": "2026-01-07 18:19:32.995223",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "candidate-cv",
@@ -28,7 +28,7 @@
  "show_attachments": 0,
  "show_list": 0,
  "show_sidebar": 0,
- "title": "Candidate CV",
+ "title": "Candidate Form",
  "web_form_fields": [
   {
    "allow_read_on_all_link_options": 0,
