@@ -90,14 +90,14 @@
   },
   {
    "fieldname": "min_ctc",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Min CTC Monthly",
    "reqd": 1
   },
   {
    "fieldname": "max_ctc",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Max CTC Monthly",
    "reqd": 1
@@ -241,9 +241,9 @@
   },
   {
    "fieldname": "assign_recruiter",
-   "fieldtype": "Link",
+   "fieldtype": "Table MultiSelect",
    "label": "Assign Recruiter",
-   "options": "User"
+   "options": "DKP_JobOpeningRecruiter_Child"
   },
   {
    "fieldname": "job_description",
@@ -280,9 +280,10 @@
   }
  ],
  "grid_page_length": 50,
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-06 14:15:23.936657",
+ "modified": "2026-01-09 17:53:33.976968",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

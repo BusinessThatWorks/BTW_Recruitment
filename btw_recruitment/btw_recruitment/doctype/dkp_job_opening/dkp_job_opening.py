@@ -10,7 +10,15 @@ class DKP_Job_Opening(Document):
         if not self.assign_recruiter:
             return
 
-        recruiter_email = self.assign_recruiter  # already email
+        # ✅ Extract recruiter emails from child table
+        recruiter_emails = [
+            row.recruiter_name
+            for row in self.assign_recruiter
+            if row.recruiter_name
+        ]
+
+        if not recruiter_emails:
+            return
 
         subject = f"New Job Opening Assigned – {self.name}"
 
@@ -30,10 +38,11 @@ class DKP_Job_Opening(Document):
         """
 
         frappe.sendmail(
-            recipients=[recruiter_email],
+            recipients=recruiter_emails,  # ✅ list of emails
             subject=subject,
             content=html_content,
         )
+
 
 
 @frappe.whitelist()
@@ -80,8 +89,8 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         "location": job_opening.location or "",
         "department": job_opening.department or "",
         "gender_preference": (job_opening.gender_preference or "").strip(),
-        "min_ctc": (job_opening.min_ctc or "").strip(),
-        "max_ctc": (job_opening.max_ctc or "").strip(),
+        "min_ctc": job_opening.min_ctc or "",
+        "max_ctc": job_opening.max_ctc or "",
     }
 
     # Get all candidates (excluding blacklisted and already added)

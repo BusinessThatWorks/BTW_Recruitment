@@ -54,7 +54,8 @@
   "blacklist_reason",
   "blacklist_attachment",
   "blacklisted_on",
-  "blacklisted_by"
+  "blacklisted_by",
+  "amended_from"
  ],
  "fields": [
   {
@@ -217,6 +218,7 @@
   {
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Department",
    "options": "DKP_Department"
   },
@@ -325,12 +327,24 @@
    "fieldname": "disc_score",
    "fieldtype": "Float",
    "label": "DISC Score"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "DKP_Candidate",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-01-07 14:09:28.470541",
+ "modified": "2026-01-09 17:04:55.956517",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
