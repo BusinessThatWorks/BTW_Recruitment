@@ -76,7 +76,7 @@ frappe.pages['hr-recruitment-jobs'].on_page_load = function(wrapper) {
 
                     <div class="col-md-3">
                         <select class="form-control" id="filter-sla-status">
-                            <option value="">SLA Status</option>
+                            <option value="">Status</option>
                             <option value="Open">Open</option>
                             <option value="On Hold">On Hold</option>
                             <option value="Closed – Hired">Closed – Hired</option>
@@ -159,65 +159,6 @@ function load_job_kpis() {
         }
     });
 }
-// function render_job_kpi_cards(data) {
-//     const cards = [
-//         { label: "Total Job Openings", value: data.total_jobs },
-//         { label: "Active Jobs", value: data.active_jobs },
-//         { label: "Total Open Positions", value: data.total_positions },
-//         { label: "High / Critical Jobs", value: data.priority_jobs },
-//         { label: "SLA Breached Jobs", value: data.sla_breached_jobs }
-//     ];
-
-//     const $row = $("#job-kpi-cards");
-//     $row.empty();
-
-//     cards.forEach(card => {
-//         $(`
-//             <div class="kpi-col">
-//                 <div class="card kpi-card">
-//                     <div class="kpi-value">${card.value}</div>
-//                     <div class="kpi-label">${card.label}</div>
-//                 </div>
-//             </div>
-//         `).appendTo($row);
-//     });
-
-//     // Add styles if not already added
-//     if (!$("#job-kpi-card-style").length) {
-//         $("<style>")
-//             .prop("type", "text/css")
-//             .attr("id", "job-kpi-card-style")
-//             .html(`
-// 				#job-kpi-cards {
-//             display: flex;
-//             gap: 12px;
-//             padding:16px;
-//         }
-//         .kpi-col {
-//             flex: 1;
-
-//         }
-//                 .kpi-card {
-//                     padding: 14px;
-//                     text-align: center;
-//                     border-radius: 8px;
-//                     background: #ffffff;
-//                     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-//                     height: 100%;
-//                 }
-//                 .kpi-value {
-//                     font-size: 20px;
-//                     font-weight: 600;
-//                 }
-//                 .kpi-label {
-//                     margin-top: 6px;
-//                     font-size: 13px;
-//                     color: #6c7680;
-//                 }
-//             `)
-//             .appendTo("head");
-//     }
-// }
 function render_job_kpi_cards(data) {
     const cards = [
         {
@@ -241,19 +182,6 @@ function render_job_kpi_cards(data) {
 
     const $row = $("#job-kpi-cards");
     $row.empty();
-
-    // cards.forEach(card => {
-    //     $(`
-    //         <div class="kpi-col">
-    //             <a href="${card.link}" class="kpi-link">
-    //                 <div class="card kpi-card">
-    //                     <div class="kpi-value">${card.value}</div>
-    //                     <div class="kpi-label">${card.label}</div>
-    //                 </div>
-    //             </a>
-    //         </div>
-    //     `).appendTo($row);
-    // });
     cards.forEach(card => {
         const cardHtml = `
             <div class="kpi-col">
@@ -504,20 +432,27 @@ function load_department_filter_options() {
         args: {
             doctype: "DKP_Job_Opening",
             fields: ["department"],
-            distinct: true,
             filters: [["department", "is", "set"]],
             limit_page_length: 1000
         },
         callback(r) {
             if (r.message) {
                 const $dept = $("#filter-department");
-                $dept.find("option:not(:first)").remove(); // clear old options
+                $dept.find("option:not(:first)").remove();
+
+                const seen = new Set(); // 🔑 unique tracker
+
                 r.message.forEach(d => {
-                    if (d.department) {
-                        $dept.append(`<option value="${d.department}">${d.department}</option>`);
+                    if (d.department && !seen.has(d.department)) {
+                        seen.add(d.department);
+                        $dept.append(
+                            `<option value="${d.department}">${d.department}</option>`
+                        );
                     }
                 });
             }
         }
     });
 }
+
+
