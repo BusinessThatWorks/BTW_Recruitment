@@ -101,6 +101,21 @@ def get_urgent_openings(from_date=None, to_date=None):
         filters=filters,
         order_by="modified desc"
     )
+
+
+@frappe.whitelist()
+def get_recruiter_filter_options():
+    return frappe.db.sql("""
+        SELECT
+            name,
+            full_name
+        FROM `tabUser`
+        WHERE
+            enabled = 1
+            AND role_profile_name = 'DKP Recruiter'
+        ORDER BY full_name
+    """, as_dict=True)
+
 # import frappe
 # from frappe.utils import now_datetime, add_days
 # from frappe.utils import format_datetime
