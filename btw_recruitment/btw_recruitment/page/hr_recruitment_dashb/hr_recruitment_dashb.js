@@ -194,7 +194,7 @@ $(document).on("click", "#apply-candidate-filters", function () {
 });
 
 // Live filtering for candidate filters
-$(document).on("change", "#filter-department, #filter-designation", function() {
+$(document).on("change", "#filter-department, #filter-designation, #filter-min-exp, #filter-max-exp", function() {
     apply_candidate_filters();
 });
 
@@ -397,7 +397,6 @@ function load_kpis() {
             }
 
             render_department_pie_chart();
-            render_applications_table();
             render_urgent_openings_table();
             // load_candidate_department_options();
             // render_candidate_table();
