@@ -1,58 +1,4 @@
 import frappe
-from frappe.utils import add_days
-@frappe.whitelist()
-def get_active_applications(limit=10, offset=0,from_date=None, to_date=None,stage=None):
-    limit = int(limit)
-    offset = int(offset)
-
-    # Default stages
-    default_stages = ["", "In Review", "Screening", "Interview", "Offered"]
-
-    # Base filters
-    active_filters = [
-        ["parenttype", "=", "DKP_Job_Application"],
-        ["stage", "in", default_stages]
-    ]
-
-    # Apply date filter if provided
-    if from_date and to_date:
-        active_filters.append([
-            "creation",
-            "between",
-            [from_date, add_days(to_date, 1)]
-        ])
-
-    # Apply Stage filter if selected
-    if stage:
-        if stage == "No Assigned Stage":
-            active_filters.append(["stage", "=", ""])  # blank stage
-        else:
-            active_filters.append(["stage", "=", stage])
-    data = frappe.get_all(
-        "DKP_JobApplication_Child",
-        fields=[
-            "candidate_name",
-            "stage",
-            "interview_date",
-            "parent as job_application"
-        ],
-        filters=active_filters,
-        order_by="modified desc",
-        limit_start=offset,
-        limit_page_length=limit
-    )
-
-    total = frappe.db.count(
-    "DKP_JobApplication_Child",
-    active_filters
-)
-
-
-    return {
-        "total": total,
-        "data": data
-    }
-
 
 @frappe.whitelist()
 def get_candidates_by_department(from_date=None, to_date=None):
@@ -523,9 +469,169 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
 
     return {"total": total, "data": result}
 
-# candidate table tab structured queries and functions
+# # candidate table tab structured queries and functions
+# import frappe
+# from frappe.utils import get_datetime, add_days
+
+# @frappe.whitelist()
+# def get_candidate_table(
+#     from_date=None,
+#     to_date=None,
+#     limit=20,
+#     offset=0,
+
+#     department=None,
+#     current_designation=None,
+#     min_experience=None,
+#     max_experience=None,
+
+#     search_text=None,
+#     candidate_name_search=None 
+# ):
+#     limit = int(limit)
+#     offset = int(offset)
+
+#     filters = []
+
+#     # ---------------- Date Filter (GLOBAL) ----------------
+#     if from_date and to_date:
+#         filters.append([
+#             "creation",
+#             "between",
+#             [get_datetime(from_date), get_datetime(add_days(to_date, 1))]
+#         ])
+
+#     # ---------------- Structured Filters ----------------
+#     if department:
+#         filters.append(["department", "=", department])
+
+#     if current_designation:
+#         filters.append([
+#             "current_designation",
+#             "like",
+#             f"%{current_designation}%"
+#         ])
+
+
+#     if min_experience not in (None, "", "null"):
+#         filters.append(
+#             ["total_experience_years", ">=", float(min_experience)]
+#         )
+
+#     if max_experience not in (None, "", "null"):
+#         filters.append(
+#             ["total_experience_years", "<=", float(max_experience)]
+#         )
+
+
+#     # ---------------- Search Conditions ----------------
+#     if candidate_name_search:
+#         filters.append([
+#             "candidate_name",
+#             "like",
+#             f"%{candidate_name_search}%"
+#         ])
+#     or_filters = []
+#     if search_text:
+#         search_text = f"%{search_text}%"
+#         or_filters = [
+#             ["skills_tags", "like", search_text],
+#             ["primary_skill_set", "like", search_text],
+#             ["secondary_skill_set", "like", search_text],
+#             ["key_certifications", "like", search_text],
+#         ]
+
+#     # ---------------- Fetch Data ----------------
+#     candidates = frappe.get_all(
+#         "DKP_Candidate",
+#         fields=[
+#             "name",
+#             "candidate_name",
+#             "email",
+#             "mobile_number",
+#             "department",
+#             "current_designation",
+#             "total_experience_years",
+#             "skills_tags",
+#             "primary_skill_set",
+#             "secondary_skill_set",
+#             "key_certifications",
+#             "creation"
+#         ],
+#         filters=filters,
+#         or_filters=or_filters,
+#         order_by="creation desc",
+#         limit_start=offset,
+#         limit_page_length=limit
+#     )
+#     # ---------------- Total Count ----------------
+#     if or_filters:
+#         total = len(
+#             frappe.get_all(
+#                 "DKP_Candidate",
+#                 filters=filters,
+#                 or_filters=or_filters,
+#                 pluck="name"
+#             )
+#         )
+#     else:
+#         total = frappe.db.count(
+#             "DKP_Candidate",
+#             filters=filters
+#         )
+
+#     return {
+#         "total": total,
+#         "data": candidates
+#     }
+from rapidfuzz import fuzz
 import frappe
 from frappe.utils import get_datetime, add_days
+
+
+# def compute_candidate_score(c, query):
+#     score = 0
+
+#     if c.get("candidate_name"):
+#         score = max(score, fuzz.partial_ratio(query, c["candidate_name"]) * 1.2)
+
+#     for field in [
+#         "skills_tags",
+#         "primary_skill_set",
+#         "secondary_skill_set",
+#         "key_certifications",
+#         "current_designation"
+#     ]:
+#         if c.get(field):
+#             score = max(score, fuzz.partial_ratio(query, c[field]))
+
+#     return int(score)
+
+def compute_candidate_score(c, query):
+    score = 0
+    query = query.lower()
+
+    if c.get("candidate_name"):
+        score = max(
+            score,
+            fuzz.partial_ratio(query, c["candidate_name"].lower()) * 1.2
+        )
+
+    for field in [
+        "skills_tags",
+        "primary_skill_set",
+        "secondary_skill_set",
+        "key_certifications",
+        "current_designation"
+    ]:
+        if c.get(field):
+            score = max(
+                score,
+                fuzz.token_set_ratio(query, c[field].lower())
+            )
+
+    return int(score)
+
 
 @frappe.whitelist()
 def get_candidate_table(
@@ -540,14 +646,14 @@ def get_candidate_table(
     max_experience=None,
 
     search_text=None,
-    candidate_name_search=None 
+    candidate_name_search=None
 ):
     limit = int(limit)
     offset = int(offset)
 
     filters = []
 
-    # ---------------- Date Filter (GLOBAL) ----------------
+    # ---------------- Date Filter ----------------
     if from_date and to_date:
         filters.append([
             "creation",
@@ -560,42 +666,15 @@ def get_candidate_table(
         filters.append(["department", "=", department])
 
     if current_designation:
-        filters.append([
-            "current_designation",
-            "like",
-            f"%{current_designation}%"
-        ])
-
+        filters.append(["current_designation", "like", f"%{current_designation}%"])
 
     if min_experience not in (None, "", "null"):
-        filters.append(
-            ["total_experience_years", ">=", float(min_experience)]
-        )
+        filters.append(["total_experience_years", ">=", float(min_experience)])
 
     if max_experience not in (None, "", "null"):
-        filters.append(
-            ["total_experience_years", "<=", float(max_experience)]
-        )
+        filters.append(["total_experience_years", "<=", float(max_experience)])
 
-
-    # ---------------- Search Conditions ----------------
-    if candidate_name_search:
-        filters.append([
-            "candidate_name",
-            "like",
-            f"%{candidate_name_search}%"
-        ])
-    or_filters = []
-    if search_text:
-        search_text = f"%{search_text}%"
-        or_filters = [
-            ["skills_tags", "like", search_text],
-            ["primary_skill_set", "like", search_text],
-            ["secondary_skill_set", "like", search_text],
-            ["key_certifications", "like", search_text],
-        ]
-
-    # ---------------- Fetch Data ----------------
+    # ---------------- Fetch Base Data ----------------
     candidates = frappe.get_all(
         "DKP_Candidate",
         fields=[
@@ -613,31 +692,36 @@ def get_candidate_table(
             "creation"
         ],
         filters=filters,
-        or_filters=or_filters,
         order_by="creation desc",
-        limit_start=offset,
-        limit_page_length=limit
+        # limit_page_length=500 include if slower performance
     )
-    # ---------------- Total Count ----------------
-    if or_filters:
-        total = len(
-            frappe.get_all(
-                "DKP_Candidate",
-                filters=filters,
-                or_filters=or_filters,
-                pluck="name"
-            )
-        )
+
+    # ---------------- Fuzzy Search ----------------
+    if search_text or candidate_name_search:
+        query = (candidate_name_search or search_text).strip()
+        scored_candidates = []
+
+        for c in candidates:
+            score = compute_candidate_score(c, query)
+            if score >= 60:
+                c["_score"] = score
+                scored_candidates.append(c)
+
+
+        scored_candidates.sort(key=lambda x: x["_score"], reverse=True)
+
+        total = len(scored_candidates)
+        candidates = scored_candidates[offset: offset + limit]
+
     else:
-        total = frappe.db.count(
-            "DKP_Candidate",
-            filters=filters
-        )
+        total = len(candidates)
+        candidates = candidates[offset: offset + limit]
 
     return {
         "total": total,
         "data": candidates
     }
+
 
 from frappe.utils import cint
 
@@ -765,55 +849,147 @@ def get_job_applications_table(from_date=None, to_date=None, limit=20, offset=0,
 
     return {"data": applications, "total": total}
 
+def compute_company_score(c, query):
+    score = 0
+    query = query.lower()
+
+    for field in ["company_name", "industry", "state", "city"]:
+        if c.get(field):
+            score = max(
+                score,
+                fuzz.token_set_ratio(query, c[field].lower())  # better than partial_ratio
+            )
+    return int(score)
+
 import frappe
 
+# @frappe.whitelist()
+# def get_companies(from_date=None, to_date=None, company_name=None, client_type=None,
+#                   industry=None, state=None, city=None, client_status=None,
+#                   limit_start=0, limit_page_length=50):
+
+#     filters = {}
+
+#     # ---- Text Filters ----
+#     if company_name:
+#         filters["company_name"] = ["like", f"%{company_name}%"]
+
+#     if client_type:
+#         filters["client_type"] = client_type
+
+#     if industry:
+#         filters["industry"] = ["like", f"%{industry}%"]
+
+#     if state:
+#         filters["state"] = ["like", f"%{state}%"]
+
+#     if city:
+#         filters["city"] = ["like", f"%{city}%"]
+
+#     if client_status:
+#         filters["client_status"] = client_status
+
+#     # ---- Date Filter: (global filter) ----
+#     if from_date and to_date:
+#         filters["creation"] = ["between", [from_date, to_date]]  # can switch to "modified"
+
+#     # ---- Fetch Total Rows for Pagination ----
+#     total = frappe.db.count("DKP_Company", filters=filters)
+
+#     # ---- Fetch Company Records ----
+#     data = frappe.db.get_list(
+#         "DKP_Company",
+#         filters=filters,
+#         fields=[
+#             "name", "company_name", "client_type", "industry",
+#             "state", "city", "billing_address", "billing_mail",
+#             "billing_number", "client_status", "replacement_policy_days",
+#             "standard_fee_type", "creation"
+#         ],
+#         limit_start=limit_start,
+#         limit_page_length=limit_page_length,
+#         order_by="creation desc"
+#     )
+
+#     return {"data": data, "total": total}
+
 @frappe.whitelist()
-def get_companies(from_date=None, to_date=None, company_name=None, client_type=None,
-                  industry=None, state=None, city=None, client_status=None,
-                  limit_start=0, limit_page_length=50):
+def get_companies(
+    from_date=None, to_date=None,
+    company_name=None, industry=None, state=None, city=None,
+    client_type=None, client_status=None,
+    limit_start=0, limit_page_length=50
+):
+
+    # 🔥 IMPORTANT FIX
+    limit_start = int(limit_start or 0)
+    limit_page_length = int(limit_page_length or 50)
 
     filters = {}
 
-    # ---- Text Filters ----
-    if company_name:
-        filters["company_name"] = ["like", f"%{company_name}%"]
-
+    # ---- NON-FUZZY DROPDOWN FILTERS ----
     if client_type:
         filters["client_type"] = client_type
-
-    if industry:
-        filters["industry"] = ["like", f"%{industry}%"]
-
-    if state:
-        filters["state"] = ["like", f"%{state}%"]
-
-    if city:
-        filters["city"] = ["like", f"%{city}%"]
 
     if client_status:
         filters["client_status"] = client_status
 
-    # ---- Date Filter: (global filter) ----
     if from_date and to_date:
-        filters["creation"] = ["between", [from_date, to_date]]  # can switch to "modified"
+        filters["creation"] = ["between", [from_date, to_date]]
 
-    # ---- Fetch Total Rows for Pagination ----
-    total = frappe.db.count("DKP_Company", filters=filters)
-
-    # ---- Fetch Company Records ----
-    data = frappe.db.get_list(
+    # ---- FETCH BASE DATA ----
+    companies = frappe.get_all(
         "DKP_Company",
         filters=filters,
         fields=[
             "name", "company_name", "client_type", "industry",
             "state", "city", "billing_address", "billing_mail",
-            "billing_number", "client_status", "replacement_policy_days",
-            "standard_fee_type", "creation"
+            "billing_number", "client_status",
+            "replacement_policy_days", "standard_fee_type", "creation"
         ],
-        limit_start=limit_start,
-        limit_page_length=limit_page_length,
-        order_by="creation desc"
+        order_by="creation desc",
     )
 
-    return {"data": data, "total": total}
+    # ---- FUZZY SEARCH ----
+    search_text = company_name or industry or state or city
+
+    if search_text:
+
+        def compute_company_score(c, query):
+            score = 0
+            query = query.lower()
+
+            if c.get("company_name"):
+                score = max(score, fuzz.token_set_ratio(query, c["company_name"].lower()) * 1.2)
+
+            for field in ["industry", "state", "city"]:
+                if c.get(field):
+                    score = max(score, fuzz.token_set_ratio(query, c[field].lower()))
+
+            return int(score)
+
+        scored = []
+        query = search_text.strip().lower()
+
+        for c in companies:
+            score = compute_company_score(c, query)
+            threshold = 40 if len(query) <= 5 else 60
+            if score >= threshold:
+                c["_score"] = score
+                scored.append(c)
+
+        scored.sort(key=lambda x: x["_score"], reverse=True)
+        total = len(scored)
+        data = scored[limit_start: limit_start + limit_page_length]
+
+    else:
+        total = len(companies)
+        data = companies[limit_start: limit_start + limit_page_length]
+
+    return {
+        "data": data,
+        "total": total
+    }
+
+
 
