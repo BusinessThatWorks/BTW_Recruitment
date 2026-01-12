@@ -550,3 +550,44 @@ function add_candidates_to_opening(frm, candidate_names) {
         3
     );
 }
+
+frappe.ui.form.on("DKP_JobApplication_Child", {
+	stage: function (frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+
+		if (row.stage === "Shortlisted For Interview") {
+			add_candidate_to_interview_table(frm, row.candidate_name);
+		}
+	}
+});
+function add_candidate_to_interview_table(frm, candidate_name) {
+	if (!candidate_name) return;
+
+	// 🔁 Avoid duplicates
+	let exists = frm.doc.dkp_jobopeninginterview_child?.some(
+		r => r.candidate_name === candidate_name
+	);
+
+	if (exists) {
+		return;
+	}
+
+	let new_row = frm.add_child("interview");
+	new_row.candidate_name = candidate_name;
+
+	frm.refresh_field("interview");
+}
+frappe.ui.form.on("DKP_JobApplication_Child", {
+	stage: function (frm, cdt, cdn) {
+		let show = false;
+
+		(frm.doc.candidates_table || []).forEach(row => {
+			if (row.stage === "Shortlisted For Interview") {
+				show = true;
+			}
+		});
+
+		frm.set_value("show_interview_table", show ? 1 : 0);
+	}
+});
+

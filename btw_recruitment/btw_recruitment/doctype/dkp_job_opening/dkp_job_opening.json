@@ -43,7 +43,9 @@
   "received_on",
   "candidates_tab",
   "suggest_candidates",
-  "candidates_table"
+  "candidates_table",
+  "interview",
+  "show_interview_table"
  ],
  "fields": [
   {
@@ -277,13 +279,27 @@
    "fieldname": "suggest_candidates",
    "fieldtype": "Button",
    "label": "Suggest Candidates"
+  },
+  {
+   "depends_on": "eval:doc.show_interview_table;",
+   "fieldname": "interview",
+   "fieldtype": "Table",
+   "label": "Interview ",
+   "options": "DKP_JobOpeningInterview_Child"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_interview_table",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Show Interview Table"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-09 17:53:33.976968",
+ "modified": "2026-01-12 15:24:46.819603",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
