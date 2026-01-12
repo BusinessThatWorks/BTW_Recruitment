@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "{company_name}.####",
  "creation": "2025-11-14 17:59:36.157631",
@@ -284,7 +285,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-09 17:06:00.819390",
+ "modified": "2026-01-12 16:54:52.493216",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",

@@ -404,25 +404,19 @@ function render_company_table(data, total) {
 
 function load_industry_filter_options() {
     frappe.call({
-        method: "frappe.client.get_list",
-        args: {
-            doctype: "DKP_Company",
-            fields: ["industry"],
-            distinct: true,
-            filters: [["industry", "is", "set"]],
-            limit_page_length: 1000
-        },
+        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_distinct_industries",
         callback(r) {
-            if (r.message) {
-                const $industry = $("#filter-industry");
-                r.message.forEach(d => {
-                    if (d.industry) {
-                        $industry.append(
-                            `<option value="${d.industry}">${d.industry}</option>`
-                        );
-                    }
-                });
-            }
+            const $industry = $("#filter-industry");
+            $industry.empty();
+            $industry.append(`<option value="">All</option>`);
+
+            (r.message || []).forEach(ind => {
+                $industry.append(
+                    `<option value="${(ind)}">${ind.toUpperCase()}</option>`
+                );
+            });
         }
     });
 }
+
+

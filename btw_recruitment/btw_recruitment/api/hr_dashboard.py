@@ -377,7 +377,18 @@ def get_client_type_distribution(from_date=None, to_date=None):
     }
 
     return chart
+@frappe.whitelist()
+def get_distinct_industries():
+    rows = frappe.db.sql("""
+        SELECT DISTINCT
+            TRIM(LOWER(industry)) AS industry
+        FROM `tabDKP_Company`
+        WHERE industry IS NOT NULL
+          AND industry != ''
+        ORDER BY industry
+    """, as_dict=True)
 
+    return [r["industry"].title() for r in rows]
 import frappe
 from frappe.utils import get_datetime, add_days
 
@@ -588,25 +599,6 @@ from rapidfuzz import fuzz
 import frappe
 from frappe.utils import get_datetime, add_days
 
-
-# def compute_candidate_score(c, query):
-#     score = 0
-
-#     if c.get("candidate_name"):
-#         score = max(score, fuzz.partial_ratio(query, c["candidate_name"]) * 1.2)
-
-#     for field in [
-#         "skills_tags",
-#         "primary_skill_set",
-#         "secondary_skill_set",
-#         "key_certifications",
-#         "current_designation"
-#     ]:
-#         if c.get(field):
-#             score = max(score, fuzz.partial_ratio(query, c[field]))
-
-#     return int(score)
-
 def compute_candidate_score(c, query):
     score = 0
     query = query.lower()
@@ -703,7 +695,7 @@ def get_candidate_table(
 
         for c in candidates:
             score = compute_candidate_score(c, query)
-            if score >= 60:
+            if score >= 70 or (len(query) <= 3 and score >= 40):
                 c["_score"] = score
                 scored_candidates.append(c)
 
@@ -991,5 +983,5 @@ def get_companies(
         "total": total
     }
 
-
+# //
 
