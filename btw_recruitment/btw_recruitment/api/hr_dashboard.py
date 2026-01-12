@@ -377,7 +377,18 @@ def get_client_type_distribution(from_date=None, to_date=None):
     }
 
     return chart
+@frappe.whitelist()
+def get_distinct_industries():
+    rows = frappe.db.sql("""
+        SELECT DISTINCT
+            TRIM(LOWER(industry)) AS industry
+        FROM `tabDKP_Company`
+        WHERE industry IS NOT NULL
+          AND industry != ''
+        ORDER BY industry
+    """, as_dict=True)
 
+    return [r["industry"].title() for r in rows]
 import frappe
 from frappe.utils import get_datetime, add_days
 
