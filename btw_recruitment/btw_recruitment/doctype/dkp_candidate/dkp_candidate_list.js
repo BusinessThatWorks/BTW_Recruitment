@@ -1,4 +1,5 @@
 frappe.listview_settings["DKP_Candidate"] = {
+	hide_name_column: true,
 	onload(listview) {
 
 		const mark_btn = listview.page.add_inner_button(
