@@ -556,7 +556,7 @@ function add_candidates_to_opening(frm, candidate_names) {
         3
     );
 }
-
+// /
 frappe.ui.form.on("DKP_JobApplication_Child", {
 	stage: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
