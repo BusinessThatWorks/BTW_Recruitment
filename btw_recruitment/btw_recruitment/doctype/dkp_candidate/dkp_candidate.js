@@ -148,5 +148,21 @@ frappe.ui.form.on("DKP_Candidate", {
 
     }
 });
+frappe.ui.form.on("DKP_Candidate", {
+	date_of_birth(frm) {
+		if (!frm.doc.date_of_birth) {
+			frm.set_value("age", null);
+			return;
+		}
+
+		const dob = moment(frm.doc.date_of_birth, "YYYY-MM-DD");
+		const today = moment();
+
+		const age = today.diff(dob, "years");
+
+		frm.set_value("age", age);
+	}
+});
+
 
 
