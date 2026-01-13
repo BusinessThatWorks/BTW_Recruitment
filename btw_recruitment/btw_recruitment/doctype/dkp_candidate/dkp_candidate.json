@@ -12,13 +12,13 @@
   "mobile_number",
   "alternate_phone",
   "date_of_birth",
+  "age",
   "gender",
   "current_location",
   "marital_status",
   "total_experience_years",
   "address",
   "languages",
-  "age",
   "column_break_cjpe",
   "highest_qualification",
   "institute__university",
@@ -312,10 +312,12 @@
    "options": "DKP_Company"
   },
   {
+   "default": "0",
    "fieldname": "current_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Current CTC Monthly"
+   "label": "Current CTC Monthly",
+   "reqd": 1
   },
   {
    "fieldname": "expected_ctc_monthly",
@@ -344,7 +346,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-09 17:04:55.956517",
+ "modified": "2026-01-13 17:43:47.430153",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
