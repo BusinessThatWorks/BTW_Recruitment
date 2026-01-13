@@ -217,6 +217,9 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                     return;
                 }
                 if (candidate.is_no_poach) {
+                    // allow add
+                    selected_candidates.push(candidate_name);
+
                     blocked_candidates.push({
                         name: candidate.candidate_name || candidate.name,
                         reason: "no-poach",
@@ -229,7 +232,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 
             // Show warning if blocked candidates were selected
             if (blocked_candidates.length > 0) {
-                let blocked_msg = "The following candidates cannot be added:\n\n";
+                let blocked_msg = "The following candidates is:\n\n";
                 blocked_candidates.forEach(bc => {
                     if (bc.reason === "no-poach") {
                         blocked_msg += `• ${bc.name} - No-Poach (${bc.company})\n`;
@@ -378,7 +381,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                     <input type="checkbox" class="candidate-checkbox mr-2"
                                            data-candidate="${candidate.name}"
                                            id="opening-candidate-${globalIndex}"
-                                           ${is_no_poach ? "disabled" : ""}>
+                                           >
                                     <label for="opening-candidate-${globalIndex}"
                                            style="margin: 0; cursor: ${is_no_poach ? "not-allowed" : "pointer"};">
                                         <strong>${candidate.candidate_name || candidate.name}</strong>
@@ -395,6 +398,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                     }
                                 </div>
                                 <div class="ml-4" style="font-size: 0.9em; color: #6c757d;">
+                                <div><strong>Age:</strong> ${candidate.age || "-"}</div>
                                     <div><strong>Designation:</strong> ${candidate.current_designation || "-"}</div>
                                     <div><strong>Experience:</strong> ${candidate.total_experience_years || 0} years</div>
                                     <div><strong>Location:</strong> ${candidate.current_location || "-"}</div>
@@ -404,6 +408,8 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                             ? `<div><strong>Certifications:</strong> ${candidate.key_certifications}</div>`
                                             : ""
                                     }
+                                    <div><strong>Current CTC:</strong> ${candidate.current_ctc || "-"}</div>
+                                    <div><strong>Expected CTC:</strong> ${candidate.expected_ctc || "-"}</div>
                                 </div>
                                 <div class="ml-4 mt-2">
                                     <small style="color: #6c757d;">
@@ -435,7 +441,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                     ${matchPercentage}% Match
                                 </div>
                                 <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
-                                   class="btn btn-sm btn-link mt-2" style="font-size: 0.8em;">
+                                   class="btn btn-sm btn-secondary mt-2" style="font-size: 0.8em;">
                                     View Profile
                                 </a>
                             </div>

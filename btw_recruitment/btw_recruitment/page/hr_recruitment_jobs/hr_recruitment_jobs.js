@@ -430,7 +430,7 @@ function load_department_filter_options() {
     frappe.call({
         method: "frappe.client.get_list",
         args: {
-            doctype: "DKP_Job_Opening",
+            doctype: "DKP_Department",
             fields: ["department"],
             filters: [["department", "is", "set"]],
             limit_page_length: 1000
