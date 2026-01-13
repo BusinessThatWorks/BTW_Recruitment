@@ -27,11 +27,9 @@
   "notes",
   "section_break_gnpc",
   "shift_and_working_hours",
-  "shift_type",
   "working_hours",
   "working_hoursend",
   "week_off_policy",
-  "break_duration",
   "annual_leave_days",
   "billing_details_tab",
   "section_break_oxty",
@@ -228,21 +226,10 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "shift_type",
-   "fieldtype": "Select",
-   "label": "Shift Type",
-   "options": "General Shift\nDay Shift\nNight Shift\nRotational Shift\nHybrid Shift"
-  },
-  {
    "fieldname": "week_off_policy",
    "fieldtype": "Select",
    "label": "Week Off Policy",
    "options": "5 Days (Sat-Sun Off)\n6 Days (Sunday Off)\nAlternate Saturdays\nRoster Based"
-  },
-  {
-   "fieldname": "break_duration",
-   "fieldtype": "Data",
-   "label": "Break Duration (e.g., 45 mins)"
   },
   {
    "fieldname": "annual_leave_days",
@@ -252,7 +239,7 @@
   {
    "fieldname": "shift_and_working_hours",
    "fieldtype": "Heading",
-   "label": "Shift and Working Hours"
+   "label": "Working Hours"
   },
   {
    "fieldname": "company_details",
@@ -285,7 +272,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-12 16:54:52.493216",
+ "modified": "2026-01-13 12:29:05.088440",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",
