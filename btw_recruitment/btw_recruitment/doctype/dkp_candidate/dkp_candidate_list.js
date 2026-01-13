@@ -1,89 +1,3 @@
-// frappe.listview_settings["DKP_Candidate"] = {
-// 	onload(listview) {
-
-// 		const mark_btn = listview.page.add_inner_button(
-// 			__("Add to openings"),
-// 			() => {
-// 				const selected = listview.get_checked_items();
-
-// 				if (!selected.length) {
-// 					frappe.msgprint(__("Please select at least one record"));
-// 					return;
-// 				}
-
-// 				open_job_opening_dialog(selected);
-// 			}
-// 		);
-// 	}
-// };
-
-// function open_job_opening_dialog(selected_candidates) {
-
-// 	const dialog = new frappe.ui.Dialog({
-// 		title: __("Add Candidates to Job Opening"),
-// 		fields: [
-// 			{
-// 				label: __("Job Opening"),
-// 				fieldname: "job_opening",
-// 				fieldtype: "Link",
-// 				options: "DKP_Job_Opening",
-// 				reqd: 1
-// 			}
-// 		],
-// 		primary_action_label: __("Add"),
-// 		primary_action(values) {
-
-// 			if (!values.job_opening) return;
-
-// 			add_candidates_to_opening(values.job_opening, selected_candidates);
-// 			dialog.hide();
-// 		}
-// 	});
-
-// 	dialog.show();
-// }
-
-// function add_candidates_to_opening(job_opening, selected_candidates) {
-
-// 	frappe.call({
-// 		method: "frappe.client.get",
-// 		args: {
-// 			doctype: "DKP_Job_Opening",
-// 			name: job_opening
-// 		},
-// 		callback(r) {
-// 			if (!r.message) return;
-
-// 			const doc = r.message;
-
-// 			selected_candidates.forEach(row => {
-// 	const exists = (doc.candidates_table || []).some(
-// 		d => d.candidate_name === row.name
-// 	);
-
-// 	if (!exists) {
-// 		doc.candidates_table = doc.candidates_table || [];
-// 		doc.candidates_table.push({
-// 			candidate_name: row.name
-// 		});
-// 	}
-// });
-
-
-// 			frappe.call({
-// 				method: "frappe.client.save",
-// 				args: { doc },
-// 				callback() {
-// 					frappe.msgprint({
-// 						title: __("Success"),
-// 						message: __("Candidates added to Job Opening successfully"),
-// 						indicator: "green"
-// 					});
-// 				}
-// 			});
-// 		}
-// 	});
-// }
 frappe.listview_settings["DKP_Candidate"] = {
 	onload(listview) {
 
@@ -155,13 +69,14 @@ function open_job_opening_dialog(selected_candidates) {
 					</select>
 				</div>
 			</div>
-			<div class="row mb-2">
-				<div class="col-sm-6 mb-2">
+			<div class="row mb-2 align-items-center">
+				<div class="col-sm-4">
 					<select class="form-control" id="candidate-dialog-department">
 						<option value="">All Departments</option>
 					</select>
 				</div>
-				<div class="col-sm-6 mb-2">
+
+				<div class="col-sm-4">
 					<input
 						type="text"
 						class="form-control"
@@ -171,7 +86,14 @@ function open_job_opening_dialog(selected_candidates) {
 					>
 					<datalist id="candidate-company-list"></datalist>
 				</div>
+
+				<div class="col-sm-4 text-end">
+					<button class="btn btn-sm btn-dark" id="candidate-clear-filters">
+						Clear Filters
+					</button>
+				</div>
 			</div>
+
 			<div id="candidate-openings-list" style="max-height: 450px; overflow-y: auto;"></div>
 			<div id="candidate-openings-pagination" class="mt-2 d-flex justify-content-between align-items-center"></div>
 		</div>
@@ -229,9 +151,6 @@ function open_job_opening_dialog(selected_candidates) {
 		} else if (id === "candidate-dialog-department") {
 			filter_state.department = $(this).val();
 		} 
-		// else if (id === "candidate-dialog-company") {
-		// 	filter_state.company = $(this).val();
-		// }
 		current_page = 1;
 		apply_filters(dialog);
 	});
@@ -247,7 +166,36 @@ function open_job_opening_dialog(selected_candidates) {
 
 	current_page = 1;
 	apply_filters(dialog);
+	});
+	dialog.$wrapper.find("#candidate-clear-filters").on("click", function () {
+
+	// 🔹 Stop pending search debounce
+	clearTimeout(searchTimeout);
+
+	// 1️⃣ Clear UI fields
+	dialog.$wrapper.find(
+		"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-search"
+	).val("");
+
+	dialog.$wrapper.find("#candidate-dialog-company").val("");
+
+	// 2️⃣ Reset filter state
+	filter_state = {
+		status: null,
+		priority: null,
+		department: null,
+		company: null,
+		search: null
+	};
+
+	// 3️⃣ Reset pagination
+	current_page = 1;
+
+	// 4️⃣ Re-render
+	apply_filters(dialog);
 });
+
+
 	function load_filter_options(d) {
 		// Load departments
 		frappe.call({
@@ -268,7 +216,6 @@ function open_job_opening_dialog(selected_candidates) {
 			}
 		});
 
-		// Load companies
 		// Load companies
 		frappe.call({
 			method: "frappe.client.get_list",
