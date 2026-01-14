@@ -57,28 +57,33 @@
    "in_filter": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Company Name"
+   "label": "Company Name",
+   "reqd": 1
   },
   {
    "fieldname": "client_type",
    "fieldtype": "Select",
    "label": "Client Type",
-   "options": "Recruitment\nConsulting\nRecruitment + Consulting"
+   "options": "Recruitment\nConsulting\nRecruitment + Consulting",
+   "reqd": 1
   },
   {
    "fieldname": "industry",
    "fieldtype": "Data",
-   "label": "Industry"
+   "label": "Industry",
+   "reqd": 1
   },
   {
    "fieldname": "state",
    "fieldtype": "Data",
-   "label": "State"
+   "label": "State",
+   "reqd": 1
   },
   {
    "fieldname": "city",
    "fieldtype": "Data",
-   "label": "City"
+   "label": "City",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_oxty",
@@ -87,17 +92,20 @@
   {
    "fieldname": "billing_address",
    "fieldtype": "Data",
-   "label": "Billing Name"
+   "label": "Billing Name",
+   "reqd": 1
   },
   {
    "fieldname": "billing_mail",
    "fieldtype": "Data",
-   "label": "Billing Address"
+   "label": "Billing Address",
+   "reqd": 1
   },
   {
    "fieldname": "billing_number",
    "fieldtype": "Data",
-   "label": "Billing POC Phone"
+   "label": "Billing POC Phone",
+   "reqd": 1
   },
   {
    "fieldname": "company_details_section",
@@ -118,25 +126,29 @@
    "fieldname": "replacement_policy_days",
    "fieldtype": "Select",
    "label": "Replacement Policy (Days)",
-   "options": "30\n60\n90"
+   "options": "30\n60\n90",
+   "reqd": 1
   },
   {
    "fieldname": "standard_fee_type",
    "fieldtype": "Select",
    "label": "Standard Fee Type",
-   "options": "Percentage of CTC\nFlat Fee\nSlab Based\nNA"
+   "options": "Percentage of CTC\nFlat Fee\nSlab Based\nNA",
+   "reqd": 1
   },
   {
    "default": "0",
    "fieldname": "standard_fee_value",
    "fieldtype": "Float",
-   "label": "Standard Fee Value"
+   "label": "Standard Fee Value",
+   "reqd": 1
   },
   {
    "default": "e.g., \u201cPayment within 14 days of invoice\u201d.",
    "fieldname": "payment_terms",
    "fieldtype": "Small Text",
-   "label": "Payment Terms"
+   "label": "Payment Terms",
+   "reqd": 1
   },
   {
    "default": "Any special conditions (e.g., \u201cC-suite only\u201d, \u201cHigh priority client\u201d).",
@@ -157,18 +169,21 @@
   {
    "fieldname": "upload_contractagreement",
    "fieldtype": "Attach",
-   "label": "Upload Contract/Agreement"
+   "label": "Upload Contract/Agreement",
+   "reqd": 1
   },
   {
    "fieldname": "gstin",
    "fieldtype": "Data",
-   "label": "GSTIN"
+   "label": "GSTIN",
+   "reqd": 1
   },
   {
    "fieldname": "client_status",
    "fieldtype": "Select",
    "label": "Client Status",
-   "options": "Active\nInactive"
+   "options": "Active\nInactive",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_wmab",
@@ -177,12 +192,14 @@
   {
    "fieldname": "address",
    "fieldtype": "Data",
-   "label": "Address"
+   "label": "Address",
+   "reqd": 1
   },
   {
    "fieldname": "pin",
    "fieldtype": "Int",
-   "label": "PIN"
+   "label": "PIN",
+   "reqd": 1
   },
   {
    "fieldname": "billing_poc",
@@ -192,17 +209,20 @@
   {
    "fieldname": "billing_email_to",
    "fieldtype": "Data",
-   "label": "Billing Email (To)"
+   "label": "Billing Email (To)",
+   "reqd": 1
   },
   {
    "fieldname": "billing_email_cc",
    "fieldtype": "Data",
-   "label": "Billing Email (CC)"
+   "label": "Billing Email (CC)",
+   "reqd": 1
   },
   {
    "fieldname": "billing_poc_name",
    "fieldtype": "Data",
-   "label": "Billing POC Name"
+   "label": "Billing POC Name",
+   "reqd": 1
   },
   {
    "fieldname": "billing_poc_email",
@@ -217,7 +237,8 @@
   {
    "fieldname": "billing_phone",
    "fieldtype": "Data",
-   "label": "Billing Phone"
+   "label": "Billing Phone",
+   "reqd": 1
   },
   {
    "fieldname": "working_hours",
@@ -253,7 +274,8 @@
    "fieldname": "pf_compliance",
    "fieldtype": "Select",
    "label": "PF Compliance",
-   "options": "\nYes\nNo"
+   "options": "\nYes\nNo",
+   "reqd": 1
   },
   {
    "fieldname": "working_hoursend",
@@ -263,19 +285,21 @@
   {
    "fieldname": "name_of_director",
    "fieldtype": "Data",
-   "label": "Name of Director"
+   "label": "Name of Director",
+   "reqd": 1
   },
   {
    "fieldname": "phone_number",
    "fieldtype": "Data",
-   "label": "Phone Number"
+   "label": "Phone Number",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-14 10:51:27.773984",
+ "modified": "2026-01-14 16:53:47.699680",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",
