@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class DKP_JobOpeningInterview_Child(Document):
+class DKP_Interview_Child(Document):
 	pass

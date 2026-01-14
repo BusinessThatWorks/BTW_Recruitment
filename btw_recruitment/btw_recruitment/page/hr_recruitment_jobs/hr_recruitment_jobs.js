@@ -138,7 +138,8 @@ frappe.pages['hr-recruitment-jobs'].on_page_load = function(wrapper) {
 function load_job_dashboard() {
     load_job_kpis();
 	load_job_health();
-	// load_urgent_jobs();
+    load_department_filter_options()
+
 }
 
 function load_job_kpis() {

@@ -5,25 +5,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "candidate",
+  "candidate_name",
   "job_opening_id",
-  "job_opening_title",
-  "recruiter_id",
-  "recruiter_name",
-  "stage",
-  "interviewer",
-  "date",
-  "mode",
-  "rating",
-  "feedback"
+  "interview_child_table"
  ],
  "fields": [
-  {
-   "fetch_from": "job_application_id.candidate_name",
-   "fieldname": "candidate",
-   "fieldtype": "Data",
-   "label": "Candidate"
-  },
   {
    "fetch_from": "job_application_id.job_opening_id",
    "fieldname": "job_opening_id",
@@ -31,61 +17,24 @@
    "label": "Job Opening ID"
   },
   {
-   "fetch_from": "job_application_id.job_opening_title",
-   "fieldname": "job_opening_title",
-   "fieldtype": "Data",
-   "label": "Job Opening Title"
+   "fetch_from": "job_application_id.candidate_name",
+   "fieldname": "candidate_name",
+   "fieldtype": "Link",
+   "label": "Candidate Name",
+   "options": "DKP_Candidate"
   },
   {
-   "fetch_from": "job_application_id.recruiter",
-   "fieldname": "recruiter_id",
-   "fieldtype": "Data",
-   "label": "Recruiter ID"
-  },
-  {
-   "fetch_from": "job_application_id.recruiter_name",
-   "fieldname": "recruiter_name",
-   "fieldtype": "Data",
-   "label": "Recruiter Name"
-  },
-  {
-   "fetch_from": "job_application_id.stage",
-   "fieldname": "stage",
-   "fieldtype": "Data",
-   "label": "Stage"
-  },
-  {
-   "fieldname": "interviewer",
-   "fieldtype": "Data",
-   "label": "Interviewer"
-  },
-  {
-   "fieldname": "date",
-   "fieldtype": "Datetime",
-   "label": "Date"
-  },
-  {
-   "fieldname": "mode",
-   "fieldtype": "Select",
-   "label": "Mode",
-   "options": "Online\nOffline"
-  },
-  {
-   "fieldname": "rating",
-   "fieldtype": "Float",
-   "label": "Rating"
-  },
-  {
-   "fieldname": "feedback",
-   "fieldtype": "Small Text",
-   "label": "Feedback"
+   "fieldname": "interview_child_table",
+   "fieldtype": "Table",
+   "label": "Interview Child Table",
+   "options": "DKP_Interview_Child"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-09 17:06:46.578041",
+ "modified": "2026-01-14 12:41:08.887008",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
