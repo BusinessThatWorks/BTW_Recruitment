@@ -3,8 +3,8 @@
  "creation": "2025-12-16 14:58:54.274157",
  "docstatus": 0,
  "doctype": "Page",
- "idx": 0,
- "modified": "2025-12-19 10:40:03.069008",
+ "idx": 2,
+ "modified": "2026-01-14 14:24:16.642789",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "hr-recruitment-jobs",
@@ -19,6 +19,9 @@
   },
   {
    "role": "BTW Recruiter"
+  },
+  {
+   "role": "DKP Recruiter"
   }
  ],
  "script": null,

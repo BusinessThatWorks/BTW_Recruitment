@@ -171,7 +171,7 @@ function open_job_opening_dialog(selected_candidates) {
 	});
 	dialog.$wrapper.find("#candidate-clear-filters").on("click", function () {
 
-	// 🔹 Stop pending search debounce
+	// Stop pending search debounce
 	clearTimeout(searchTimeout);
 
 	// 1️⃣ Clear UI fields

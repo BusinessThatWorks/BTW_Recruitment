@@ -8,10 +8,9 @@ from frappe.model.document import Document
 class DKP_Company(Document):
 	# pass
 	def autoname(self):
-			# Use company_name as document name
-			self.name = self.company_name.strip()
+		self.name = self.company_name.strip()
 
-			def validate(self):
+		def validate(self):
 				# Check duplicate company name
 				if frappe.db.exists(
 					"Company",
@@ -23,4 +22,4 @@ class DKP_Company(Document):
 					frappe.throw(
 						f"Company '{self.company_name}' already exists.",
 						frappe.DuplicateEntryError
-					)
+					)					
