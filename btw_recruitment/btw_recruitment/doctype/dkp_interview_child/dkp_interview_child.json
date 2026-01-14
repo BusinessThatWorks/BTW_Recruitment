@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-14 12:15:27.507913",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "interview_stage",
+  "interview_date_time",
+  "interviewer_email",
+  "feedback"
+ ],
+ "fields": [
+  {
+   "fieldname": "interview_stage",
+   "fieldtype": "Select",
+   "label": "Interview Stage",
+   "options": "Stage 1\nStage 2\nStage 3\nStage 4\nStage 5\nStage 6\nStage 7\nStage 8\nStage 9\nStage 10"
+  },
+  {
+   "fieldname": "interview_date_time",
+   "fieldtype": "Datetime",
+   "label": "Interview Date Time"
+  },
+  {
+   "fieldname": "interviewer_email",
+   "fieldtype": "Data",
+   "label": "Interviewer Email"
+  },
+  {
+   "fieldname": "feedback",
+   "fieldtype": "Data",
+   "label": "Feedback"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-14 12:40:40.766305",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "DKP_Interview_Child",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
