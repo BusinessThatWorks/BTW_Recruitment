@@ -111,10 +111,10 @@
    "fieldtype": "Section Break"
   },
   {
-   "default": "0",
    "fieldname": "no_poach_flag",
-   "fieldtype": "Check",
-   "label": "No Poach Flag"
+   "fieldtype": "Select",
+   "label": "No Poach Flag",
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "column_break_izwc",
@@ -298,7 +298,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-14 23:06:24.715218",
+ "modified": "2026-01-14 23:59:01.162620",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",

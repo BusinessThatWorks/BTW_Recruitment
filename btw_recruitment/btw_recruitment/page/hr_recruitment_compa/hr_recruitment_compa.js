@@ -362,7 +362,7 @@ function render_company_table(data, total) {
                 <td>${d.industry || "-"}</td>
                 <td>${d.client_status || "-"}</td>
                 <td>${d.open_jobs}</td>
-                <td>${d.no_poach ? "Yes" : "No"}</td>
+                <td>${d.no_poach || "-"}</td>
                 <td>${d.replacement_days || "-"}</td>
             </tr>
         `).appendTo(table.find("tbody"));

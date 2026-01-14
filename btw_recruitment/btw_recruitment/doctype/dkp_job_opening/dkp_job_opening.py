@@ -283,15 +283,18 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             candidate["match_reasons"] = match_reasons
 
             # Check no-poach status
-            candidate["is_no_poach"] = False
-            candidate["no_poach_company"] = ""
-            if candidate.get("current_company_master"):
-                no_poach_flag = frappe.db.get_value(
-                    "DKP_Company", candidate.current_company_master, "no_poach_flag"
-                )
-                if no_poach_flag:
-                    candidate["is_no_poach"] = True
-                    candidate["no_poach_company"] = candidate.current_company_master
+            no_poach_flag = frappe.db.get_value(
+                "DKP_Company",
+                candidate.current_company_master,
+                "no_poach_flag"
+            )
+
+            if no_poach_flag == "Yes":
+                candidate["is_no_poach"] = True
+                candidate["no_poach_company"] = candidate.current_company_master
+            else:
+                candidate["is_no_poach"] = False
+                candidate["no_poach_company"] = ""
 
             matched_candidates.append(candidate)
 

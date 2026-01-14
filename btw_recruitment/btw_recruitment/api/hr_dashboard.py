@@ -447,20 +447,6 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
 
         job_counts = {d["company"]: d["count"] for d in job_data}
 
-    # Fetch Active Applications count per company
-    # application_counts = {}
-    # if company_names:
-    #     app_data = frappe.db.sql("""
-    #         SELECT jo.company, COUNT(ja.name) as count
-    #         FROM `tabDKP_Job_Application` ja
-    #         INNER JOIN `tabDKP_Job_Opening` jo
-    #             ON ja.job_opening_title = jo.name
-    #         WHERE jo.company IN %(companies)s
-    #         GROUP BY jo.company
-    #     """, {"companies": tuple(company_names)}, as_dict=1)
-
-    #     application_counts = {d["company"]: d["count"] for d in app_data}
-
     # Build final table data
     result = []
     for c in companies:
@@ -471,7 +457,7 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
             "client_status": c.client_status,
             "open_jobs": job_counts.get(c.name, 0),
             # "active_applications": application_counts.get(c.name, 0),
-            "no_poach": c.no_poach_flag,
+            "no_poach": c.no_poach_flag or None,
             "replacement_days": c.replacement_policy_days
         })
 
