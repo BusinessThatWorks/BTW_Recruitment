@@ -282,8 +282,13 @@
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-01-14 12:10:54.633419",
+ "links": [
+  {
+   "link_doctype": "DKP_Interview",
+   "link_fieldname": "job_opening"
+  }
+ ],
+ "modified": "2026-01-14 15:04:41.571873",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

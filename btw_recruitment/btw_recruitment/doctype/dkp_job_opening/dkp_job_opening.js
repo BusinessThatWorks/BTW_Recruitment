@@ -556,44 +556,71 @@ function add_candidates_to_opening(frm, candidate_names) {
         3
     );
 }
-// /
+
+// Improved interview creation with check for candidate selection and better flow
 frappe.ui.form.on("DKP_JobApplication_Child", {
-	stage: function (frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
+    create_interview(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
 
-		if (row.stage === "Shortlisted For Interview") {
-			add_candidate_to_interview_table(frm, row.candidate_name);
-		}
-	}
+        if (!row.candidate_name) {
+            frappe.msgprint("Please select a candidate first");
+            return;
+        }
+
+        frappe.db.get_value(
+            "DKP_Interview",
+            {
+                job_opening: frm.doc.name,
+                candidate_name: row.candidate_name
+            },
+            "name"
+        ).then(r => {
+            if (r.message && r.message.name) {
+                // ✅ Interview exists → OPEN it
+                frappe.set_route("Form", "DKP_Interview", r.message.name);
+                return;
+            }
+
+            // ✅ Interview does not exist → CREATE it
+            frappe.new_doc("DKP_Interview", {
+                job_opening: frm.doc.name,
+                candidate_name: row.candidate_name
+            });
+        });
+    }
 });
-function add_candidate_to_interview_table(frm, candidate_name) {
-	if (!candidate_name) return;
-
-	// 🔁 Avoid duplicates
-	let exists = frm.doc.dkp_jobopeninginterview_child?.some(
-		r => r.candidate_name === candidate_name
-	);
-
-	if (exists) {
-		return;
-	}
-
-	let new_row = frm.add_child("interview");
-	new_row.candidate_name = candidate_name;
-
-	frm.refresh_field("interview");
-}
 frappe.ui.form.on("DKP_JobApplication_Child", {
-	stage: function (frm, cdt, cdn) {
-		let show = false;
+    candidate_name(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
 
-		(frm.doc.candidates_table || []).forEach(row => {
-			if (row.stage === "Shortlisted For Interview") {
-				show = true;
-			}
-		});
+        if (!row.candidate_name) return;
 
-		frm.set_value("show_interview_table", show ? 1 : 0);
-	}
+        let duplicate = false;
+
+        (frm.doc.candidates_table || []).forEach(r => {
+            if (
+                r.name !== row.name &&
+                r.candidate_name === row.candidate_name
+            ) {
+                duplicate = true;
+            }
+        });
+
+        if (duplicate) {
+            frappe.msgprint({
+                title: __("Duplicate Candidate"),
+                message: __(
+                    `Candidate <b>${row.candidate_name}</b> is already added in this job opening.`
+                ),
+                indicator: "red"
+            });
+
+            frappe.model.set_value(cdt, cdn, "candidate_name", "");
+        }
+    }
 });
+
+
+
+
 
