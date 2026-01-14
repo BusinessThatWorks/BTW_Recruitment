@@ -1,9 +1,17 @@
-# Copyright (c) 2025, Sarim and contributors
-# For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
 class DKP_Interview(Document):
-	pass
+
+    def after_insert(self):
+        frappe.db.set_value(
+            "DKP_JobApplication_Child",
+            {
+                "parent": self.job_opening,
+                "candidate_name": self.candidate_name
+            },
+            "interview",
+            self.name
+        )

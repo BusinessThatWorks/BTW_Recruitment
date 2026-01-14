@@ -8,13 +8,10 @@
  "field_order": [
   "candidate_name",
   "stage",
-  "interview_date",
-  "interview_feedback",
   "eq_test_score",
   "disc_score",
   "remarks",
-  "interview_scheduling",
-  "select_vyoz"
+  "create_interview"
  ],
  "fields": [
   {
@@ -31,16 +28,6 @@
    "options": "\nIn Review\nShortlisted For Interview\nInterview in Progress\nSelected\nOffered\nOffer Drop\nJoined"
   },
   {
-   "fieldname": "interview_date",
-   "fieldtype": "Datetime",
-   "label": "Interview Date"
-  },
-  {
-   "fieldname": "interview_feedback",
-   "fieldtype": "Data",
-   "label": "Interview Feedback"
-  },
-  {
    "fetch_from": "eq_test_score_link.eq_test_score",
    "fieldname": "eq_test_score",
    "fieldtype": "Data",
@@ -52,29 +39,22 @@
    "label": "Recruiter Remarks"
   },
   {
-   "depends_on": "eval:doc.stage == \"Shortlisted For Interview\";",
-   "fieldname": "interview_scheduling",
-   "fieldtype": "Link",
-   "label": "Interview Scheduling",
-   "options": "DKP_Interview"
-  },
-  {
-   "fieldname": "select_vyoz",
-   "fieldtype": "Select",
-   "label": "Interview Stage",
-   "options": "stage 1\nstage 2\nstage 3"
-  },
-  {
    "fieldname": "disc_score",
    "fieldtype": "Data",
    "label": "DISC Score"
+  },
+  {
+   "depends_on": "eval:doc.stage == \"Shortlisted For Interview\";",
+   "fieldname": "create_interview",
+   "fieldtype": "Button",
+   "label": "Create Interview"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-07 14:21:18.104899",
+ "modified": "2026-01-14 15:30:25.881010",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",

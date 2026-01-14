@@ -6,16 +6,10 @@
  "engine": "InnoDB",
  "field_order": [
   "candidate_name",
-  "job_opening_id",
+  "job_opening",
   "interview_child_table"
  ],
  "fields": [
-  {
-   "fetch_from": "job_application_id.job_opening_id",
-   "fieldname": "job_opening_id",
-   "fieldtype": "Data",
-   "label": "Job Opening ID"
-  },
   {
    "fetch_from": "job_application_id.candidate_name",
    "fieldname": "candidate_name",
@@ -28,13 +22,20 @@
    "fieldtype": "Table",
    "label": "Interview Child Table",
    "options": "DKP_Interview_Child"
+  },
+  {
+   "fetch_from": "job_application_id.job_opening_id",
+   "fieldname": "job_opening",
+   "fieldtype": "Link",
+   "label": "Job Opening",
+   "options": "DKP_Job_Opening"
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-14 12:41:08.887008",
+ "modified": "2026-01-14 14:47:55.301793",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
