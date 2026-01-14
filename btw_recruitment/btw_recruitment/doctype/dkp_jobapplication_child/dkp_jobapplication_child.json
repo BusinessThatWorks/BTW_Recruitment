@@ -11,7 +11,8 @@
   "eq_test_score",
   "disc_score",
   "remarks",
-  "create_interview"
+  "create_interview",
+  "interview"
  ],
  "fields": [
   {
@@ -48,13 +49,20 @@
    "fieldname": "create_interview",
    "fieldtype": "Button",
    "label": "Create Interview"
+  },
+  {
+   "fieldname": "interview",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Interview",
+   "options": "DKP_Interview"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-14 15:30:25.881010",
+ "modified": "2026-01-14 20:44:36.580216",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",

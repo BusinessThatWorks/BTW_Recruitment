@@ -39,7 +39,7 @@ def get_urgent_openings(from_date=None, to_date=None):
             "name",
             "designation",
             "company",
-            "assign_recruiter",
+            # "assign_recruiter",
             "priority",
             "number_of_positions",
             "status"
@@ -448,18 +448,18 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
         job_counts = {d["company"]: d["count"] for d in job_data}
 
     # Fetch Active Applications count per company
-    application_counts = {}
-    if company_names:
-        app_data = frappe.db.sql("""
-            SELECT jo.company, COUNT(ja.name) as count
-            FROM `tabDKP_Job_Application` ja
-            INNER JOIN `tabDKP_Job_Opening` jo
-                ON ja.job_opening_title = jo.name
-            WHERE jo.company IN %(companies)s
-            GROUP BY jo.company
-        """, {"companies": tuple(company_names)}, as_dict=1)
+    # application_counts = {}
+    # if company_names:
+    #     app_data = frappe.db.sql("""
+    #         SELECT jo.company, COUNT(ja.name) as count
+    #         FROM `tabDKP_Job_Application` ja
+    #         INNER JOIN `tabDKP_Job_Opening` jo
+    #             ON ja.job_opening_title = jo.name
+    #         WHERE jo.company IN %(companies)s
+    #         GROUP BY jo.company
+    #     """, {"companies": tuple(company_names)}, as_dict=1)
 
-        application_counts = {d["company"]: d["count"] for d in app_data}
+    #     application_counts = {d["company"]: d["count"] for d in app_data}
 
     # Build final table data
     result = []
@@ -470,7 +470,7 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
             "industry": c.industry,
             "client_status": c.client_status,
             "open_jobs": job_counts.get(c.name, 0),
-            "active_applications": application_counts.get(c.name, 0),
+            # "active_applications": application_counts.get(c.name, 0),
             "no_poach": c.no_poach_flag,
             "replacement_days": c.replacement_policy_days
         })
@@ -736,9 +736,9 @@ def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
     if department:
         conditions.append("department = %s")
         values.append(department)
-    if recruiter:
-        conditions.append("assign_recruiter LIKE %s")
-        values.append(f"%{recruiter}%")
+    # if recruiter:
+    #     conditions.append("assign_recruiter LIKE %s")
+    #     values.append(f"%{recruiter}%")
     if status:
         conditions.append("status = %s")
         values.append(status)
@@ -754,7 +754,7 @@ def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
 
     # Get paged data
     data = frappe.db.sql(f"""
-        SELECT name, designation, company, department, assign_recruiter AS recruiter, 
+        SELECT name, designation, company, department,  
                status, number_of_positions, creation
         FROM `tabDKP_Job_Opening`
         {where_clause}
@@ -764,82 +764,82 @@ def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
 
     return {"data": data, "total": total}
 
-@frappe.whitelist()
-def get_job_applications_table(from_date=None, to_date=None, limit=20, offset=0,
-                                company_name=None, job_opening_title=None, designation=None):
-    """
-    Returns paginated job applications table data with filters and date filters.
-    Fetches from DKP_Job_Application doctype with child table candidates.
-    """
-    limit = int(limit)
-    offset = int(offset)
+# @frappe.whitelist()
+# def get_job_applications_table(from_date=None, to_date=None, limit=20, offset=0,
+#                                 company_name=None, job_opening_title=None, designation=None):
+#     """
+#     Returns paginated job applications table data with filters and date filters.
+#     Fetches from DKP_Job_Application doctype with child table candidates.
+#     """
+#     limit = int(limit)
+#     offset = int(offset)
 
-    conditions = []
-    values = []
+#     conditions = []
+#     values = []
 
-    # Date filters
-    if from_date:
-        conditions.append("ja.creation >= %s")
-        values.append(from_date + " 00:00:00")
-    if to_date:
-        conditions.append("ja.creation <= %s")
-        values.append(to_date + " 23:59:59")
+#     # Date filters
+#     if from_date:
+#         conditions.append("ja.creation >= %s")
+#         values.append(from_date + " 00:00:00")
+#     if to_date:
+#         conditions.append("ja.creation <= %s")
+#         values.append(to_date + " 23:59:59")
     
-    # Additional filters
-    if company_name:
-        conditions.append("ja.company_name LIKE %s")
-        values.append(f"%{company_name}%")
-    if job_opening_title:
-        conditions.append("ja.job_opening_title LIKE %s")
-        values.append(f"%{job_opening_title}%")
-    if designation:
-        conditions.append("ja.designation LIKE %s")
-        values.append(f"%{designation}%")
+#     # Additional filters
+#     if company_name:
+#         conditions.append("ja.company_name LIKE %s")
+#         values.append(f"%{company_name}%")
+#     if job_opening_title:
+#         conditions.append("ja.job_opening_title LIKE %s")
+#         values.append(f"%{job_opening_title}%")
+#     if designation:
+#         conditions.append("ja.designation LIKE %s")
+#         values.append(f"%{designation}%")
 
-    where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+#     where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
 
-    # Filtered total
-    total = frappe.db.sql(f"""
-        SELECT COUNT(DISTINCT ja.name) 
-        FROM `tabDKP_Job_Application` ja
-        {where_clause}
-    """, values)[0][0]
+#     # Filtered total
+#     total = frappe.db.sql(f"""
+#         SELECT COUNT(DISTINCT ja.name) 
+#         FROM `tabDKP_Job_Application` ja
+#         {where_clause}
+#     """, values)[0][0]
 
-    # Get paged job applications
-    applications = frappe.db.sql(f"""
-        SELECT ja.name, ja.company_name, ja.job_opening_title, ja.designation, 
-               ja.joining_date, ja.creation
-        FROM `tabDKP_Job_Application` ja
-        {where_clause}
-        ORDER BY ja.creation DESC
-        LIMIT {cint(limit)} OFFSET {cint(offset)}
-    """, values, as_dict=1)
+#     # Get paged job applications
+#     applications = frappe.db.sql(f"""
+#         SELECT ja.name, ja.company_name, ja.job_opening_title, ja.designation, 
+#                ja.joining_date, ja.creation
+#         FROM `tabDKP_Job_Application` ja
+#         {where_clause}
+#         ORDER BY ja.creation DESC
+#         LIMIT {cint(limit)} OFFSET {cint(offset)}
+#     """, values, as_dict=1)
 
-    # Get child table candidates for each application
-    application_names = [app.name for app in applications]
-    candidates_data = {}
+#     # Get child table candidates for each application
+#     application_names = [app.name for app in applications]
+#     candidates_data = {}
     
-    if application_names:
-        # Get all candidates for these applications
-        candidates = frappe.db.sql("""
-            SELECT parent, candidate_name, stage, interview_date, interview_feedback, name
-            FROM `tabDKP_JobApplication_Child`
-            WHERE parent IN %(applications)s
-            ORDER BY modified DESC
-        """, {"applications": tuple(application_names)}, as_dict=1)
+#     if application_names:
+#         # Get all candidates for these applications
+#         candidates = frappe.db.sql("""
+#             SELECT parent, candidate_name, stage, interview_date, interview_feedback, name
+#             FROM `tabDKP_JobApplication_Child`
+#             WHERE parent IN %(applications)s
+#             ORDER BY modified DESC
+#         """, {"applications": tuple(application_names)}, as_dict=1)
         
-        # Group candidates by parent application
-        for candidate in candidates:
-            if candidate.parent not in candidates_data:
-                candidates_data[candidate.parent] = []
-            candidates_data[candidate.parent].append(candidate)
+#         # Group candidates by parent application
+#         for candidate in candidates:
+#             if candidate.parent not in candidates_data:
+#                 candidates_data[candidate.parent] = []
+#             candidates_data[candidate.parent].append(candidate)
     
-    # Attach candidates to each application
-    for app in applications:
-        app.candidates = candidates_data.get(app.name, [])
-        app.candidates_count = len(app.candidates)
+#     # Attach candidates to each application
+#     for app in applications:
+#         app.candidates = candidates_data.get(app.name, [])
+#         app.candidates_count = len(app.candidates)
 
-    return {"data": applications, "total": total}
+#     return {"data": applications, "total": total}
 
 def compute_company_score(c, query):
     score = 0

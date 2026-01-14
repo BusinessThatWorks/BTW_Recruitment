@@ -342,7 +342,6 @@ function render_company_table(data, total) {
                     <th>Industry</th>
                     <th>Status</th>
                     <th>Open Jobs</th>
-                    <th>Active Applications</th>
                     <th>Poach</th>
                     <th>Replacement Days</th>
                 </tr>
@@ -363,7 +362,6 @@ function render_company_table(data, total) {
                 <td>${d.industry || "-"}</td>
                 <td>${d.client_status || "-"}</td>
                 <td>${d.open_jobs}</td>
-                <td>${d.active_applications}</td>
                 <td>${d.no_poach ? "Yes" : "No"}</td>
                 <td>${d.replacement_days || "-"}</td>
             </tr>
