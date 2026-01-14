@@ -38,7 +38,7 @@ def get_urgent_openings(from_date=None, to_date=None):
         fields=[
             "name",
             "designation",
-            "company",
+            "company_name",
             # "assign_recruiter",
             "priority",
             "number_of_positions",
@@ -754,7 +754,7 @@ def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
 
     # Get paged data
     data = frappe.db.sql(f"""
-        SELECT name, designation, company, department,  
+        SELECT name, designation, company_name, department,  
                status, number_of_positions, creation
         FROM `tabDKP_Job_Opening`
         {where_clause}

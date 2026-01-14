@@ -28,7 +28,7 @@ class DKP_Job_Opening(Document):
         <p>A new job opening has been assigned to you.</p>
 
         <ul>
-            <li><b>Company:</b> {self.company}</li>
+            <li><b>Company:</b> {self.company_name}</li>
             <li><b>Designation:</b> {self.designation}</li>
             <li><b>Department:</b> {self.department or "-"}</li>
             <li><b>Location:</b> {self.location or "-"}</li>

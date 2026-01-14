@@ -2,7 +2,6 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "{company_name}.####",
  "creation": "2025-11-14 17:59:36.157631",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -299,11 +298,11 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-14 16:53:47.699680",
+ "modified": "2026-01-14 23:06:24.715218",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",
- "naming_rule": "Expression",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {
