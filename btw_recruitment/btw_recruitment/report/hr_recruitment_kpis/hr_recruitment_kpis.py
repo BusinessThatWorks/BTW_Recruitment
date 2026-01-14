@@ -32,33 +32,33 @@ def execute(filters=None):
     blacklisted_candidates = frappe.db.count("DKP_Candidate", {"blacklisted": 1})
     date_filter = get_date_filter(filters)
 
-    # ---------------- ACTIVE APPLICATIONS ----------------
-    active_filters = [
-    ["parenttype", "=", "DKP_Job_Application"],
-    ["stage", "in", ["", "In Review", "Screening", "Interview","Offered"]]
-]
+#     # ---------------- ACTIVE APPLICATIONS ----------------
+#     active_filters = [
+#     ["parenttype", "=", "DKP_Job_Application"],
+#     ["stage", "in", ["", "In Review", "Screening", "Interview","Offered"]]
+# ]
 
-    if date_filter:
-        active_filters.append(["creation", *date_filter])
+#     if date_filter:
+#         active_filters.append(["creation", *date_filter])
 
-    active_applications = frappe.db.count(
-        "DKP_JobApplication_Child",
-        active_filters
-    )
+#     active_applications = frappe.db.count(
+#         "DKP_JobApplication_Child",
+#         active_filters
+#     )
 
         # ---------------- OFFERS RELEASED ----------------
-    offer_filters = [
-    ["parenttype", "=", "DKP_Job_Application"],
-    ["stage", "=", "Offered"]
-]
+#     offer_filters = [
+#     ["parenttype", "=", "DKP_Job_Application"],
+#     ["stage", "=", "Offered"]
+# ]
 
-    if date_filter:
-        offer_filters.append(["creation", *date_filter])
+#     if date_filter:
+#         offer_filters.append(["creation", *date_filter])
 
-    offers_released = frappe.db.count(
-        "DKP_JobApplication_Child",
-        offer_filters
-    )
+#     offers_released = frappe.db.count(
+#         "DKP_JobApplication_Child",
+#         offer_filters
+#     )
     # ---------------- TOTAL JOB OPENINGS ----------------
     job_opening_filters = []
 
@@ -73,8 +73,8 @@ def execute(filters=None):
     data = [{
         "total_candidates": total_candidates,
         "blacklisted_candidates": blacklisted_candidates,
-        "active_applications": active_applications,
-        "offers_released": offers_released,
+        # "active_applications": active_applications,
+        # "offers_released": offers_released,
         "total_job_openings": total_job_openings
     }]
 

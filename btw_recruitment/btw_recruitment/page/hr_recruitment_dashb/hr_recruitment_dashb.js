@@ -110,35 +110,9 @@ function on_global_date_change() {
         load_jobs_table();
         load_recruiter_filter_options();
     }
-    // if (active_tab === "job-applications") {
-    //     job_applications_table_state.offset = 0;
-    //     load_job_applications_table();
-    // }
+    
     if (active_tab === "company") { company_table_state.offset = 0; load_company_table(); }
 }
-
-// // When Stage filter changes
-// $(document).on("change", "#filter-stage", function() {
-//     dashboard_filters.stage = $(this).val() || null;
-
-//     // Reset pagination
-//     applications_pagination.offset = 0;
-//     applications_pagination.current_page = 1;
-
-//     // Reload table
-//     load_applications_table();
-// });
-
-// // Clear filters button
-// $(document).on("click", "#clear-application-filters", function() {
-//     $("#filter-stage").val("");
-//     dashboard_filters.stage = null;
-
-//     applications_pagination.offset = 0;
-//     applications_pagination.current_page = 1;
-
-//     load_applications_table();
-// });
 
 $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
     const tab = $(this).data("tab");
@@ -559,7 +533,6 @@ function render_urgent_openings_table(callback) {
                                 <th>#</th>
                                 <th>Job Opening</th>
                                 <th>Company</th>
-                                <th>Recruiter</th>
                                 <th>Priority</th>
                                 <th>Positions</th>
                                 <th>Status</th>
@@ -584,7 +557,6 @@ function render_urgent_openings_table(callback) {
                             </a>
                         </td>
                         <td>${row.company || "-"}</td>
-                        <td>${row.assign_recruiter || "-"}</td>
                         <td>
                             <span style="
                                 padding:4px 10px;
@@ -765,24 +737,24 @@ function get_ageing_days(creation) {
 }
 let recruiter_loaded = false;
 
-function load_recruiter_filter_options() {
-    if (recruiter_loaded) return;
-    recruiter_loaded = true;
+// function load_recruiter_filter_options() {
+//     if (recruiter_loaded) return;
+//     recruiter_loaded = true;
 
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_recruiter_filter_options",
-        callback(r) {
-            const $rec = $("#filter-job-recruiter");
-            $rec.find("option:not(:first)").remove();
+//     frappe.call({
+//         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_recruiter_filter_options",
+//         callback(r) {
+//             const $rec = $("#filter-job-recruiter");
+//             $rec.find("option:not(:first)").remove();
 
-            r.message.forEach(u => {
-                $rec.append(
-                    `<option value="${u.name}">${u.full_name || u.name}</option>`
-                );
-            });
-        }
-    });
-}
+//             r.message.forEach(u => {
+//                 $rec.append(
+//                     `<option value="${u.name}">${u.full_name || u.name}</option>`
+//                 );
+//             });
+//         }
+//     });
+// }
 
 
 
@@ -798,7 +770,7 @@ function load_jobs_table() {
             offset: jobs_table_state.offset,
             designation: jobs_table_filters.designation,
             department: jobs_table_filters.department,
-            recruiter: jobs_table_filters.recruiter,
+            // recruiter: jobs_table_filters.recruiter,
             status: jobs_table_filters.status
         },
         callback(r) {
@@ -826,7 +798,6 @@ function render_jobs_table(data, total) {
                     <th>Company</th>
                     <th>Designation</th>
                     <th>Department</th>
-                    <th>Recruiter</th>
                     <th>Status</th>
                     <th>No. of Positions</th>
                     <th>Created On</th>
@@ -851,7 +822,6 @@ function render_jobs_table(data, total) {
                     <td>${d.company || "-"}</td>
                     <td>${d.designation || "-"}</td>
                     <td>${d.department || "-"}</td>
-                    <td>${d.recruiter || "-"}</td>
                     <td>${d.status || "-"}</td>
                     <td>${d.number_of_positions || "-"}</td>
                     <td>${moment(d.creation).format("DD-MM-YYYY hh:mm A")}</td>

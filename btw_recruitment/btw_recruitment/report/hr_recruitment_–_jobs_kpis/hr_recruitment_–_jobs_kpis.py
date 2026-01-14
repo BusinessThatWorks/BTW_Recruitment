@@ -66,23 +66,23 @@ def execute(filters=None):
         job_filters + [["priority", "in", ["High", "Critical"]]]
     )
 
-    # ---------------- SLA BREACHED ----------------
-    sla_filters = job_filters + [
-        ["sla_due_date", "<", now_datetime()],
-        ["status", "=", "Open"]
-    ]
+    # # ---------------- SLA BREACHED ----------------
+    # sla_filters = job_filters + [
+    #     ["sla_due_date", "<", now_datetime()],
+    #     ["status", "=", "Open"]
+    # ]
 
-    sla_breached_jobs = frappe.db.count(
-        "DKP_Job_Opening",
-        sla_filters
-    )
+    # sla_breached_jobs = frappe.db.count(
+    #     "DKP_Job_Opening",
+    #     sla_filters
+    # )
 
     data = [{
         "total_jobs": total_jobs,
         "active_jobs": active_jobs,
         "total_positions": total_positions,
         "priority_jobs": priority_jobs,
-        "sla_breached_jobs": sla_breached_jobs
+        # "sla_breached_jobs": sla_breached_jobs
     }]
 
     # ---------------- CHART: STATUS DISTRIBUTION ----------------
