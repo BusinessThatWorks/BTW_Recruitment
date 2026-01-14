@@ -556,7 +556,7 @@ function render_urgent_openings_table(callback) {
                                 ${row.job_title || row.name}
                             </a>
                         </td>
-                        <td>${row.company || "-"}</td>
+                        <td>${row.company_name || "-"}</td>
                         <td>
                             <span style="
                                 padding:4px 10px;
@@ -819,7 +819,7 @@ function render_jobs_table(data, total) {
             table.find("tbody").append(`
                 <tr>
                     <td><a href="/app/dkp_job_opening/${d.name}">${d.name || "-"}</a></td>
-                    <td>${d.company || "-"}</td>
+                    <td>${d.company_name || "-"}</td>
                     <td>${d.designation || "-"}</td>
                     <td>${d.department || "-"}</td>
                     <td>${d.status || "-"}</td>

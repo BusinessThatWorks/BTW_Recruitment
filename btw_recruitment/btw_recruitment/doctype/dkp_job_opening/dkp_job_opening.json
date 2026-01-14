@@ -1,12 +1,12 @@
 {
  "actions": [],
- "autoname": "{company}.-.{designation}.-.####",
+ "autoname": "{company_name}.-.{designation}.-.##",
  "creation": "2025-11-15 11:43:20.822307",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "attach_job_description",
-  "company",
+  "company_name",
   "designation",
   "department",
   "number_of_positions",
@@ -46,12 +46,6 @@
   "candidates_table"
  ],
  "fields": [
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company Name",
-   "options": "DKP_Company"
-  },
   {
    "fieldname": "designation",
    "fieldtype": "Data",
@@ -277,6 +271,12 @@
    "fieldname": "suggest_candidates",
    "fieldtype": "Button",
    "label": "Suggest Candidates"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Link",
+   "label": "Company Name",
+   "options": "DKP_Company"
   }
  ],
  "grid_page_length": 50,
@@ -288,7 +288,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-14 15:04:41.571873",
+ "modified": "2026-01-14 23:07:52.306921",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
