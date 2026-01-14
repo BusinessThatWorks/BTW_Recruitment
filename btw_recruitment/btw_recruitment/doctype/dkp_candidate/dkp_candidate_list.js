@@ -287,7 +287,7 @@ function open_job_opening_dialog(selected_candidates) {
 			filtered_openings = filtered_openings.filter(o => o.department === filter_state.department);
 		}
 		if (filter_state.company) {
-			filtered_openings = filtered_openings.filter(o => o.company === filter_state.company);
+			filtered_openings = filtered_openings.filter(o => o.company_name === filter_state.company);
 		}
 
 		render_openings(d);
@@ -475,7 +475,7 @@ function add_candidates_to_opening(job_opening, selected_candidates) {
 
 					if (already_existing.length) {
 						const existing_list = already_existing.join(", ");
-						message += "<br><br>" + __("Already there: {0}", [existing_list]);
+						message =__("Already there: {0}", [existing_list]);
 					}
 
 					frappe.msgprint({

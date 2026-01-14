@@ -22,7 +22,7 @@ def get_job_openings_for_candidate_dialog(
     if search:
         search_term = f"%{search}%"
         conditions.append("""
-            (name LIKE %s OR designation LIKE %s OR company LIKE %s OR department LIKE %s OR location LIKE)
+            (name LIKE %s OR designation LIKE %s OR company_name LIKE %s OR department LIKE %s OR location LIKE)
         """)
         values.extend([search_term, search_term, search_term, search_term,search_term])
 
@@ -55,7 +55,7 @@ def get_job_openings_for_candidate_dialog(
         SELECT 
             name,
             designation,
-            company,
+            company_name,
             department,
             status,
             priority,
@@ -65,7 +65,6 @@ def get_job_openings_for_candidate_dialog(
             max_experience_years,
             min_ctc,
             max_ctc,
-            assign_recruiter,
             creation
         FROM `tabDKP_Job_Opening`
         {where_clause}
