@@ -17,18 +17,16 @@
   "current_location",
   "marital_status",
   "total_experience_years",
-  "address",
-  "languages",
+  "relevant_experience",
   "column_break_cjpe",
+  "languages",
   "highest_qualification",
   "institute__university",
   "current_designation",
   "current_company",
-  "current_company_master",
   "currently_employed",
+  "current_company_master",
   "skills_tags",
-  "primary_skill_set",
-  "secondary_skill_set",
   "key_certifications",
   "preferred_locationselect_upto_3_section",
   "current_ctc_monthly",
@@ -44,11 +42,15 @@
   "remarks",
   "added_by",
   "job_applications_section",
+  "secondary_skill_set",
   "resume_parsed",
+  "primary_skill_set",
+  "address",
   "test_tab",
   "eq_test_score",
   "eq_test_upload",
   "disc_score",
+  "enneagram_upload",
   "blacklist_tab",
   "blacklisted",
   "blacklist_reason",
@@ -73,12 +75,14 @@
   {
    "fieldname": "email",
    "fieldtype": "Data",
-   "label": "Email"
+   "label": "Email",
+   "reqd": 1
   },
   {
    "fieldname": "mobile_number",
    "fieldtype": "Data",
-   "label": "Mobile Number"
+   "label": "Mobile Number",
+   "reqd": 1
   },
   {
    "fieldname": "alternate_phone",
@@ -88,7 +92,8 @@
   {
    "fieldname": "current_location",
    "fieldtype": "Data",
-   "label": "Current Location"
+   "label": "Current Location",
+   "reqd": 1
   },
   {
    "fieldname": "preferred_locationselect_upto_3_section",
@@ -110,17 +115,20 @@
   {
    "fieldname": "total_experience_years",
    "fieldtype": "Float",
-   "label": "Total Experience (Years)"
+   "label": "Total Experience (Years)",
+   "reqd": 1
   },
   {
    "fieldname": "current_company",
    "fieldtype": "Data",
-   "label": "Current Company"
+   "label": "Current Company",
+   "reqd": 1
   },
   {
    "fieldname": "current_designation",
    "fieldtype": "Data",
-   "label": "Current Designation"
+   "label": "Current Designation",
+   "reqd": 1
   },
   {
    "fieldname": "last_working_day",
@@ -130,7 +138,7 @@
   {
    "fieldname": "skills_tags",
    "fieldtype": "Small Text",
-   "label": "Skills (Tags)"
+   "label": "Skills"
   },
   {
    "fieldname": "key_certifications",
@@ -140,7 +148,8 @@
   {
    "fieldname": "highest_qualification",
    "fieldtype": "Data",
-   "label": "Highest Qualification"
+   "label": "Highest Qualification",
+   "reqd": 1
   },
   {
    "fieldname": "institute__university",
@@ -153,18 +162,21 @@
    "in_list_view": 1,
    "label": "Gender",
    "options": "\nMale\nFemale\nNot Disclosed",
-   "placeholder": " "
+   "placeholder": " ",
+   "reqd": 1
   },
   {
    "fieldname": "resume_attachment",
    "fieldtype": "Attach",
-   "label": "Resume Attachment"
+   "label": "Resume Attachment",
+   "reqd": 1
   },
   {
    "fieldname": "resume_source",
    "fieldtype": "Select",
    "label": "Resume Source",
-   "options": "\nNaukri\nLinkedIn\nIndeed\nReferral\nWalk-in\nInternal DB\nOther"
+   "options": "\nNaukri\nLinkedIn\nIndeed\nReferral\nWalk-in\nInternal DB\nOther",
+   "reqd": 1
   },
   {
    "fieldname": "job_applications_section",
@@ -188,41 +200,48 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Currently Employed",
-   "options": "\nYes\nNo"
+   "options": "\nYes\nNo",
+   "reqd": 1
   },
   {
    "fieldname": "official_notice_period_days",
    "fieldtype": "Data",
-   "label": "Official Notice Period (Days)"
+   "label": "Official Notice Period (Days)",
+   "reqd": 1
   },
   {
    "fieldname": "serving_notice",
    "fieldtype": "Select",
    "label": "Serving Notice",
-   "options": "\nYes\nNo"
+   "options": "\nYes\nNo",
+   "reqd": 1
   },
   {
    "fieldname": "primary_skill_set",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Primary Skill Set"
   },
   {
    "fieldname": "secondary_skill_set",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Secondary Skill set"
   },
   {
    "fieldname": "communication_skill",
    "fieldtype": "Select",
    "label": "Communication Skill",
-   "options": "\nGood\nAverage\nBad"
+   "options": "\nGood\nAverage\nBad",
+   "reqd": 1
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Department",
-   "options": "DKP_Department"
+   "options": "DKP_Department",
+   "reqd": 1
   },
   {
    "fieldname": "remarks",
@@ -237,6 +256,7 @@
   {
    "fieldname": "address",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Address"
   },
   {
@@ -308,6 +328,7 @@
    "label": "Added By"
   },
   {
+   "depends_on": "eval:doc.currently_employed===\"Yes\";",
    "fieldname": "current_company_master",
    "fieldtype": "Link",
    "label": "Current Company Master",
@@ -325,7 +346,8 @@
    "fieldname": "expected_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Expected CTC Monthly"
+   "label": "Expected CTC Monthly",
+   "reqd": 1
   },
   {
    "fieldname": "disc_score",
@@ -341,14 +363,23 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "relevant_experience",
+   "fieldtype": "Data",
+   "label": "Relevant Experience"
+  },
+  {
+   "fieldname": "enneagram_upload",
+   "fieldtype": "Attach",
+   "label": "Enneagram Upload"
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-15 13:05:03.077625",
+ "modified": "2026-01-15 16:17:51.517950",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

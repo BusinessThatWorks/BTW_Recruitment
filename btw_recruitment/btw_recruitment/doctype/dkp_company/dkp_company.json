@@ -26,17 +26,8 @@
   "notes",
   "section_break_gnpc",
   "shift_and_working_hours",
-  "working_hours",
-  "working_hoursend",
   "week_off_policy",
   "annual_leave_days",
-  "section_break_jifv",
-  "created_by",
-  "last_modified_by",
-  "user",
-  "column_break_zbyp",
-  "created_by_time",
-  "last_modified_by_time",
   "billing_details_tab",
   "section_break_oxty",
   "billing_address",
@@ -54,7 +45,8 @@
   "standard_fee_value",
   "gstin",
   "upload_contractagreement",
-  "payment_terms"
+  "payment_terms",
+  "amended_from"
  ],
  "fields": [
   {
@@ -70,7 +62,7 @@
    "fieldname": "client_type",
    "fieldtype": "Select",
    "label": "Client Type",
-   "options": "Recruitment\nConsulting\nRecruitment + Consulting",
+   "options": "\nRecruitment\nConsulting\nRecruitment + Consulting",
    "reqd": 1
   },
   {
@@ -132,14 +124,14 @@
    "fieldname": "replacement_policy_days",
    "fieldtype": "Select",
    "label": "Replacement Policy (Days)",
-   "options": "30\n60\n90",
+   "options": "\n30\n60\n90",
    "reqd": 1
   },
   {
    "fieldname": "standard_fee_type",
    "fieldtype": "Select",
    "label": "Standard Fee Type",
-   "options": "Percentage of CTC\nFlat Fee\nSlab Based\nNA",
+   "options": "\nPercentage of CTC\nFlat Fee\nSlab Based\nNA",
    "reqd": 1
   },
   {
@@ -188,7 +180,7 @@
    "fieldname": "client_status",
    "fieldtype": "Select",
    "label": "Client Status",
-   "options": "Active\nInactive",
+   "options": "\nActive\nInactive",
    "reqd": 1
   },
   {
@@ -247,11 +239,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "working_hours",
-   "fieldtype": "Data",
-   "label": "Working Hours(Start)"
-  },
-  {
    "fieldname": "section_break_gnpc",
    "fieldtype": "Section Break"
   },
@@ -259,7 +246,7 @@
    "fieldname": "week_off_policy",
    "fieldtype": "Select",
    "label": "Week Off Policy",
-   "options": "5 Days (Sat-Sun Off)\n6 Days (Sunday Off)\nAlternate Saturdays\nRoster Based"
+   "options": "\n5 Days (Sat-Sun Off)\n5.5 Days (Sat Half)\n6 Days (Sunday Off)\nAlternate Saturdays\nRoster Based"
   },
   {
    "fieldname": "annual_leave_days",
@@ -284,11 +271,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "working_hoursend",
-   "fieldtype": "Data",
-   "label": "Working Hours(End)"
-  },
-  {
    "fieldname": "name_of_director",
    "fieldtype": "Data",
    "label": "Name of Director",
@@ -301,51 +283,21 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_break_jifv",
-   "fieldtype": "Section Break",
-   "label": "Audit"
-  },
-  {
-   "fieldname": "created_by",
-   "fieldtype": "Data",
-   "label": "Created By",
-   "read_only": 1
-  },
-  {
-   "fieldname": "last_modified_by",
-   "fieldtype": "Data",
-   "label": "Last Modified By",
-   "read_only": 1
-  },
-  {
-   "fieldname": "user",
+   "fieldname": "amended_from",
    "fieldtype": "Link",
-   "hidden": 1,
-   "label": "User",
-   "options": "User"
-  },
-  {
-   "fieldname": "column_break_zbyp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "created_by_time",
-   "fieldtype": "Data",
-   "label": "Created By (Time)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "last_modified_by_time",
-   "fieldtype": "Data",
-   "label": "Last Modified By (Time)",
-   "read_only": 1
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "DKP_Company",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-01-15 11:40:27.809036",
+ "modified": "2026-01-15 16:12:54.278103",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",
@@ -381,5 +333,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

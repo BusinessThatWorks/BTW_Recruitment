@@ -19,17 +19,19 @@
   "min_ctc",
   "max_ctc",
   "variableincentive",
+  "shift",
   "column_break_ttxn",
   "job_description",
   "priority",
   "status",
   "closed_reason",
-  "required_certifications",
+  "required_qualification",
   "must_have_skills",
   "assign_recruiter",
   "good_to_have_skills",
   "notes",
   "hidden_fields_section",
+  "required_certifications",
   "requirement_source",
   "working_days",
   "working_hours",
@@ -60,7 +62,7 @@
    "fieldname": "work_mode",
    "fieldtype": "Select",
    "label": "Work Mode",
-   "options": "Remote\nHybrid\nOnsite"
+   "options": "\nRemote\nHybrid\nOnsite"
   },
   {
    "fieldname": "travel_required",
@@ -111,6 +113,7 @@
   {
    "fieldname": "required_certifications",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Required Certifications"
   },
   {
@@ -169,17 +172,16 @@
    "options": "Normal\nUrgent\nImmediate Joiner Only"
   },
   {
-   "default": "0",
    "fieldname": "number_of_positions",
    "fieldtype": "Select",
    "label": "Number of Positions",
-   "options": "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+   "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nOn Hold\nClosed \u2013 Hired\nClosed \u2013 Cancelled"
+   "options": "\nOpen\nOn Hold\nClosed \u2013 Hired\nClosed \u2013 Cancelled"
   },
   {
    "fieldname": "profiles_sent_count",
@@ -220,7 +222,7 @@
    "fieldname": "priority",
    "fieldtype": "Select",
    "label": "Priority",
-   "options": "Low\nMedium\nHigh\nCritical"
+   "options": "\nLow\nMedium\nHigh\nCritical"
   },
   {
    "fieldname": "attach_job_description",
@@ -277,10 +279,21 @@
    "fieldtype": "Link",
    "label": "Company Name",
    "options": "DKP_Company"
+  },
+  {
+   "fieldname": "shift",
+   "fieldtype": "Select",
+   "label": "Shift",
+   "options": "\nGeneral Shift\nNight Shift\nRoster"
+  },
+  {
+   "fieldname": "required_qualification",
+   "fieldtype": "Select",
+   "label": "Required Qualification",
+   "options": "\nAny Graduate\nUnder Graduate\nPost Graduate"
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [
   {
@@ -288,11 +301,11 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-14 23:07:52.306921",
+ "modified": "2026-01-15 16:16:30.693276",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

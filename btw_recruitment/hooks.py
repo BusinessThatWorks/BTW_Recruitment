@@ -258,17 +258,28 @@ app_license = "mit"
 # }
 
 # hokks
-web_include_head = """
-<link rel="manifest" href="/assets/btw_recruitment/manifest.json">
-"""
+# web_include_head = """
+# <link rel="manifest" href="/assets/btw_recruitment/manifest.json">
+# """
 
+# app_include_head = """
+# <link rel="manifest" href="/assets/btw_recruitment/manifest.json">
+# """
+
+# web_include_js = [
+#     "/assets/btw_recruitment/pwa.js"
+# ]
+# app_include_js = [
+#     "/assets/btw_recruitment/pwa.js"
+# ]
+
+# Include manifest + theme color
 app_include_head = """
 <link rel="manifest" href="/assets/btw_recruitment/manifest.json">
+<meta name="theme-color" content="#0d6efd">
 """
 
-web_include_js = [
-    "/assets/btw_recruitment/pwa.js"
-]
+# Include PWA JS (service worker registration)
 app_include_js = [
     "/assets/btw_recruitment/pwa.js"
 ]
