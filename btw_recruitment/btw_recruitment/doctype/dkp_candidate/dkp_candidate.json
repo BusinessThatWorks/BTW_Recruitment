@@ -47,16 +47,12 @@
   "primary_skill_set",
   "address",
   "test_tab",
-  "eq_test_score",
   "eq_test_upload",
-  "disc_score",
   "enneagram_upload",
+  "disc_score",
   "blacklist_tab",
   "blacklisted",
   "blacklist_reason",
-  "blacklist_attachment",
-  "blacklisted_on",
-  "blacklisted_by",
   "amended_from"
  ],
  "fields": [
@@ -75,14 +71,12 @@
   {
    "fieldname": "email",
    "fieldtype": "Data",
-   "label": "Email",
-   "reqd": 1
+   "label": "Email"
   },
   {
    "fieldname": "mobile_number",
    "fieldtype": "Data",
-   "label": "Mobile Number",
-   "reqd": 1
+   "label": "Mobile Number"
   },
   {
    "fieldname": "alternate_phone",
@@ -92,8 +86,7 @@
   {
    "fieldname": "current_location",
    "fieldtype": "Data",
-   "label": "Current Location",
-   "reqd": 1
+   "label": "Current Location"
   },
   {
    "fieldname": "preferred_locationselect_upto_3_section",
@@ -115,20 +108,17 @@
   {
    "fieldname": "total_experience_years",
    "fieldtype": "Float",
-   "label": "Total Experience (Years)",
-   "reqd": 1
+   "label": "Total Experience (Years)"
   },
   {
    "fieldname": "current_company",
    "fieldtype": "Data",
-   "label": "Current Company",
-   "reqd": 1
+   "label": "Current Company"
   },
   {
    "fieldname": "current_designation",
    "fieldtype": "Data",
-   "label": "Current Designation",
-   "reqd": 1
+   "label": "Current Designation"
   },
   {
    "fieldname": "last_working_day",
@@ -148,8 +138,7 @@
   {
    "fieldname": "highest_qualification",
    "fieldtype": "Data",
-   "label": "Highest Qualification",
-   "reqd": 1
+   "label": "Highest Qualification"
   },
   {
    "fieldname": "institute__university",
@@ -168,15 +157,13 @@
   {
    "fieldname": "resume_attachment",
    "fieldtype": "Attach",
-   "label": "Resume Attachment",
-   "reqd": 1
+   "label": "Resume Attachment"
   },
   {
    "fieldname": "resume_source",
    "fieldtype": "Select",
    "label": "Resume Source",
-   "options": "\nNaukri\nLinkedIn\nIndeed\nReferral\nWalk-in\nInternal DB\nOther",
-   "reqd": 1
+   "options": "\nNaukri\nLinkedIn\nIndeed\nReferral\nWalk-in\nInternal DB\nOther"
   },
   {
    "fieldname": "job_applications_section",
@@ -200,21 +187,18 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Currently Employed",
-   "options": "\nYes\nNo",
-   "reqd": 1
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "official_notice_period_days",
    "fieldtype": "Data",
-   "label": "Official Notice Period (Days)",
-   "reqd": 1
+   "label": "Official Notice Period (Days)"
   },
   {
    "fieldname": "serving_notice",
    "fieldtype": "Select",
    "label": "Serving Notice",
-   "options": "\nYes\nNo",
-   "reqd": 1
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "primary_skill_set",
@@ -232,16 +216,14 @@
    "fieldname": "communication_skill",
    "fieldtype": "Select",
    "label": "Communication Skill",
-   "options": "\nGood\nAverage\nBad",
-   "reqd": 1
+   "options": "\nGood\nAverage\nBad"
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Department",
-   "options": "DKP_Department",
-   "reqd": 1
+   "options": "DKP_Department"
   },
   {
    "fieldname": "remarks",
@@ -271,11 +253,6 @@
    "label": "Assessment"
   },
   {
-   "fieldname": "eq_test_score",
-   "fieldtype": "Float",
-   "label": "EQ Test Score"
-  },
-  {
    "fieldname": "eq_test_upload",
    "fieldtype": "Attach",
    "label": "EQ Test Upload"
@@ -295,22 +272,6 @@
    "fieldname": "blacklist_reason",
    "fieldtype": "Data",
    "label": "Blacklist Reason"
-  },
-  {
-   "fieldname": "blacklist_attachment",
-   "fieldtype": "Attach",
-   "label": "Blacklist Attachment"
-  },
-  {
-   "fieldname": "blacklisted_on",
-   "fieldtype": "Datetime",
-   "label": "Blacklisted On"
-  },
-  {
-   "fieldname": "blacklisted_by",
-   "fieldtype": "Link",
-   "label": "Blacklisted By",
-   "options": "User"
   },
   {
    "fieldname": "variableincentive",
@@ -339,30 +300,18 @@
    "fieldname": "current_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Current CTC Monthly",
-   "reqd": 1
+   "label": "Current CTC Monthly"
   },
   {
    "fieldname": "expected_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Expected CTC Monthly",
-   "reqd": 1
+   "label": "Expected CTC Monthly"
   },
   {
    "fieldname": "disc_score",
-   "fieldtype": "Float",
-   "label": "DISC Score"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "DKP_Candidate",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "fieldtype": "Attach",
+   "label": "DISC Upload"
   },
   {
    "fieldname": "relevant_experience",
@@ -373,13 +322,23 @@
    "fieldname": "enneagram_upload",
    "fieldtype": "Attach",
    "label": "Enneagram Upload"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "DKP_Candidate",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-15 16:17:51.517950",
+ "modified": "2026-01-15 17:20:37.925912",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
