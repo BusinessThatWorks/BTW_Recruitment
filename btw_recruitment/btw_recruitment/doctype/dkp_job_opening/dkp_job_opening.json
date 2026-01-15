@@ -294,7 +294,6 @@
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [
   {
@@ -302,11 +301,11 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-15 14:42:44.773693",
+ "modified": "2026-01-15 16:16:30.693276",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
