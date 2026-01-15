@@ -1,7 +1,7 @@
 {
   "name": "DUA Talent Connect",
   "short_name": "DUA",
-  "start_url": "/",
+  "start_url": "/app/home",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
