@@ -30,6 +30,13 @@
   "working_hoursend",
   "week_off_policy",
   "annual_leave_days",
+  "section_break_jifv",
+  "created_by",
+  "last_modified_by",
+  "user",
+  "column_break_zbyp",
+  "created_by_time",
+  "last_modified_by_time",
   "billing_details_tab",
   "section_break_oxty",
   "billing_address",
@@ -292,13 +299,53 @@
    "fieldtype": "Data",
    "label": "Phone Number",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_jifv",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Data",
+   "label": "Created By",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_modified_by",
+   "fieldtype": "Data",
+   "label": "Last Modified By",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_zbyp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "created_by_time",
+   "fieldtype": "Data",
+   "label": "Created By (Time)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_modified_by_time",
+   "fieldtype": "Data",
+   "label": "Last Modified By (Time)",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-14 23:59:01.162620",
+ "modified": "2026-01-15 11:40:27.809036",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Company",

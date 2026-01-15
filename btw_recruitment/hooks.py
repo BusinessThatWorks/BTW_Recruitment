@@ -258,3 +258,17 @@ app_license = "mit"
 # }
 
 # hokks
+web_include_head = """
+<link rel="manifest" href="/assets/btw_recruitment/manifest.json">
+"""
+
+app_include_head = """
+<link rel="manifest" href="/assets/btw_recruitment/manifest.json">
+"""
+
+web_include_js = [
+    "/assets/btw_recruitment/pwa.js"
+]
+app_include_js = [
+    "/assets/btw_recruitment/pwa.js"
+]

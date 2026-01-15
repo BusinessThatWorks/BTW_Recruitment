@@ -6,8 +6,8 @@
  "field_order": [
   "candidate_details_section",
   "resume_attachment",
-  "department",
   "candidate_name",
+  "department",
   "email",
   "mobile_number",
   "alternate_phone",
@@ -61,6 +61,8 @@
   {
    "fieldname": "candidate_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Candidate Name"
   },
   {
@@ -346,7 +348,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-13 17:43:47.430153",
+ "modified": "2026-01-15 13:05:03.077625",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
