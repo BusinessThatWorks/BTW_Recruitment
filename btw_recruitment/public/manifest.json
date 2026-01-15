@@ -1,6 +1,6 @@
 {
-  "name": "Duas Talent Connect",
-  "short_name": "Duas Talent",
+  "name": "DUA Talent Connect",
+  "short_name": "DUA",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -8,14 +8,28 @@
   "theme_color": "#0d6efd",
   "icons": [
     {
-      "src": "/files/DUA_Logo_192x192.png",
+      "src": "/files/dua-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/files/DUA_Logo_512x512.png",
+      "src": "/files/dua-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/files/dua-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/files/dua-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
