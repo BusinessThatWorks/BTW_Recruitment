@@ -440,10 +440,17 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                 ">
                                     ${matchPercentage}% Match
                                 </div>
-                                <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
-                                   class="btn btn-sm btn-secondary mt-2" style="font-size: 0.8em;">
-                                    View Profile
-                                </a>
+                                <div class="mt-2">
+                                    <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
+                                       class="btn btn-sm btn-secondary" style="font-size: 0.8em; display: block; margin-bottom: 4px;">
+                                        View Profile
+                                    </a>
+                                    <button class="btn btn-sm btn-info previous-openings-btn mt-2" 
+                                            data-candidate="${candidate.name}"
+                                            style="font-size: 0.8em; display: block; width: 100%;">
+                                        Previous Openings
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -533,6 +540,32 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
     d.$wrapper.find("#opening-filter-max-ctc").on("input", applyFilters);
     d.$wrapper.find("#opening-filter-hide-nopoach").on("change", applyFilters);
 
+    // Bind Previous Openings button click handlers using event delegation
+    // This is bound once when dialog is created, works for all dynamically created buttons
+    d.$wrapper.on("click", ".previous-openings-btn", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const candidate_name = $(this).data("candidate");
+        const current_job_opening = frm.doc.name;
+        if (!candidate_name) {
+            frappe.msgprint({
+                title: "Error",
+                message: "Candidate name not found",
+                indicator: "red"
+            });
+            return;
+        }
+        if (typeof show_previous_openings_dialog === "function") {
+            show_previous_openings_dialog(candidate_name, current_job_opening);
+        } else {
+            frappe.msgprint({
+                title: "Error",
+                message: "Function not found",
+                indicator: "red"
+            });
+        }
+    });
+
     // Initial render
     applyFilters();
     updateSelectedCount();
@@ -555,6 +588,126 @@ function add_candidates_to_opening(frm, candidate_names) {
         },
         3
     );
+}
+
+// --------- PREVIOUS OPENINGS DIALOG ----------
+
+function show_previous_openings_dialog(candidate_name, current_job_opening) {
+    // Show loading state
+    frappe.show_alert({
+        message: "Loading previous openings...",
+        indicator: "blue"
+    }, 2);
+
+    // Fetch previous openings from backend
+    frappe.call({
+        method: "btw_recruitment.btw_recruitment.doctype.dkp_job_opening.dkp_job_opening.get_candidate_previous_openings",
+        args: {
+            candidate_name: candidate_name,
+            current_job_opening: current_job_opening
+        },
+        callback(r) {
+            if (!r.message || !r.message.success) {
+                frappe.msgprint({
+                    title: "Error",
+                    message: r.message?.message || "Failed to fetch previous openings",
+                    indicator: "red"
+                });
+                return;
+            }
+
+            const openings = r.message.openings || [];
+
+            if (openings.length === 0) {
+                frappe.msgprint({
+                    title: "No Previous Openings",
+                    message: "This candidate has no previous job openings.",
+                    indicator: "orange"
+                });
+                return;
+            }
+
+            // Build HTML for openings list
+            const openings_html = `
+                <div id="previous-openings-list" style="max-height: 500px; overflow-y: auto;">
+                    ${openings.map((opening, index) => {
+                        const stage = opening.stage || "Stage Not Set";
+                        const stageColor = getStageColor(stage);
+                        const formattedDate = opening.opening_created ? 
+                            frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string(opening.opening_created)) : "-";
+                        
+                        return `
+                            <div class="previous-opening-card mb-3 p-3"
+                                 style="border: 1px solid #dee2e6; border-radius: 6px; background: #fff;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="mb-2">
+                                            <strong style="font-size: 1.1em;">${opening.job_opening_name || "-"}</strong>
+                                        </div>
+                                        <div style="font-size: 0.9em; color: #6c757d;">
+                                            <div><strong>Designation:</strong> ${opening.designation || "-"}</div>
+                                            <div><strong>Company:</strong> ${opening.company_name || "-"}</div>
+                                            ${opening.department ? `<div><strong>Department:</strong> ${opening.department}</div>` : ""}
+                                            ${opening.location ? `<div><strong>Location:</strong> ${opening.location}</div>` : ""}
+                                            <div><strong>Status:</strong> ${opening.opening_status || "-"}</div>
+                                            <div><strong>Created:</strong> ${formattedDate}</div>
+                                        </div>
+                                        ${opening.remarks ? `
+                                            <div class="mt-2" style="font-size: 0.85em; color: #495057;">
+                                                <strong>Remarks:</strong> ${opening.remarks}
+                                            </div>
+                                        ` : ""}
+                                    </div>
+                                    <div class="text-right ml-3">
+                                        <div class="stage-badge" style="
+                                            background: ${stageColor};
+                                            color: white;
+                                            padding: 8px 16px;
+                                            border-radius: 20px;
+                                            font-weight: bold;
+                                            font-size: 0.9em;
+                                            white-space: nowrap;
+                                        ">
+                                            ${stage}
+                                        </div>
+                                        <a href="/app/dkp_job_opening/${opening.job_opening_name}" target="_blank"
+                                           class="btn btn-sm btn-secondary mt-2" style="font-size: 0.8em;">
+                                            View Opening
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join("")}
+                </div>
+            `;
+
+            // Create and show dialog
+            const dialog = new frappe.ui.Dialog({
+                title: `Previous Openings - ${candidate_name}`,
+                size: "small",
+                fields: [
+                    {
+                        fieldtype: "HTML",
+                        options: openings_html
+                    }
+                ],
+                primary_action_label: "Close",
+                primary_action: () => dialog.hide()
+            });
+
+            dialog.show();
+        }
+    });
+}
+
+function getStageColor(stage) {
+   const stageColors = {
+    "Schedule Interview": "#4A90E2",   // calm blue
+    "Submitted To Client": "#7B61FF",   // clean purple
+    "Rejected By Client": "#E5533D",    // soft red (not harsh)
+};
+    return stageColors[stage] || "#6c757d";
 }
 
 // Improved interview creation with check for candidate selection and better flow
@@ -589,12 +742,14 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
         });
     }
 });
+// --------- CANDIDATE manual addition VALIDATIONS ----------
 frappe.ui.form.on("DKP_JobApplication_Child", {
     candidate_name(frm, cdt, cdn) {
         const row = locals[cdt][cdn];
 
         if (!row.candidate_name) return;
 
+        // Check for duplicate candidates first
         let duplicate = false;
 
         (frm.doc.candidates_table || []).forEach(r => {
@@ -616,7 +771,50 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
             });
 
             frappe.model.set_value(cdt, cdn, "candidate_name", "");
+            return;
         }
+
+        // Check blacklisted and no-poach status
+        frappe.db.get_value("DKP_Candidate", row.candidate_name, [
+            "blacklisted",
+            "current_company_master"
+        ]).then((r) => {
+            if (!r.message) return;
+
+            const candidate = r.message;
+
+            // Check if candidate is blacklisted - prevent adding
+            if (candidate.blacklisted === "Yes") {
+                frappe.msgprint({
+                    title: __("Blacklisted Candidate"),
+                    message: __(
+                        `Candidate <b>${row.candidate_name}</b> is blacklisted and cannot be added to this job opening.`
+                    ),
+                    indicator: "red"
+                });
+                frappe.model.set_value(cdt, cdn, "candidate_name", "");
+                return;
+            }
+
+            // Check if candidate's current company master has no-poach flag - allow but warn
+            if (candidate.current_company_master) {
+                frappe.db.get_value("DKP_Company", candidate.current_company_master, [
+                    "no_poach_flag",
+                    "company_name"
+                ]).then((company_r) => {
+                    if (company_r.message && company_r.message.no_poach_flag === "Yes") {
+                        frappe.msgprint({
+                            title: __("No-Poach Warning"),
+                            message: __(
+                                `Candidate <b>${row.candidate_name}</b> is currently employed at <b>${company_r.message.company_name || candidate.current_company_master}</b> which has a No-Poach policy.`
+                            ),
+                            indicator: "orange"
+                        });
+                        // Allow adding but show warning
+                    }
+                });
+            }
+        });
     }
 });
 
