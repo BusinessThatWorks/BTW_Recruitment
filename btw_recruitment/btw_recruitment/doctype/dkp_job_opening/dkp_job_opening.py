@@ -28,10 +28,12 @@ class DKP_Job_Opening(Document):
         <p>A new job opening has been assigned to you.</p>
 
         <ul>
+            <li><b>Job Opening ID:</b> {self.name}</li>
             <li><b>Company:</b> {self.company_name}</li>
             <li><b>Designation:</b> {self.designation}</li>
             <li><b>Department:</b> {self.department or "-"}</li>
             <li><b>Location:</b> {self.location or "-"}</li>
+            <li><b>Assigned Recruiters:</b> {', '.join(recruiter_emails)}</li>
         </ul>
 
         <p>Regards,<br>HR Team</p>
@@ -94,7 +96,8 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
     }
 
     # Get all candidates (excluding blacklisted and already added)
-    candidate_filters = {"blacklisted": 0}
+    candidate_filters = {"blacklisted": "No"}
+
 
     if existing_candidates:
         candidate_filters["name"] = ["not in", existing_candidates]
