@@ -316,3 +316,50 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
     }
 
 
+@frappe.whitelist()
+def get_candidate_previous_openings(candidate_name, current_job_opening=None):
+    """
+    Get all previous job openings for a candidate with their stages.
+    Excludes the current job opening if provided.
+    """
+    if not candidate_name:
+        return {"success": False, "message": "Candidate name is required"}
+
+    # Query to get all job openings where this candidate was added
+    # Join DKP_JobApplication_Child with DKP_Job_Opening to get opening details
+    conditions = ["child.candidate_name = %s"]
+    values = [candidate_name]
+
+    if current_job_opening:
+        conditions.append("jo.name != %s")
+        values.append(current_job_opening)
+
+    where_clause = "WHERE " + " AND ".join(conditions)
+
+    openings = frappe.db.sql(f"""
+        SELECT 
+            jo.name AS job_opening_name,
+            jo.designation,
+            jo.company_name,
+            jo.department,
+            jo.location,
+            jo.status AS opening_status,
+            jo.creation AS opening_created,
+            jo.modified AS opening_modified,
+            child.stage,
+            child.remarks,
+            child.modified AS stage_modified
+        FROM `tabDKP_JobApplication_Child` child
+        INNER JOIN `tabDKP_Job_Opening` jo
+            ON jo.name = child.parent
+        {where_clause}
+        ORDER BY jo.creation DESC
+    """, values, as_dict=True)
+
+    return {
+        "success": True,
+        "openings": openings,
+        "total": len(openings)
+    }
+
+
