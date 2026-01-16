@@ -389,7 +389,7 @@ function render_kpi_cards(data) {
         {
             label: "Blacklisted Candidates",
             value: data.blacklisted_candidates,
-            link: "/app/dkp_candidate?blacklisted=1"
+            link: "/app/dkp_candidate?blacklisted=Yes"
         },
         {
             label: "Total Job Openings",

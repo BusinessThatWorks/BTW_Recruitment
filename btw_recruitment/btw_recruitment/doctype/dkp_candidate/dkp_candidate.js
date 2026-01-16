@@ -136,7 +136,7 @@ frappe.ui.form.on("DKP_Candidate", {
 
     refresh(frm) {
 
-        ["added_by", "blacklisted_by"].forEach(field => {
+        ["added_by"].forEach(field => {
             frm.set_query(field, function() {
                 return {
                     filters: {

@@ -51,12 +51,14 @@
   {
    "fieldname": "designation",
    "fieldtype": "Data",
-   "label": "Designation"
+   "label": "Designation",
+   "reqd": 1
   },
   {
    "fieldname": "location",
    "fieldtype": "Data",
-   "label": "Location"
+   "label": "Location",
+   "reqd": 1
   },
   {
    "fieldname": "work_mode",
@@ -222,7 +224,8 @@
    "fieldname": "priority",
    "fieldtype": "Select",
    "label": "Priority",
-   "options": "\nLow\nMedium\nHigh\nCritical"
+   "options": "\nLow\nMedium\nHigh\nCritical",
+   "reqd": 1
   },
   {
    "fieldname": "attach_job_description",
@@ -239,7 +242,8 @@
    "fieldname": "assign_recruiter",
    "fieldtype": "Table MultiSelect",
    "label": "Assign Recruiter",
-   "options": "DKP_JobOpeningRecruiter_Child"
+   "options": "DKP_JobOpeningRecruiter_Child",
+   "reqd": 1
   },
   {
    "fieldname": "job_description",
@@ -261,7 +265,7 @@
   {
    "fieldname": "candidates_tab",
    "fieldtype": "Tab Break",
-   "label": "Candidates"
+   "label": "Suggested Candidates"
   },
   {
    "fieldname": "candidates_table",
@@ -278,7 +282,8 @@
    "fieldname": "company_name",
    "fieldtype": "Link",
    "label": "Company Name",
-   "options": "DKP_Company"
+   "options": "DKP_Company",
+   "reqd": 1
   },
   {
    "fieldname": "shift",
@@ -301,7 +306,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-15 16:16:30.693276",
+ "modified": "2026-01-16 11:52:47.870260",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

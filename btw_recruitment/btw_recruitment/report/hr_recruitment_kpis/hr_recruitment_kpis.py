@@ -29,7 +29,11 @@ def execute(filters=None):
     ]
 
     total_candidates = frappe.db.count("DKP_Candidate")
-    blacklisted_candidates = frappe.db.count("DKP_Candidate", {"blacklisted": 1})
+    blacklisted_candidates = frappe.db.count(
+                            "DKP_Candidate",
+                            {"blacklisted": "Yes"}
+                        )
+
     date_filter = get_date_filter(filters)
 
 #     # ---------------- ACTIVE APPLICATIONS ----------------

@@ -39,7 +39,8 @@
   "serving_notice",
   "last_working_day",
   "column_break_lczr",
-  "remarks",
+  "reason_for_change",
+  "recruiter_remarks",
   "added_by",
   "job_applications_section",
   "secondary_skill_set",
@@ -151,8 +152,7 @@
    "in_list_view": 1,
    "label": "Gender",
    "options": "\nMale\nFemale\nNot Disclosed",
-   "placeholder": " ",
-   "reqd": 1
+   "placeholder": " "
   },
   {
    "fieldname": "resume_attachment",
@@ -226,11 +226,6 @@
    "options": "DKP_Department"
   },
   {
-   "fieldname": "remarks",
-   "fieldtype": "Small Text",
-   "label": "Remarks"
-  },
-  {
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
    "label": "Date Of Birth"
@@ -263,10 +258,10 @@
    "label": "Blacklist"
   },
   {
-   "default": "0",
    "fieldname": "blacklisted",
-   "fieldtype": "Check",
-   "label": "Blacklisted"
+   "fieldtype": "Select",
+   "label": "Blacklisted",
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "blacklist_reason",
@@ -292,7 +287,7 @@
    "depends_on": "eval:doc.currently_employed===\"Yes\";",
    "fieldname": "current_company_master",
    "fieldtype": "Link",
-   "label": "Current Company Master",
+   "label": "Current Company Master(For No Poach)",
    "options": "DKP_Company"
   },
   {
@@ -332,13 +327,23 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reason_for_change",
+   "fieldtype": "Data",
+   "label": "Reason For Change"
+  },
+  {
+   "fieldname": "recruiter_remarks",
+   "fieldtype": "Small Text",
+   "label": "Recruiter Remarks"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-15 17:20:37.925912",
+ "modified": "2026-01-16 14:03:04.385005",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
