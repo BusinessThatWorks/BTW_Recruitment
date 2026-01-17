@@ -24,7 +24,7 @@ def execute(filters=None):
         {"label": "Total Job Openings", "fieldname": "total_jobs", "fieldtype": "Int"},
         {"label": "Active Jobs", "fieldname": "active_jobs", "fieldtype": "Int"},
         {"label": "Total Positions Open", "fieldname": "total_positions", "fieldtype": "Int"},
-        {"label": "High / Critical Jobs", "fieldname": "priority_jobs", "fieldtype": "Int"},
+        {"label": "Critical Jobs", "fieldname": "priority_jobs", "fieldtype": "Int"},
         {"label": "SLA Breached Jobs", "fieldname": "sla_breached_jobs", "fieldtype": "Int"},
     ]
 
@@ -63,7 +63,7 @@ def execute(filters=None):
     # ---------------- PRIORITY JOBS ----------------
     priority_jobs = frappe.db.count(
         "DKP_Job_Opening",
-        job_filters + [["priority", "in", ["High", "Critical"]]]
+        job_filters + [["priority", "in", ["Critical"]]]
     )
 
     # # ---------------- SLA BREACHED ----------------

@@ -256,8 +256,20 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                 return;
             }
 
-            // Add candidates to Job Opening's candidates_table
-            add_candidates_to_opening(frm, selected_candidates);
+            // Build candidate display names map
+            const candidate_display_names = {};
+            candidates.forEach(candidate => {
+                if (selected_map[candidate.name]) {
+                    candidate_display_names[candidate.name] = candidate.candidate_name || candidate.name;
+                }
+            });
+
+            // Show previous openings dialog for selected candidates before adding
+            const current_job_opening = frm.doc.name;
+            show_multiple_candidates_previous_openings(selected_candidates, candidate_display_names, current_job_opening, () => {
+                // After dialog is closed, add candidates to Job Opening's candidates_table
+                add_candidates_to_opening(frm, selected_candidates);
+            });
             d.hide();
         },
         secondary_action_label: "Close",
@@ -429,29 +441,60 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                     }
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="match-score" style="
-                                    background: ${matchColor};
-                                    color: white;
-                                    padding: 8px 12px;
-                                    border-radius: 20px;
-                                    font-weight: bold;
-                                    font-size: 0.9em;
-                                ">
-                                    ${matchPercentage}% Match
-                                </div>
-                                <div class="mt-2">
-                                    <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
-                                       class="btn btn-sm btn-secondary" style="font-size: 0.8em; display: block; margin-bottom: 4px;">
-                                        View Profile
-                                    </a>
-                                    <button class="btn btn-sm btn-info previous-openings-btn mt-2" 
-                                            data-candidate="${candidate.name}"
-                                            style="font-size: 0.8em; display: block; width: 100%;">
-                                        Previous Openings
-                                    </button>
-                                </div>
-                            </div>
+                            <div class="candidate-actions text-right">
+    <div class="text-right" style="min-width: 170px;">
+    <div class="match-score" style="
+        background: ${matchColor};
+        color: #ffffff;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9em;
+        margin-bottom: 14px;
+        text-align: center;
+    ">
+        ${matchPercentage}% Match
+    </div>
+
+    <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
+   style="
+        display: block;
+        background-color: #f8fafc;
+        color: #1f2937;
+        font-size: 0.8em;
+        width: 100%;
+        margin-bottom: 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        padding: 7px 10px;
+        text-align: center;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+   "
+   onmouseover="this.style.backgroundColor='#e5e7eb'"
+   onmouseout="this.style.backgroundColor='#f8fafc'">
+    View Profile
+</a>
+
+    <button class="previous-openings-btn"
+            data-candidate="${candidate.name}"
+            style="
+                background-color: #fef3c7;
+                color: #92400e;
+                font-size: 0.8em;
+                width: 100%;
+                border: 1px solid #f59e0b;
+                border-radius: 6px;
+                padding: 7px 10px;
+                cursor: pointer;
+            "
+            onmouseover="this.style.backgroundColor='#fde68a'"
+            onmouseout="this.style.backgroundColor='#fef3c7'">
+        📂 Previous Openings
+    </button>
+</div>
+
+
                         </div>
                     </div>
                 `;
@@ -708,6 +751,163 @@ function getStageColor(stage) {
     "Rejected By Client": "#E5533D",    // soft red (not harsh)
 };
     return stageColors[stage] || "#6c757d";
+}
+
+// --------- MULTIPLE CANDIDATES PREVIOUS OPENINGS DIALOG ----------
+
+function show_multiple_candidates_previous_openings(candidate_names, candidate_display_names, current_job_opening, callback) {
+    if (!candidate_names || candidate_names.length === 0) {
+        if (callback) callback();
+        return;
+    }
+
+    // Show loading state
+    frappe.show_alert({
+        message: "Loading previous openings for selected candidates...",
+        indicator: "blue"
+    }, 2);
+
+    // Fetch previous openings for all candidates
+    const promises = candidate_names.map(candidate_name => {
+        return frappe.call({
+            method: "btw_recruitment.btw_recruitment.doctype.dkp_job_opening.dkp_job_opening.get_candidate_previous_openings",
+            args: {
+                candidate_name: candidate_name,
+                current_job_opening: current_job_opening
+            }
+        });
+    });
+
+    Promise.all(promises).then(results => {
+        // Organize openings by candidate
+        const candidate_openings_map = {};
+        let has_any_openings = false;
+
+        results.forEach((r, index) => {
+            const candidate_name = candidate_names[index];
+            if (r.message && r.message.success) {
+                const openings = r.message.openings || [];
+                if (openings.length > 0) {
+                    has_any_openings = true;
+                    candidate_openings_map[candidate_name] = openings;
+                } else {
+                    candidate_openings_map[candidate_name] = [];
+                }
+            } else {
+                candidate_openings_map[candidate_name] = [];
+            }
+        });
+
+        // Build HTML for all candidates' openings
+        let openings_html = `
+            <div id="multiple-candidates-openings-list" style="max-height: 500px; overflow-y: auto;">
+        `;
+
+        candidate_names.forEach(candidate_name => {
+            const openings = candidate_openings_map[candidate_name] || [];
+            const display_name = candidate_display_names[candidate_name] || candidate_name;
+            
+            openings_html += `
+                <div class="candidate-section mb-4" style="border-bottom: 2px solid #dee2e6; padding-bottom: 15px;">
+                    <div class="mb-2">
+                        <strong style="font-size: 1.2em; color: #495057;">${display_name}</strong>
+                    </div>
+            `;
+
+            if (openings.length === 0) {
+                openings_html += `
+                    <div class="text-muted" style="font-size: 0.9em; padding-left: 10px;">
+                        No previous openings found.
+                    </div>
+                `;
+            } else {
+                openings.forEach((opening, index) => {
+                    const stage = opening.stage || "Stage Not Set";
+                    const stageColor = getStageColor(stage);
+                    const formattedDate = opening.opening_created ? 
+                        frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string(opening.opening_created)) : "-";
+                    
+                    openings_html += `
+                        <div class="previous-opening-card mb-3 p-3"
+                             style="border: 1px solid #dee2e6; border-radius: 6px; background: #fff; margin-left: 10px;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="mb-2">
+                                        <strong style="font-size: 1.1em;">${opening.job_opening_name || "-"}</strong>
+                                    </div>
+                                    <div style="font-size: 0.9em; color: #6c757d;">
+                                        <div><strong>Designation:</strong> ${opening.designation || "-"}</div>
+                                        <div><strong>Company:</strong> ${opening.company_name || "-"}</div>
+                                        ${opening.department ? `<div><strong>Department:</strong> ${opening.department}</div>` : ""}
+                                        ${opening.location ? `<div><strong>Location:</strong> ${opening.location}</div>` : ""}
+                                        <div><strong>Status:</strong> ${opening.opening_status || "-"}</div>
+                                        <div><strong>Created:</strong> ${formattedDate}</div>
+                                    </div>
+                                    ${opening.remarks ? `
+                                        <div class="mt-2" style="font-size: 0.85em; color: #495057;">
+                                            <strong>Remarks:</strong> ${opening.remarks}
+                                        </div>
+                                    ` : ""}
+                                </div>
+                                <div class="text-right ml-3">
+                                    <div class="stage-badge" style="
+                                        background: ${stageColor};
+                                        color: white;
+                                        padding: 8px 16px;
+                                        border-radius: 20px;
+                                        font-weight: bold;
+                                        font-size: 0.9em;
+                                        white-space: nowrap;
+                                    ">
+                                        ${stage}
+                                    </div>
+                                    <a href="/app/dkp_job_opening/${opening.job_opening_name}" target="_blank"
+                                       class="btn btn-sm btn-secondary mt-2" style="font-size: 0.8em;">
+                                        View Opening
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            openings_html += `</div>`;
+        });
+
+        openings_html += `</div>`;
+
+        // Create and show dialog
+        const dialog = new frappe.ui.Dialog({
+            title: `Previous Openings(7 Days) - ${candidate_names.length} Selected Candidate(s)`,
+            size: "large",
+            fields: [
+                {
+                    fieldtype: "HTML",
+                    options: openings_html
+                }
+            ],
+            primary_action_label: "Continue & Add Candidates",
+            primary_action: () => {
+                dialog.hide();
+                if (callback) callback();
+            },
+            secondary_action_label: "Cancel",
+            secondary_action: () => {
+                dialog.hide();
+            }
+        });
+
+        dialog.show();
+    }).catch(error => {
+        frappe.msgprint({
+            title: "Error",
+            message: "Failed to fetch previous openings for some candidates.",
+            indicator: "red"
+        });
+        // Still proceed with adding candidates even if there's an error
+        if (callback) callback();
+    });
 }
 
 // Improved interview creation with check for candidate selection and better flow
