@@ -321,9 +321,14 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
     """
     Get all previous job openings for a candidate with their stages.
     Excludes the current job opening if provided.
+    Only returns openings from the last 7 days.
     """
     if not candidate_name:
         return {"success": False, "message": "Candidate name is required"}
+
+    # Calculate date 7 days ago
+    from frappe.utils import add_days, now_datetime
+    seven_days_ago = add_days(now_datetime(), -7)
 
     # Query to get all job openings where this candidate was added
     # Join DKP_JobApplication_Child with DKP_Job_Opening to get opening details
@@ -333,6 +338,10 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
     if current_job_opening:
         conditions.append("jo.name != %s")
         values.append(current_job_opening)
+
+    # Filter for openings created in the last 7 days
+    conditions.append("jo.creation >= %s")
+    values.append(seven_days_ago)
 
     where_clause = "WHERE " + " AND ".join(conditions)
 

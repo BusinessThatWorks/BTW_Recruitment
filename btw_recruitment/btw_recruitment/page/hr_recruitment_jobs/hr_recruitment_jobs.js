@@ -168,6 +168,11 @@ function render_job_kpi_cards(data) {
             link: "/app/dkp_job_opening"
         },
         {
+        label: "Total Positions",
+        value: data.total_positions,
+        link: "/app/dkp_job_opening?status=Open"
+    },
+        {
             label: "Active Jobs",
             value: data.active_jobs,
             link: "/app/dkp_job_opening?status=Open"
