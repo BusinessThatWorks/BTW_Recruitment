@@ -31,7 +31,7 @@ const priorityColors = {
 let candidate_departments_loaded = false;
 let jobs_departments_loaded = false;
 let jobs_table_state = { limit: 20, offset: 0 };
-let jobs_table_filters = { designation: null, department: null, recruiter: null, status: null };
+let jobs_table_filters = { company_name: null, designation: null, department: null, recruiter: null, status: null };
 let job_applications_table_state = { limit: 20, offset: 0 };
 let job_applications_table_filters = { company_name: null, job_opening_title: null, designation: null };
 let company_table_state = { limit: 20, offset: 0 };
@@ -43,11 +43,7 @@ let company_filters = {
     city: null,
     client_status: null
 };
-// $('a[data-tab="jobs"]').click(() => {
-//     console.log("Jobs tab clicked"); // should print
-//     load_jobs_department_options();
-//     load_jobs_table();
-// });
+
 
 frappe.pages['hr-recruitment-dashb'].on_page_load = function(wrapper) {
     const page = frappe.ui.make_app_page({
@@ -56,62 +52,106 @@ frappe.pages['hr-recruitment-dashb'].on_page_load = function(wrapper) {
         single_column: true
     });
 $(frappe.render_template("hr_recruitment_dashb")).appendTo(page.body);
-page.add_field({
-    label: 'From Date',
-    fieldtype: 'Date',
-    fieldname: 'from_date',
-    change() {
-        dashboard_filters.from_date = this.value  || null;
-        on_global_date_change();
+// page.add_field({
+//     label: 'From Date',
+//     fieldtype: 'Date',
+//     fieldname: 'from_date',
+//     change() {
+//         dashboard_filters.from_date = this.value  || null;
+//         on_global_date_change();
+//     }
+// });
+
+// page.add_field({
+//     label: 'To Date',
+//     fieldtype: 'Date',
+//     fieldname: 'to_date',
+//     change() {
+//         dashboard_filters.to_date = this.value  || null;
+//         on_global_date_change();
+//     }
+// });
+// page.add_field({
+//     label: 'Clear Date Filter', // No label, just a button
+//     fieldtype: 'Button',
+//     fieldname: 'clear_date_filter',
+//     options: 'Clear Dates',
+//     click() {
+//         // Clear the input fields
+//         $('input[data-fieldname="from_date"]').val('');  
+//         $('input[data-fieldname="to_date"]').val('');
+
+//         // Reset the dashboard filter values
+//         dashboard_filters.from_date = null;
+//         dashboard_filters.to_date = null;
+
+//         // Refresh the currently active tab
+//         on_global_date_change();
+//     }
+// });
+$(document).ready(function() {
+    const active_tab = $("#hr-dashboard-tabs .nav-link.active").data("tab");
+    if(active_tab === "candidates") {
+        // refresh_dashboard();
+        load_candidate_table();
     }
 });
+$(document).on(
+    "change",
+    "#candidate-from-date, #candidate-to-date, #jobs-from-date, #jobs-to-date, #company-from-date, #company-to-date",
+    function () {
+        const $tab = $(this).closest(".tab-pane");
 
-page.add_field({
-    label: 'To Date',
-    fieldtype: 'Date',
-    fieldname: 'to_date',
-    change() {
-        dashboard_filters.to_date = this.value  || null;
+        dashboard_filters.from_date =
+            $tab.find('input[type="date"][id$="from-date"]').val() || null;
+
+        dashboard_filters.to_date =
+            $tab.find('input[type="date"][id$="to-date"]').val() || null;
+
         on_global_date_change();
     }
-});
-page.add_field({
-    label: 'Clear Date Filter', // No label, just a button
-    fieldtype: 'Button',
-    fieldname: 'clear_date_filter',
-    options: 'Clear Dates',
-    click() {
-        // Clear the input fields
-        $('input[data-fieldname="from_date"]').val('');
-        $('input[data-fieldname="to_date"]').val('');
+);
+$(document).on(
+    "click",
+    "#candidate-clear-dates, #jobs-clear-dates, #company-clear-dates",
+    function () {
+        const $tab = $(this).closest(".tab-pane");
 
-        // Reset the dashboard filter values
+        $tab.find('input[type="date"]').val("");
+
         dashboard_filters.from_date = null;
         dashboard_filters.to_date = null;
 
-        // Refresh the currently active tab
         on_global_date_change();
     }
-});
+);
 
 function on_global_date_change() {
     const active_tab = $("#hr-dashboard-tabs .nav-link.active").data("tab");
 
-    if (active_tab === "overall") {
-        refresh_dashboard();
-    }
+    // if (active_tab === "overall") {
+    //     refresh_dashboard();
+    // }
 
     if (active_tab === "candidates") {
         candidate_table_state.offset = 0;
         load_candidate_table();
+        refresh_dashboard();
     }
     if (active_tab === "jobs") {
         jobs_table_state.offset = 0;
+        load_job_kpis();
         load_jobs_table();
-        load_recruiter_filter_options();
+        // load_recruiter_filter_options();
     }
     
-    if (active_tab === "company") { company_table_state.offset = 0; load_company_table(); }
+    if (active_tab === "company") { 
+        company_table_state.offset = 0; 
+        load_company_table(); 
+        load_company_kpis();
+        load_client_type_chart();
+        load_industry_chart();
+    }
 }
 
 $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
@@ -129,14 +169,19 @@ $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
 
     if (tab === "candidates") {
         load_candidates_tab();
+        load_candidate_table();
     }
     if (tab === "jobs") {   
+        load_job_kpis();
         load_jobs_department_options();
         load_jobs_table();
-        load_recruiter_filter_options()
+        // load_recruiter_filter_options()
     }
     if (tab === "company") {
         load_company_table();
+        load_company_kpis();
+        load_client_type_chart();
+        load_industry_chart();
     }
 });
 // Helper function to apply candidate filters
@@ -200,13 +245,15 @@ $(document).on("click", "#clear-candidate-filters", function () {
 });
 $(document).on("click", 'a[data-tab="jobs"]', () => {
     console.log("Jobs tab clicked");
+
     load_jobs_department_options();
     load_jobs_table();
-    load_recruiter_filter_options();
+    // load_recruiter_filter_options();
 });
 
 // Helper function to apply job filters
 function apply_job_filters() {
+    jobs_table_filters.company_name = $("#filter-job-company").val() || null;
     jobs_table_filters.designation = $("#filter-job-title").val() || null;
     jobs_table_filters.department = $("#filter-job-department").val() || null;
     jobs_table_filters.recruiter = $("#filter-job-recruiter").val() || null;
@@ -221,13 +268,13 @@ $("#apply-job-filters").click(() => {
 });
 
 // Live filtering for job filters
-$(document).on("change", "#filter-job-department, #filter-job-status, #filter-job-recruiter", function() {
+$(document).on("change","#filter-job-company", "#filter-job-department, #filter-job-status, #filter-job-recruiter", function() {
     apply_job_filters();
 });
 
 // Debounced live filtering for text inputs
 let job_filter_timeout;
-$(document).on("keyup", "#filter-job-title, #filter-job-recruiter", function() {
+$(document).on("keyup", "#filter-job-company, #filter-job-title, #filter-job-recruiter", function() {
     clearTimeout(job_filter_timeout);
     job_filter_timeout = setTimeout(function() {
         apply_job_filters();
@@ -235,11 +282,13 @@ $(document).on("keyup", "#filter-job-title, #filter-job-recruiter", function() {
 });
 
 $("#clear-job-filters").click(() => {
+    $("#filter-job-company").val("");
     $("#filter-job-title").val("");
     $("#filter-job-department").val("");
     $("#filter-job-recruiter").val("");
     $("#filter-job-status").val("");
 
+    jobs_table_filters.company_name = null;
     jobs_table_filters.designation = null; // <-- correct
     jobs_table_filters.department = null;
     jobs_table_filters.recruiter = null;
@@ -271,7 +320,7 @@ $("#apply-company-filters").click(() => {
 });
 
 // Live filtering for company filters
-$(document).on("change", "#filter-company-type, #filter-company-status", function() {
+$(document).on("change","#filter-company-name, #filter-company-type, #filter-company-status,  #filter-company-city", function() {
     apply_company_filters();
 });
 
@@ -320,7 +369,7 @@ function load_candidates_tab() {
     $("#candidates-table").empty();
 
     candidate_table_state.offset = 0;
-
+    load_kpis();
     load_candidate_department_options();
     load_candidate_table();
 }
@@ -372,10 +421,6 @@ function load_kpis() {
 
             render_department_pie_chart();
             render_urgent_openings_table();
-            // load_candidate_department_options();
-            // render_candidate_table();
-            // load_candidate_table()
-            // load_jobs_table()
         }
     });
 }
@@ -391,11 +436,7 @@ function render_kpi_cards(data) {
             value: data.blacklisted_candidates,
             link: "/app/dkp_candidate?blacklisted=Yes"
         },
-        {
-            label: "Total Job Openings",
-            value: data.total_job_openings,
-            link: "/app/dkp_job_opening"
-        }
+        
     ];
 
     const $row = $("#hr-kpi-cards");
@@ -757,7 +798,202 @@ let recruiter_loaded = false;
 // }
 
 
+function load_job_kpis() {
+    frappe.call({
+        method: "frappe.desk.query_report.run",
+        args: {
+            report_name: "HR Recruitment – Jobs KPIs",
+            filters: {
+                from_date: dashboard_filters.from_date,
+                to_date: dashboard_filters.to_date
+            }
+        },
+        callback(r) {
+            if (r.message) {
+                render_job_kpi_cards(r.message.result[0]);
+                render_job_charts(r.message.chart);
+            }
+        }
+    });
+}
+function render_job_kpi_cards(data) {
+    const cards = [
+        {
+            label: "Total Job Openings",
+            value: data.total_jobs,
+            link: "/app/dkp_job_opening"
+        },
+        {
+        label: "Total Open Positions",
+        value: data.total_positions,
+        link: "/app/dkp_job_opening?status=Open"
+    },
+        {
+            label: "Active Jobs",
+            value: data.active_jobs,
+            link: "/app/dkp_job_opening?status=Open"
+        },
+        
+        {
+            label: "Critical Jobs",
+            value: data.priority_jobs,
+            link: "/app/dkp_job_opening?priority=Critical"
+        },
+        
+    ];
 
+    const $row = $("#job-kpi-cards");
+    $row.empty();
+    cards.forEach(card => {
+        const cardHtml = `
+            <div class="kpi-col">
+                ${card.link ? `
+                    <a href="${card.link}" class="kpi-link">
+                        <div class="card kpi-card">
+                            <div class="kpi-value">${card.value}</div>
+                            <div class="kpi-label">${card.label}</div>
+                        </div>
+                    </a>
+                ` : `
+                    <div class="card kpi-card kpi-card-disabled">
+                        <div class="kpi-value">${card.value}</div>
+                        <div class="kpi-label">${card.label}</div>
+                    </div>
+                `}
+            </div>
+        `;
+        $(cardHtml).appendTo($row);
+    });
+
+    // Add styles once
+    if (!$("#job-kpi-card-style").length) {
+        $("<style>")
+            .prop("type", "text/css")
+            .attr("id", "job-kpi-card-style")
+            .html(`
+                #job-kpi-cards {
+                    display: flex;
+                    gap: 12px;
+                    padding: 16px;
+                }
+                .kpi-col {
+                    flex: 1;
+                }
+                .kpi-link {
+                    text-decoration: none;
+                    color: inherit;
+                    display: block;
+                    height: 100%;
+                }
+                .kpi-card {
+                    padding: 14px;
+                    text-align: center;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+                    height: 100%;
+                    cursor: pointer;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                }
+                .kpi-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+                }
+                    .kpi-card-disabled {
+                    cursor: default;
+                    opacity: 0.85;
+                }
+                .kpi-value {
+                    font-size: 20px;
+                    font-weight: 600;
+                }
+                .kpi-label {
+                    margin-top: 6px;
+                    font-size: 13px;
+                    color: #6c7680;
+                }
+            `)
+            .appendTo("head");
+    }
+}
+function normalize_status(status) {
+    if (!status) return "";
+
+    const s = status.toLowerCase().trim();
+
+    if (s === "open") return "open";
+    if (s === "hold") return "hold";
+
+    if (s === "closed – hired" || s === "closed - hired")
+        return "closed_hired";
+
+    if (s === "closed – cancelled" || s === "closed - cancelled")
+        return "closed_cancelled";
+
+    return "other";
+}
+function render_job_charts(chart) {
+	const labels = chart.data.labels;
+    const values = chart.data.datasets[0].values;
+
+    const datasets = labels.map((label, index) => {
+        const key = normalize_status(label);
+
+        return {
+            name: label,
+            values: labels.map((_, i) => i === index ? values[index] : 0),
+            chartType: "bar",
+        };
+    });
+
+    new frappe.Chart("#job-status-chart", {
+        title: "Job Status Distribution",
+        data: {
+            labels,
+            datasets
+        },
+        type: "donut",
+        height: 250
+    });
+
+    // Department-wise chart (if separate data needed)
+    frappe.call({
+        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_department_job_data",
+        args: {
+            from_date: dashboard_filters.from_date,
+            to_date: dashboard_filters.to_date
+        },
+        callback(r) {
+        if (!r.message || !r.message.length) return;
+
+        const dept_data = r.message;
+
+        const labels = dept_data.map(d => d.department);
+        const values = dept_data.map(d => d.count);
+
+        const datasets = labels.map((label, index) => ({
+            name: label,
+            values: labels.map((_, i) => i === index ? values[index] : 0),
+            chartType: "bar"
+            // color optional – frappe will auto assign if omitted
+        }));
+
+        new frappe.Chart("#job-department-chart", {
+            title: "Department-wise Job Openings",
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            type: "bar",
+            height: 250,
+            barOptions: {
+                stacked: true,      // important (same as pipeline chart)
+                spaceRatio: 0.7
+            }
+        });
+    }
+    });
+}
 function load_jobs_table() {
     console.log("Loading Jobs Table...", jobs_table_filters, jobs_table_state);
 
@@ -768,6 +1004,7 @@ function load_jobs_table() {
             to_date: dashboard_filters.to_date,
             limit: jobs_table_state.limit,
             offset: jobs_table_state.offset,
+            company_name: jobs_table_filters.company_name,
             designation: jobs_table_filters.designation,
             department: jobs_table_filters.department,
             // recruiter: jobs_table_filters.recruiter,
@@ -862,189 +1099,176 @@ function render_jobs_table(data, total) {
             load_jobs_table();
         });
 }
+// ---------------- KPIs ----------------
+function load_company_kpis() {
+    frappe.call({
+        method: "frappe.desk.query_report.run",
+        args: {
+            report_name: "Company Recruitment KPIs",
+            filters: {
+                from_date: dashboard_filters.from_date,
+                to_date: dashboard_filters.to_date
+            }
+        },
+        callback(r) {
+            if(r.message) {
+				console.log(r.message.result);
+				
+                render_company_kpi_cards(r.message.result);
+            }
+        }
+    });
+}
+function render_company_kpi_cards(data) {
+    const kpiLinks = {
+        "Total Clients": "/app/dkp_company",
+        "Active Clients": "/app/dkp_company?client_status=Active",
+        "Inactive Clients": "/app/dkp_company?client_status=Inactive",
+        "Companies with Open Jobs": "/app/dkp_job_opening?status=Open",
+    };
 
-// function load_job_applications_table() {
-//     console.log("Loading Job Applications Table...", job_applications_table_filters, job_applications_table_state);
+    const $row = $("#company-kpi-cards");
+    $row.empty();
 
-//     frappe.call({
-//         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_job_applications_table",
-//         args: {
-//             from_date: dashboard_filters.from_date,
-//             to_date: dashboard_filters.to_date,
-//             limit: job_applications_table_state.limit,
-//             offset: job_applications_table_state.offset,
-//             company_name: job_applications_table_filters.company_name,
-//             job_opening_title: job_applications_table_filters.job_opening_title,
-//             designation: job_applications_table_filters.designation
-//         },
-//         callback(r) {
-//             console.log("Job Applications API Response:", r);
+    data.forEach(item => {
+        const link = kpiLinks[item.kpi];
 
-//             if (r.message) {
-//                 render_job_applications_table(r.message.data, r.message.total);
-//             } else {
-//                 render_job_applications_table([], 0);
-//             }
-//         }
-//     });
-// }
+        $(`
+            <div class="kpi-col">
+                ${link ? `
+                    <a href="${link}" class="kpi-link">
+                        <div class="card kpi-card">
+                            <div class="kpi-value">${item.value}</div>
+                            <div class="kpi-label">${item.kpi}</div>
+                        </div>
+                    </a>
+                ` : `
+                    <div class="card kpi-card">
+                        <div class="kpi-value">${item.value}</div>
+                        <div class="kpi-label">${item.kpi}</div>
+                    </div>
+                `}
+            </div>
+        `).appendTo($row);
+    });
+}
 
-// function render_job_applications_table(data, total) {
-//     console.log("render_job_applications_table called with data:", data);
-//     const $container = $("#job-applications-table");
-//     $container.empty();
+if (!$("#company-kpi-cards").length) {
+        $("<style>")
+            .prop("type", "text/css")
+            .attr("id", "company-kpi-card-style")
+            .html(`
+				#company-kpi-cards {
+            display: flex;
+            gap: 12px;
+            padding:16px;
+        }
+        .kpi-col {
+            flex: 1;
 
-//     if (!data || !data.length) {
-//         $container.append(`
-//             <div class="card p-4 text-center text-muted">
-//                 <p>No job applications found</p>
-//             </div>
-//         `);
-//         return;
-//     }
+        }
+            .kpi-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
 
-//     // Create cards for each application
-//     data.forEach((app, index) => {
-//         const cardId = `app-card-${index}`;
-//         const candidatesId = `candidates-${index}`;
-//         const candidates = app.candidates || [];
-//         const candidatesCount = app.candidates_count || 0;
-        
-//         const card = $(`
-//             <div class="card mb-3 application-card" style="border-left: 4px solid #4A90E2;">
-//                 <div class="card-header" style="background: #f8f9fa; cursor: pointer;" data-toggle="collapse" data-target="#${candidatesId}">
-//                     <div class="d-flex justify-content-between align-items-center">
-//                         <div class="flex-grow-1">
-//                             <h5 class="mb-1" style="color: #2c3e50;">
-//                                 <a href="/app/dkp_job_application/${app.name}" style="color: #2c3e50; text-decoration: none;">
-//                                     ${app.name}
-//                                 </a>
-//                             </h5>
-//                             <div class="d-flex flex-wrap gap-3 mt-2" style="font-size: 0.9em; color: #6c757d;">
-//                                 <span><strong>Company:</strong> ${app.company_name || "-"}</span>
-//                                 <span><strong>Opening:</strong> ${app.job_opening_title || "-"}</span>
-//                                 <span><strong>Designation:</strong> ${app.designation || "-"}</span>
-//                                 ${app.joining_date ? `<span><strong>Joining:</strong> ${frappe.datetime.str_to_user(app.joining_date)}</span>` : ''}
-//                             </div>
-//                         </div>
-//                         <div class="text-right">
-//                             <span class="badge badge-primary" style="font-size: 0.9em; padding: 6px 12px;">
-//                                 ${candidatesCount} Candidate${candidatesCount !== 1 ? 's' : ''}
-//                             </span>
-//                             <i class="fa fa-chevron-down ml-2 toggle-icon" style="transition: transform 0.3s;"></i>
-//                         </div>
-//                     </div>
-//                 </div>
-//                 <div id="${candidatesId}" class="collapse">
-//                     <div class="card-body" style="background: #ffffff;">
-//                         ${candidates.length > 0 ? `
-//                             <div class="candidates-list">
-//                                 ${candidates.map((candidate, cIndex) => {
-//                                     const stageText = candidate.stage?.trim() || "No Stage";
-//                                     const stageColor = stageColors[candidate.stage?.trim()] || "#6c757d";
-//                                     return `
-//                                         <div class="candidate-item mb-3 p-3" style="border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa;">
-//                                             <div class="d-flex justify-content-between align-items-start">
-//                                                 <div class="flex-grow-1">
-//                                                     <h6 class="mb-2">
-//                                                         <a href="/app/dkp_candidate/${candidate.candidate_name}" style="color: #2c3e50; text-decoration: none; font-weight: 600;">
-//                                                             ${candidate.candidate_name || "-"}
-//                                                         </a>
-//                                                     </h6>
-//                                                     <div class="d-flex flex-wrap gap-3" style="font-size: 0.85em;">
-//                                                         ${candidate.interview_date ? `
-//                                                             <span style="color: #495057;">
-//                                                                 <i class="fa fa-calendar"></i> 
-//                                                                 Interview: ${frappe.datetime.str_to_user(candidate.interview_date)}
-//                                                             </span>
-//                                                         ` : ''}
-//                                                         ${candidate.interview_feedback ? `
-//                                                             <span style="color: #495057;">
-//                                                                 <i class="fa fa-comment"></i> 
-//                                                                 Feedback: ${candidate.interview_feedback}
-//                                                             </span>
-//                                                         ` : ''}
-//                                                     </div>
-//                                                 </div>
-//                                                 <div>
-//                                                     <span class="badge" style="
-//                                                         background-color: ${stageColor};
-//                                                         color: #fff;
-//                                                         padding: 6px 12px;
-//                                                         border-radius: 12px;
-//                                                         font-weight: 500;
-//                                                         font-size: 0.85em;
-//                                                     ">
-//                                                         ${stageText}
-//                                                     </span>
-//                                                 </div>
-//                                             </div>
-//                                         </div>
-//                                     `;
-//                                 }).join('')}
-//                             </div>
-//                         ` : `
-//                             <div class="text-center text-muted py-3">
-//                                 <p class="mb-0">No candidates added to this application yet</p>
-//                             </div>
-//                         `}
-//                     </div>
-//                 </div>
-//             </div>
-//         `);
-        
-//         $container.append(card);
-//     });
+.kpi-card {
+    cursor: pointer;
+}
+		.kpi-card {
+			padding: 12px;
+				text-align: center;
+							border-radius: 8px;
+							background: #ffffff;
+							box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+							height: 100%;
+						}
+						.kpi-value {
+							font-size: 20px;
+							font-weight: 600;
+						}
+						.kpi-label {
+							margin-top: 6px;
+							font-size: 13px;
+							color: #6c7680;
+						}
+                            .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+					`)							
+		.appendTo("head");                
+    }
 
-//     // Add toggle icon rotation on collapse/expand
-//     $container.find('.card-header').on('click', function() {
-//         const icon = $(this).find('.toggle-icon');
-//         const collapse = $(this).next('.collapse');
-        
-//         // Use setTimeout to check state after Bootstrap animation
-//         setTimeout(() => {
-//             if (collapse.hasClass('show')) {
-//                 icon.css('transform', 'rotate(180deg)');
-//             } else {
-//                 icon.css('transform', 'rotate(0deg)');
-//             }
-//         }, 100);
-//     });
 
-//     // Pagination
-//     const total_pages = Math.ceil(total / job_applications_table_state.limit);
-//     const current_page = Math.floor(job_applications_table_state.offset / job_applications_table_state.limit) + 1;
+// ---------------- Client Type Chart ----------------
+function load_client_type_chart() {
+    frappe.call({
+        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_client_type_distribution",
+        args: {
+            from_date: dashboard_filters.from_date,
+            to_date: dashboard_filters.to_date
+        },
+        callback(r) {
+            if(r.message) {
+                const chart_data = r.message;
+                new frappe.Chart("#client-type-chart", {
+                    title: "Client Type Distribution",
+                    data: chart_data.data,
+                    type: "pie",
+                    height: 300,
+					// legend: {
+					// 	position: "top"
+					// }
+                });
+            }
+        }
+    });
+}
 
-//     const pagination = $(`
-//         <div class="mt-3 d-flex align-items-center justify-content-between">
-//             <div>
-//                 <span class="text-muted">Showing ${job_applications_table_state.offset + 1} to ${Math.min(job_applications_table_state.offset + job_applications_table_state.limit, total)} of ${total} applications</span>
-//             </div>
-//             <div class="d-flex align-items-center gap-2">
-//                 <button class="btn btn-sm btn-primary" id="job-applications-prev">Prev</button>
-//                 <span>Page ${current_page} of ${total_pages || 1}</span>
-//                 <button class="btn btn-sm btn-primary" id="job-applications-next">Next</button>
-//             </div>
-//         </div>
-//     `);
+// ---------------- Industry Chart ----------------
+function load_industry_chart() {
+    frappe.call({
+        method: "frappe.desk.query_report.run",
+        args: {
+            report_name: "Company Recruitment KPIs",
+            filters: {
+                from_date: dashboard_filters.from_date,
+                to_date: dashboard_filters.to_date
+            }
+        },
+        callback(r) {
+            if (!r.message || !r.message.chart) return;
 
-//     $container.append(pagination);
+            const chart = r.message.chart;
+            const labels = chart.data.labels;
+            const values = chart.data.datasets[0].values;
 
-//     $("#job-applications-prev")
-//         .prop("disabled", job_applications_table_state.offset === 0)
-//         .click(() => {
-//             job_applications_table_state.offset -= job_applications_table_state.limit;
-//             load_job_applications_table();
-//         });
+            // ✅ Same proven pattern
+            const datasets = labels.map((label, index) => ({
+                name: label,
+                values: labels.map((_, i) => i === index ? values[index] : 0),
+                chartType: "bar"
+            }));
 
-//     $("#job-applications-next")
-//         .prop("disabled", current_page >= total_pages)
-//         .click(() => {
-//             job_applications_table_state.offset += job_applications_table_state.limit;
-//             load_job_applications_table();
-//         });
-// }
-
+            new frappe.Chart("#industry-chart", {
+                title: "Industry-wise Client Count",
+                data: {
+                    labels,
+                    datasets
+                },
+                type: "bar",
+                height: 250,
+                barOptions: {
+                    stacked: true,
+                    spaceRatio: 0.75
+                }
+            });
+        }
+    });
+}
 function load_company_table() {
     console.log("Loading Company Table...", company_filters, company_table_state);
 

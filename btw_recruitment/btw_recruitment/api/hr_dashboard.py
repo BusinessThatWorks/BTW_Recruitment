@@ -704,7 +704,7 @@ def get_candidate_table(
 from frappe.utils import cint
 
 @frappe.whitelist()
-def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
+def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,company_name=None,
                    designation=None, department=None, recruiter=None, status=None):
 
     conditions = []
@@ -716,6 +716,9 @@ def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,
     if to_date:
         conditions.append("creation <= %s")
         values.append(to_date + " 23:59:59")
+    if company_name:
+        conditions.append("company_name LIKE %s")
+        values.append(f"%{company_name}%")    
     if designation:
         conditions.append("designation LIKE %s")
         values.append(f"%{designation}%")
