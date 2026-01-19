@@ -131,10 +131,48 @@ def process_resume(docname):
     client = Anthropic(api_key=api_key)
 
     prompt = f"""
-You are a resume parser AI. Extract ONLY JSON. No explanation.
+You are a senior HR analytics resume parser.
+
+YOUR TASK:
+1. Extract ALL work experiences with exact dates.
+2. Identify gaps BETWEEN experiences automatically, even if gaps are not explicitly mentioned.
+3. Calculate TOTAL PROFESSIONAL EXPERIENCE by EXCLUDING gap periods.
+4. Perform all date calculations carefully.
+
+IMPORTANT RULES:
+- Do NOT guess employment that is not written.
+- If two jobs do not overlap and have a break, count that break as a GAP.
+- If dates overlap, count overlap only once.
+- Future dates (e.g. 2025) MUST be handled correctly.
+- If "Present" is mentioned, treat it as current month.
+- Use month-level precision.
+
+INTERNAL STEPS (do silently, do not explain):
+- Convert all dates to YYYY-MM
+- Calculate duration of each job in months
+- Detect gaps between jobs
+- Subtract gap months from total timeline
+- Convert final months into years (rounded to 2 decimals)
+
+DATE HANDLING RULES:
+- Month name → number (Jan=01 … Dec=12)
+- If only year is given, assume January for start, December for end
+- Example:
+  - "May 2022 – Oct 2023" → 1.42 years
+  - "Dec 2023 – Aug 2025" → 1.67 years
+- Gap example:
+  - Job1 ends Oct 2023, Job2 starts Dec 2023 → gap = Nov 2023 (1 month)
 
 Resume Text:
+----------------
 {extracted_text}
+----------------
+
+OUTPUT RULES:
+- Return ONLY valid JSON
+- No explanation
+- No markdown
+- No comments
 
 Return JSON with these fields:
 - candidate_name
@@ -153,7 +191,9 @@ Return JSON with these fields:
 - date_of_birth (format: YYYY-MM-DD)
 - address
 - age(extract from date_of_birth)
+
 """
+
 
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
