@@ -83,7 +83,7 @@ def execute(filters=None):
 
     # ---------------- KPI CARD DATA ----------------
     data = [
-        {"kpi": "Total Companies", "value": total_companies},
+        {"kpi": "Total Clients", "value": total_companies},
         {"kpi": "Active Clients", "value": active_clients},
         {"kpi": "Inactive Clients", "value": inactive_clients},
         {"kpi": "Companies with Open Jobs", "value": companies_with_open_jobs},
@@ -91,12 +91,26 @@ def execute(filters=None):
     ]
 
     # ---------------- CHART: Industry-wise Client Count ----------------
-    industry_data = frappe.db.sql("""
+    industry_conditions = ["industry IS NOT NULL"]
+    values = {}
+
+    if date_filter:
+        industry_conditions.append("creation BETWEEN %(from)s AND %(to)s")
+        values["from"] = date_filter[1][0]
+        values["to"] = date_filter[1][1]
+
+    industry_data = frappe.db.sql(f"""
         SELECT industry, COUNT(name)
         FROM `tabDKP_Company`
-        WHERE industry IS NOT NULL
+        WHERE {" AND ".join(industry_conditions)}
         GROUP BY industry
-    """)
+    """, values)
+    # industry_data = frappe.db.sql("""
+    #     SELECT industry, COUNT(name)
+    #     FROM `tabDKP_Company`
+    #     WHERE industry IS NOT NULL
+    #     GROUP BY industry
+    # """)
 
     industry_labels = [row[0] for row in industry_data]
     industry_values = [row[1] for row in industry_data]

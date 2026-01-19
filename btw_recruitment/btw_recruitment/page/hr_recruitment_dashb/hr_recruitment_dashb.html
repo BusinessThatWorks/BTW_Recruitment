@@ -1,353 +1,427 @@
 <!-- Tabs -->
 <div class="mt-3">
-    <ul class="nav nav-tabs" id="hr-dashboard-tabs">
-        <li class="nav-item">
+	<ul class="nav nav-tabs" id="hr-dashboard-tabs">
+		<!-- <li class="nav-item">
             <a class="nav-link active" data-tab="overall">Overall</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-tab="candidates">Candidates</a>
-        </li>
-        <!-- Add Jobs tab -->
-        <li class="nav-item">
-            <a class="nav-link" data-tab="jobs">Jobs</a>
-        </li>
-       
-        <li class="nav-item">
-            <a class="nav-link" data-tab="company">Company</a>
-        </li>
-    </ul>
+        </li> -->
+		<li class="nav-item">
+			<a class="nav-link active" data-tab="candidates">Candidates</a>
+		</li>
+		<!-- Add Jobs tab -->
+		<li class="nav-item">
+			<a class="nav-link" data-tab="jobs">Jobs</a>
+		</li>
 
-    <div class="tab-content pt-3">
-        <div class="tab-pane active" id="tab-overall">
-            <div class="hr-kpi-section">
-                <div class="row" id="hr-kpi-cards"></div>
+		<li class="nav-item">
+			<a class="nav-link" data-tab="company">Company</a>
+		</li>
+	</ul>
 
-                <div id="pipeline-section"></div>
-                <div id="department-section"></div>
-                <div id="urgent-openings-section"></div>
+	<div class="tab-content pt-3">
+		<div class="tab-pane active" id="tab-candidates">
+			<div class="hr-kpi-section mb-4">
+				<div class="row" id="hr-kpi-cards"></div>
 
-                <div id="applications-section"></div>
-            </div>
-        </div>
+				<div id="pipeline-section"></div>
+				<div id="department-section"></div>
+			</div>
+			<div id="candidates-filters" class="card p-3 mb-3">
+				<!-- ROW 1 : DATE FILTERS -->
+				<div class="row g-3 align-items-end mb-3">
+					<!-- FROM DATE -->
+					<div class="col-md-2">
+						<label class="form-label">From</label>
+						<input type="date" class="form-control" id="candidate-from-date" />
+					</div>
 
-        <div class="tab-pane" id="tab-candidates">
-            <div id="candidates-filters" class="mb-2">
-                <div class="row g-2 align-items-end">
+					<!-- TO DATE -->
+					<div class="col-md-2">
+						<label class="form-label">To</label>
+						<input type="date" class="form-control" id="candidate-to-date" />
+					</div>
 
-                    <div class="col-md-2">
-                        <label>Name Search</label>
-                        <input type="text" class="form-control" id="candidate-name-search" placeholder="Candidate name">
-                    </div>
+					<!-- CLEAR DATES -->
+					<div class="col-md-2">
+						<button class="btn btn-outline-secondary w-100" id="candidate-clear-dates">
+							Clear Dates
+						</button>
+					</div>
+				</div>
 
-                    <div class="col-md-2">
-                        <label>Skills / Certifications</label>
-                        <input type="text" class="form-control" id="candidate-search" placeholder="Skills, certifications">
-                    </div>
+				<hr class="my-2" />
 
-                    <div class="col-md-2">
-                        <label>Department</label>
-                        <select class="form-control" id="filter-department">
-                            <option value="">All</option>
-                        </select>
-                    </div>
+				<!-- ROW 2 : OTHER FILTERS (NO APPLY BUTTON) -->
+				<div class="row g-3 align-items-end">
+					<div class="col-md-2">
+						<label class="form-label">Candidate Name</label>
+						<input
+							type="text"
+							class="form-control"
+							id="candidate-name-search"
+							placeholder="Search by name"
+						/>
+					</div>
 
-                    <div class="col-md-2">
-                        <label>Designation</label>
-                        <input type="text" class="form-control" id="filter-designation" placeholder="e.g. React Developer">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Skills / Certifications</label>
+						<input
+							type="text"
+							class="form-control"
+							id="candidate-search"
+							placeholder="React, AWS, Java…"
+						/>
+					</div>
 
-                    <div class="col-md-1">
-                        <label>Min Exp</label>
-                        <input type="number" class="form-control" id="filter-min-exp">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Department</label>
+						<select class="form-control" id="filter-department">
+							<option value="">All</option>
+						</select>
+					</div>
 
-                    <div class="col-md-1">
-                        <label>Max Exp</label>
-                        <input type="number" class="form-control" id="filter-max-exp">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Designation</label>
+						<input
+							type="text"
+							class="form-control"
+							id="filter-designation"
+							placeholder="React Developer"
+						/>
+					</div>
 
-                    <div class="col-md-1">
-                        <button class="btn btn-primary w-100" id="apply-candidate-filters">Apply</button>
-                    </div>
+					<div class="col-md-1">
+						<label class="form-label">Min Exp</label>
+						<input type="number" class="form-control" id="filter-min-exp" />
+					</div>
 
-                    <div class="col-md-1">
-                        <button class="btn btn-secondary w-100" id="clear-candidate-filters">Clear</button>
-                    </div>
+					<div class="col-md-1">
+						<label class="form-label">Max Exp</label>
+						<input type="number" class="form-control" id="filter-max-exp" />
+					</div>
 
-                </div>
-            </div>
+					<!-- ONLY CLEAR ALL -->
+					<div class="col-md-1">
+						<button
+							class="btn btn-outline-secondary w-100"
+							id="clear-candidate-filters"
+						>
+							Clear
+						</button>
+					</div>
+				</div>
+			</div>
 
+			<div id="candidates-table"></div>
+		</div>
+		<!-- Jobs Tab -->
+		<div class="tab-pane" id="tab-jobs">
+			<!-- Jobs KPIs & Charts -->
+			<div id="jobs-dashboard-summary" class="mb-4">
+				<div class="row" id="job-kpi-cards"></div>
 
-            <div id="candidates-table"></div>
-        </div>
-        <!-- Jobs Tab -->
-        <div class="tab-pane" id="tab-jobs">
+				<div class="row mt-4">
+					<div class="col-md-12">
+						<div id="job-status-chart"></div>
+					</div>
+				</div>
 
-            <!-- Filters -->
-            <div id="jobs-filters" class="mb-2">
-                <div class="row g-2 align-items-end">
+				<div class="row mt-4">
+					<div class="col-md-12">
+						<div id="job-department-chart"></div>
+					</div>
+				</div>
+			</div>
+			<!-- Filters -->
+			<div id="jobs-filters" class="card p-3 mb-3">
+				<!-- ROW 1 : DATE FILTERS -->
+				<div class="row g-3 align-items-end mb-3">
+					<div class="col-md-2">
+						<label class="form-label">From</label>
+						<input type="date" class="form-control" id="jobs-from-date" />
+					</div>
 
-                    <div class="col-md-2">
-                        <label>Designation</label>
-                        <input type="text" class="form-control" id="filter-job-title" placeholder="e.g. React Developer">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">To</label>
+						<input type="date" class="form-control" id="jobs-to-date" />
+					</div>
 
-                    <div class="col-md-2">
-                        <label>Department</label>
-                        <select class="form-control" id="filter-job-department">
-                            <option value="">All</option>
-                        </select>
-                    </div>
+					<div class="col-md-2">
+						<button class="btn btn-outline-secondary w-100" id="jobs-clear-dates">
+							Clear Dates
+						</button>
+					</div>
+				</div>
 
-                    <!-- <div class="col-md-2">
-                        <label>Recruiter</label>
-                        <select class="form-control" id="filter-job-recruiter">
-                            <option value="">All</option>
-                        </select>
-                    </div> -->
+				<hr class="my-2" />
 
-                    <div class="col-md-2">
-                        <label>Status</label>
-                        <select class="form-control" id="filter-job-status">
-                            <option value="">All</option>
-                            <option value="Open">Open</option>
-                            <option value="On Hold">On Hold</option>
-                            <option value="Closed – Hired">Closed – Hired</option>
-                            <option value="Closed – Cancelled">Closed – Cancelled</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-1">
-                        <button class="btn btn-primary w-100" id="apply-job-filters">Apply</button>
-                    </div>
-
-                    <div class="col-md-1">
-                        <button class="btn btn-secondary w-100" id="clear-job-filters">Clear</button>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Jobs table -->
-            <div id="jobs-table"></div>
-
-        </div>
-        <!-- Job Applications Tab -->
-        <div class="tab-pane" id="tab-job-applications">
-
-            <!-- Filters -->
-            <div id="job-applications-filters" class="mb-2">
-                <div class="row g-2 align-items-end">
-
+				<!-- ROW 2 : JOB FILTERS -->
+				<div class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label>Company Name</label>
-                        <input type="text" class="form-control" id="filter-application-company" placeholder="Company name">
-                    </div>
+                        <label class="form-label">Company</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="filter-job-company"
+                            placeholder="e.g. ABC Corp"
+                        />
+					</div>
+					<div class="col-md-3">
+						<label class="form-label">Designation</label>
+						<input
+							type="text"
+							class="form-control"
+							id="filter-job-title"
+							placeholder="e.g. React Developer"
+						/>
+					</div>
 
-                    <div class="col-md-3">
-                        <label>Job Opening Title</label>
-                        <input type="text" class="form-control" id="filter-application-opening" placeholder="Job opening">
-                    </div>
+					<div class="col-md-3">
+						<label class="form-label">Department</label>
+						<select class="form-control" id="filter-job-department">
+							<option value="">All</option>
+						</select>
+					</div>
 
-                    <div class="col-md-3">
-                        <label>Designation</label>
-                        <input type="text" class="form-control" id="filter-application-designation" placeholder="e.g. React Developer">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Status</label>
+						<select class="form-control" id="filter-job-status">
+							<option value="">All</option>
+							<option value="Open">Open</option>
+							<option value="On Hold">On Hold</option>
+							<option value="Closed – Hired">Closed – Hired</option>
+							<option value="Closed – Cancelled">Closed – Cancelled</option>
+						</select>
+					</div>
 
-                    <div class="col-md-1">
-                        <button class="btn btn-primary w-100" id="apply-application-filters">Apply</button>
-                    </div>
+					<div class="col-md-1">
+						<button class="btn btn-outline-secondary w-100" id="clear-job-filters">
+							Clear
+						</button>
+					</div>
+				</div>
+			</div>
 
-                    <div class="col-md-1">
-                        <button class="btn btn-secondary w-100" id="clear-application-filters">Clear</button>
-                    </div>
+			<!-- Jobs table -->
+			<div id="jobs-table"></div>
+		</div>
 
-                </div>
-            </div>
+		<!-- Company Tab -->
+		<div class="tab-pane" id="tab-company">
+			<!-- Company KPIs & Charts -->
+			<div id="company-dashboard-summary" class="mb-4">
+				<div class="row" id="company-kpi-cards"></div>
 
-            <!-- Job Applications table -->
-            <div id="job-applications-table"></div>
+				<div class="row mt-4">
+					<div class="col-md-12">
+						<div id="client-type-chart"></div>
+					</div>
+				</div>
 
-        </div>
-        <!-- Company Tab -->
-        <div class="tab-pane" id="tab-company">
+				<div class="row mt-4">
+					<div class="col-md-12">
+						<div id="industry-chart"></div>
+					</div>
+				</div>
+			</div>
+			<div id="company-filters" class="card p-3 mb-3">
+				<!-- ROW 1 : DATE FILTERS -->
+				<div class="row g-3 align-items-end mb-3">
+					<div class="col-md-2">
+						<label class="form-label">From</label>
+						<input type="date" class="form-control" id="company-from-date" />
+					</div>
 
-            <!-- Filters -->
-            <div id="company-filters" class="mb-2">
-                <div class="row g-2 align-items-end">
+					<div class="col-md-2">
+						<label class="form-label">To</label>
+						<input type="date" class="form-control" id="company-to-date" />
+					</div>
 
-                    <div class="col-md-2">
-                        <label>Company Name</label>
-                        <input type="text" class="form-control" id="filter-company-name">
-                    </div>
+					<div class="col-md-2">
+						<button class="btn btn-outline-secondary w-100" id="company-clear-dates">
+							Clear Dates
+						</button>
+					</div>
+				</div>
 
-                    <div class="col-md-1">
-                        <label>Client Type</label>
-                        <select class="form-control" id="filter-company-type">
-                            <option value="">All</option>
-                            <option value="Recruitment">Recruitment</option>
-                            <option value="Consulting">Consulting</option>
-                            <option value="Recruitment + Consulting">Recruitment + Consulting</option>
-                        </select>
-                    </div>
+				<hr class="my-2" />
 
-                    <div class="col-md-2">
-                        <label>Industry</label>
-                        <input type="text" class="form-control" id="filter-company-industry">
-                    </div>
+				<!-- ROW 2 : COMPANY FILTERS -->
+				<div class="row g-3 align-items-end">
+					<div class="col-md-2">
+						<label class="form-label">Company Name</label>
+						<input type="text" class="form-control" id="filter-company-name" />
+					</div>
 
-                    <div class="col-md-2">
-                        <label>State</label>
-                        <input type="text" class="form-control" id="filter-company-state">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Client Type</label>
+						<select class="form-control" id="filter-company-type">
+							<option value="">All</option>
+							<option value="Recruitment">Recruitment</option>
+							<option value="Consulting">Consulting</option>
+							<option value="Recruitment + Consulting">
+								Recruitment + Consulting
+							</option>
+						</select>
+					</div>
 
-                    <div class="col-md-2">
-                        <label>City</label>
-                        <input type="text" class="form-control" id="filter-company-city">
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">Industry</label>
+						<input type="text" class="form-control" id="filter-company-industry" />
+					</div>
 
-                    <div class="col-md-1">
-                        <label>Status</label>
-                        <select class="form-control" id="filter-company-status">
-                            <option value="">All</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">State</label>
+						<input type="text" class="form-control" id="filter-company-state" />
+					</div>
 
-                    <div class="col-md-1">
-                        <button class="btn btn-primary w-100" id="apply-company-filters">Apply</button>
-                    </div>
+					<div class="col-md-2">
+						<label class="form-label">City</label>
+						<input type="text" class="form-control" id="filter-company-city" />
+					</div>
 
-                    <div class="col-md-1">
-                        <button class="btn btn-secondary w-100" id="clear-company-filters">Clear</button>
-                    </div>
+					<div class="col-md-1">
+						<label class="form-label">Status</label>
+						<select class="form-control" id="filter-company-status">
+							<option value="">All</option>
+							<option value="Active">Active</option>
+							<option value="Inactive">Inactive</option>
+						</select>
+					</div>
 
-                </div>
-            </div>
+					<div class="col-md-1">
+						<button class="btn btn-outline-secondary w-100" id="clear-company-filters">
+							Clear
+						</button>
+					</div>
+				</div>
+			</div>
 
-            <div id="company-table"></div>
-        </div>
-
-    </div>
+			<div id="company-table"></div>
+		</div>
+	</div>
 </div>
 
-
-
 <style>
-.kpi-card {
-    padding: 10px;
-    text-align: center;
-    border-radius: 8px;
-    background: #ffffff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    height: 100%;
-}
-#hr-kpi-cards {
-    display: flex;
-    gap: 12px;
-    padding: 0 16px;
-}
-.kpi-col { flex: 1; }
-.kpi-value {
-    font-size: 20px;
-    font-weight: 600;
-}
-.kpi-label {
-    margin-top: 6px;
-    font-size: 13px;
-    color: #6c7680;
-}
-.kpi-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    height: 100%;
-}
-.kpi-card {
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-}
-#pipeline-section .card,
-#department-section .card,
-#applications-table-wrapper {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
+	.kpi-card {
+		padding: 10px;
+		text-align: center;
+		border-radius: 8px;
+		background: #ffffff;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+		height: 100%;
+	}
+	#hr-kpi-cards {
+		display: flex;
+		gap: 12px;
+		padding: 0 16px;
+	}
+	.kpi-col {
+		flex: 1;
+	}
+	.kpi-value {
+		font-size: 20px;
+		font-weight: 600;
+	}
+	.kpi-label {
+		margin-top: 6px;
+		font-size: 13px;
+		color: #6c7680;
+	}
+	.kpi-link {
+		text-decoration: none;
+		color: inherit;
+		display: block;
+		height: 100%;
+	}
+	.kpi-card {
+		cursor: pointer;
+		transition:
+			transform 0.15s ease,
+			box-shadow 0.15s ease;
+	}
+	.kpi-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+	}
+	#pipeline-section .card,
+	#department-section .card,
+	#applications-table-wrapper {
+		background: #fff;
+		border-radius: 8px;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+	}
 
-#applications-table-wrapper table {
-    font-size: 13px;
-}
+	#applications-table-wrapper table {
+		font-size: 13px;
+	}
 
-#applications-table-wrapper th {
-    background: #f8f9fa;
-    font-weight: 600;
-}
+	#applications-table-wrapper th {
+		background: #f8f9fa;
+		font-weight: 600;
+	}
 
-#applications-pagination-container {
-    display: flex;
-    justify-content: flex-end;
-}
+	#applications-pagination-container {
+		display: flex;
+		justify-content: flex-end;
+	}
 
-/* Job Applications Card Styles */
-.application-card {
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
-    border-radius: 8px;
-}
+	/* Job Applications Card Styles */
+	.application-card {
+		transition:
+			box-shadow 0.3s ease,
+			transform 0.2s ease;
+		border-radius: 8px;
+	}
 
-.application-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-}
+	.application-card:hover {
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		transform: translateY(-2px);
+	}
 
-.application-card .card-header {
-    border-bottom: 1px solid #e0e0e0;
-    padding: 16px 20px;
-}
+	.application-card .card-header {
+		border-bottom: 1px solid #e0e0e0;
+		padding: 16px 20px;
+	}
 
-.application-card .card-header:hover {
-    background: #f0f0f0 !important;
-}
+	.application-card .card-header:hover {
+		background: #f0f0f0 !important;
+	}
 
-.candidate-item {
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
+	.candidate-item {
+		transition:
+			background-color 0.2s ease,
+			box-shadow 0.2s ease;
+	}
 
-.candidate-item:hover {
-    background: #f5f5f5 !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
+	.candidate-item:hover {
+		background: #f5f5f5 !important;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+	}
 
-.toggle-icon {
-    color: #6c757d;
-}
+	.toggle-icon {
+		color: #6c757d;
+	}
 
-.candidates-list {
-    max-height: 600px;
-    overflow-y: auto;
-}
+	.candidates-list {
+		max-height: 600px;
+		overflow-y: auto;
+	}
 
-.candidates-list::-webkit-scrollbar {
-    width: 6px;
-}
+	.candidates-list::-webkit-scrollbar {
+		width: 6px;
+	}
 
-.candidates-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
+	.candidates-list::-webkit-scrollbar-track {
+		background: #f1f1f1;
+		border-radius: 10px;
+	}
 
-.candidates-list::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
+	.candidates-list::-webkit-scrollbar-thumb {
+		background: #888;
+		border-radius: 10px;
+	}
 
-.candidates-list::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
+	.candidates-list::-webkit-scrollbar-thumb:hover {
+		background: #555;
+	}
 </style>

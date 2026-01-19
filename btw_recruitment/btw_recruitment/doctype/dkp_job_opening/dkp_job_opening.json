@@ -247,7 +247,7 @@
   },
   {
    "fieldname": "job_description",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Job Description"
   },
   {
@@ -306,7 +306,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-16 11:52:47.870260",
+ "modified": "2026-01-19 17:30:26.114696",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

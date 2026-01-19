@@ -83,13 +83,13 @@ def execute(filters=None):
     }]
 
     # ---------------- CHART DATA ----------------
-    stages = ["In Review", "Shortlisted For Interview", "Interview in Progress","Selected", "Offered", "Offer Drop","Joined"]
+    stages = ["Submitted to Client", "Schedule Interview", "Rejected By Client"]
     stage_counts = []
 
     for stage in stages:
         
         stage_filters = [
-    ["parenttype", "=", "DKP_Job_Application"],
+    ["parenttype", "=", "DKP_Job_Opening"],
     ["stage", "=", stage]
 ]
 
