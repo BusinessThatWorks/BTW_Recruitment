@@ -315,7 +315,21 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         "criteria": criteria,
     }
 
+def get_previous_openings_days():
+    """
+    Fetch number of days from singleton.
+    Defaults to 7 if not set or invalid.
+    """
+    try:
+        days = frappe.db.get_single_value(
+            "DKP_Previous_Openings_Days",
+            "filter_openings"
+        )
 
+        days = int(days)
+        return days if days > 0 else 7
+    except Exception:
+        return 7
 @frappe.whitelist()
 def get_candidate_previous_openings(candidate_name, current_job_opening=None):
     """
@@ -328,7 +342,9 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
 
     # Calculate date 7 days ago
     from frappe.utils import add_days, now_datetime
-    seven_days_ago = add_days(now_datetime(), -7)
+    # seven_days_ago = add_days(now_datetime(), -7)
+    days = get_previous_openings_days()
+    from_date = add_days(now_datetime(), -days)
 
     # Query to get all job openings where this candidate was added
     # Join DKP_JobApplication_Child with DKP_Job_Opening to get opening details
@@ -341,7 +357,8 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
 
     # Filter for openings created in the last 7 days
     conditions.append("jo.creation >= %s")
-    values.append(seven_days_ago)
+    values.append(from_date)
+
 
     where_clause = "WHERE " + " AND ".join(conditions)
 
@@ -366,9 +383,47 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
     """, values, as_dict=True)
 
     return {
+    "success": True,
+    "openings": openings,
+    "total": len(openings),
+    "days_used": days
+}
+
+@frappe.whitelist()
+def get_candidate_previous_openings_count(candidate_name, current_job_opening=None):
+    if not candidate_name:
+        return {"success": False, "count": 0}
+
+    from frappe.utils import add_days, now_datetime
+
+    days = get_previous_openings_days()
+    from_date = add_days(now_datetime(), -days)
+
+    conditions = ["child.candidate_name = %s"]
+    values = [candidate_name]
+
+    if current_job_opening:
+        conditions.append("jo.name != %s")
+        values.append(current_job_opening)
+
+    conditions.append("jo.creation >= %s")
+    values.append(from_date)
+
+    where_clause = "WHERE " + " AND ".join(conditions)
+
+    count = frappe.db.sql(f"""
+        SELECT COUNT(*)
+        FROM `tabDKP_JobApplication_Child` child
+        INNER JOIN `tabDKP_Job_Opening` jo
+            ON jo.name = child.parent
+        {where_clause}
+    """, values)[0][0]
+
+    return {
         "success": True,
-        "openings": openings,
-        "total": len(openings)
+        "count": count,
+        "days_used": days
     }
+
 
 

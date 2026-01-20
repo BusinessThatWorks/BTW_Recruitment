@@ -72,6 +72,30 @@ function show_opening_candidate_suggestions(frm) {
         }
     });
 }
+function update_previous_openings_button_count(
+    $button,
+    candidate_name,
+    current_job_opening
+) {
+    frappe.call({
+        method: "btw_recruitment.btw_recruitment.doctype.dkp_job_opening.dkp_job_opening.get_candidate_previous_openings_count",
+        args: {
+            candidate_name: candidate_name,
+            current_job_opening: current_job_opening
+        },
+        callback(r) {
+            if (r.message && r.message.success) {
+                const count = r.message.count || 0;
+
+                if (count > 0) {
+                    $button.text(`📂 Previous Openings (${count})`);
+                } else {
+                    $button.text("📂 Previous Openings");
+                }
+            }
+        }
+    });
+}
 
 function show_opening_candidates_dialog(frm, candidates, criteria) {
     let selected_candidates = [];
@@ -442,57 +466,57 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                 </div>
                             </div>
                             <div class="candidate-actions text-right">
-    <div class="text-right" style="min-width: 170px;">
-    <div class="match-score" style="
-        background: ${matchColor};
-        color: #ffffff;
-        padding: 8px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.9em;
-        margin-bottom: 14px;
-        text-align: center;
-    ">
-        ${matchPercentage}% Match
-    </div>
+                                <div class="text-right" style="min-width: 170px;">
+                                <div class="match-score" style="
+                                    background: ${matchColor};
+                                    color: #ffffff;
+                                    padding: 8px 12px;
+                                    border-radius: 20px;
+                                    font-weight: bold;
+                                    font-size: 0.9em;
+                                    margin-bottom: 14px;
+                                    text-align: center;
+                                ">
+                                    ${matchPercentage}% Match
+                                </div>
 
-    <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
-   style="
-        display: block;
-        background-color: #f8fafc;
-        color: #1f2937;
-        font-size: 0.8em;
-        width: 100%;
-        margin-bottom: 16px;
-        border-radius: 6px;
-        text-decoration: none;
-        padding: 7px 10px;
-        text-align: center;
-        border: 1px solid #d1d5db;
-        cursor: pointer;
-   "
-   onmouseover="this.style.backgroundColor='#e5e7eb'"
-   onmouseout="this.style.backgroundColor='#f8fafc'">
-    View Profile
-</a>
+                                <a href="/app/dkp_candidate/${candidate.name}" target="_blank"
+                            style="
+                                    display: block;
+                                    background-color: #f8fafc;
+                                    color: #1f2937;
+                                    font-size: 0.8em;
+                                    width: 100%;
+                                    margin-bottom: 16px;
+                                    border-radius: 6px;
+                                    text-decoration: none;
+                                    padding: 7px 10px;
+                                    text-align: center;
+                                    border: 1px solid #d1d5db;
+                                    cursor: pointer;
+                            "
+                            onmouseover="this.style.backgroundColor='#e5e7eb'"
+                            onmouseout="this.style.backgroundColor='#f8fafc'">
+                                View Profile
+                            </a>
 
-    <button class="previous-openings-btn"
-            data-candidate="${candidate.name}"
-            style="
-                background-color: #fef3c7;
-                color: #92400e;
-                font-size: 0.8em;
-                width: 100%;
-                border: 1px solid #f59e0b;
-                border-radius: 6px;
-                padding: 7px 10px;
-                cursor: pointer;
-            "
-            onmouseover="this.style.backgroundColor='#fde68a'"
-            onmouseout="this.style.backgroundColor='#fef3c7'">
-        📂 Previous Openings
-    </button>
-</div>
+                                <button class="previous-openings-btn"
+                                        data-candidate="${candidate.name}"
+                                        style="
+                                            background-color: #fef3c7;
+                                            color: #92400e;
+                                            font-size: 0.8em;
+                                            width: 100%;
+                                            border: 1px solid #f59e0b;
+                                            border-radius: 6px;
+                                            padding: 7px 10px;
+                                            cursor: pointer;
+                                        "
+                                        onmouseover="this.style.backgroundColor='#fde68a'"
+                                        onmouseout="this.style.backgroundColor='#fef3c7'">
+                                    📂 Previous Openings
+                                </button>
+                            </div>
 
 
                         </div>
@@ -500,6 +524,15 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                 `;
 
                 $list.append(cardHtml);
+                const $last_card = $list.children().last();
+                const $prev_btn = $last_card.find(".previous-openings-btn");
+
+                update_previous_openings_button_count(
+                    $prev_btn,
+                    candidate.name,
+                    frm.doc.name
+                );
+
             });
         }
 
@@ -724,10 +757,11 @@ function show_previous_openings_dialog(candidate_name, current_job_opening) {
                     }).join("")}
                 </div>
             `;
+            const days_used = r.message.days_used || 7;
 
             // Create and show dialog
             const dialog = new frappe.ui.Dialog({
-                title: `Previous Openings - ${candidate_name}`,
+                 title: `Previous Openings (${days_used} Days) - ${candidate_name}`,
                 size: "small",
                 fields: [
                     {
@@ -877,9 +911,11 @@ function show_multiple_candidates_previous_openings(candidate_names, candidate_d
 
         openings_html += `</div>`;
 
+        const days_used =
+        results[0]?.message?.days_used || 7;
         // Create and show dialog
         const dialog = new frappe.ui.Dialog({
-            title: `Previous Openings(7 Days) - ${candidate_names.length} Selected Candidate(s)`,
+            title: `Previous Openings(${days_used} Days) - ${candidate_names.length} Selected Candidate(s)`,
             size: "large",
             fields: [
                 {
