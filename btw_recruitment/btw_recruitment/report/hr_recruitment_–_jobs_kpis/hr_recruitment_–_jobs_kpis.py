@@ -31,20 +31,25 @@ def execute(filters=None):
     date_filter = get_date_filter(filters)
 
     # ---------------- TOTAL JOBS ----------------
-    job_filters = []
+    # job_filters = []
+    # if date_filter:
+    #     job_filters.append(["creation", *date_filter])
+
+    # total_jobs = frappe.db.count("DKP_Job_Opening", job_filters)
+    # ---------------- TOTAL JOBS ----------------
+    job_filters = [["status", "in", ["Open", "On Hold"]]]  # status Open OR Hold
     if date_filter:
         job_filters.append(["creation", *date_filter])
 
     total_jobs = frappe.db.count("DKP_Job_Opening", job_filters)
 
     # ---------------- ACTIVE JOBS ----------------
-    active_jobs = frappe.db.count(
-        "DKP_Job_Opening",
-        job_filters + [["status", "=", "Open"]]
-    )
+    # active_jobs = frappe.db.count(
+    #     "DKP_Job_Opening",
+    #     job_filters + [["status", "=", "Open"]]
+    # )
     # ---------------- TOTAL POSITIONS ----------------
     position_filters = [["status", "=", "Open"]]
-
     if date_filter:
         position_filters.append(["creation", *date_filter])
 
@@ -54,10 +59,7 @@ def execute(filters=None):
         filters=position_filters
     )
 
-    total_positions = sum(
-        int(row.number_of_positions or 0)
-        for row in rows
-    )
+    total_positions = sum(int(row.number_of_positions or 0) for row in rows)
 
 
     # ---------------- PRIORITY JOBS ----------------
@@ -79,7 +81,7 @@ def execute(filters=None):
 
     data = [{
         "total_jobs": total_jobs,
-        "active_jobs": active_jobs,
+        # "active_jobs": active_jobs,
         "total_positions": total_positions,
         "priority_jobs": priority_jobs,
         # "sla_breached_jobs": sla_breached_jobs

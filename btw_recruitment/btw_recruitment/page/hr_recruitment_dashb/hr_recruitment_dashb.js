@@ -817,33 +817,38 @@ function load_job_kpis() {
     });
 }
 function render_job_kpi_cards(data) {
+    // Define filters info
+    const kpiFilters = {
+        total_jobs: "Count of job openings with status = Open OR Hold",
+        total_positions: "Total number of positions in job openings with status = Open",
+        active_jobs: "Count of active job openings where status = Open"
+    };
+
+    // Cards definition with key for tooltip
     const cards = [
         {
+            key: "total_jobs",
             label: "Total Job Openings",
             value: data.total_jobs,
-            link: "/app/dkp_job_opening"
-        },
-        {
-        label: "Total Open Positions",
-        value: data.total_positions,
-        link: "/app/dkp_job_opening?status=Open"
-    },
-        {
-            label: "Active Jobs",
-            value: data.active_jobs,
             link: "/app/dkp_job_opening?status=Open"
         },
-        
         {
-            label: "Critical Jobs",
-            value: data.priority_jobs,
-            link: "/app/dkp_job_opening?priority=Critical"
+            key: "total_positions",
+            label: "Total Open Positions",
+            value: data.total_positions,
+            link: "/app/dkp_job_opening?status=Open"
         },
-        
+        // {
+        //     key: "active_jobs",
+        //     label: "Active Jobs",
+        //     value: data.active_jobs,
+        //     link: "/app/dkp_job_opening?status=Open"
+        // }
     ];
 
     const $row = $("#job-kpi-cards");
     $row.empty();
+
     cards.forEach(card => {
         const cardHtml = `
             <div class="kpi-col">
@@ -851,13 +856,19 @@ function render_job_kpi_cards(data) {
                     <a href="${card.link}" class="kpi-link">
                         <div class="card kpi-card">
                             <div class="kpi-value">${card.value}</div>
-                            <div class="kpi-label">${card.label}</div>
+                            <div class="kpi-label">
+                                ${card.label}
+                                <span class="kpi-info" data-info="${kpiFilters[card.key]}">ℹ️</span>
+                            </div>
                         </div>
                     </a>
                 ` : `
                     <div class="card kpi-card kpi-card-disabled">
                         <div class="kpi-value">${card.value}</div>
-                        <div class="kpi-label">${card.label}</div>
+                        <div class="kpi-label">
+                            ${card.label}
+                            <span class="kpi-info" data-info="${kpiFilters[card.key]}">ℹ️</span>
+                        </div>
                     </div>
                 `}
             </div>
@@ -894,12 +905,13 @@ function render_job_kpi_cards(data) {
                     height: 100%;
                     cursor: pointer;
                     transition: transform 0.15s ease, box-shadow 0.15s ease;
+                    position: relative;
                 }
                 .kpi-card:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 4px 10px rgba(0,0,0,0.12);
                 }
-                    .kpi-card-disabled {
+                .kpi-card-disabled {
                     cursor: default;
                     opacity: 0.85;
                 }
@@ -912,10 +924,42 @@ function render_job_kpi_cards(data) {
                     font-size: 13px;
                     color: #6c7680;
                 }
+
+                /* Tooltip for info icon */
+                .kpi-info {
+                    margin-left: 4px;
+                    font-size: 12px;
+                    color: #8d99a6;
+                    cursor: pointer;
+                    position: relative;
+                }
+
+                .kpi-info::after {
+                    content: attr(data-info);
+                    position: absolute;
+                    bottom: 125%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #111827;
+                    color: #fff;
+                    font-size: 11px;
+                    padding: 6px 8px;
+                    border-radius: 6px;
+                    white-space: nowrap;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.15s ease;
+                    z-index: 10;
+                }
+
+                .kpi-info:hover::after {
+                    opacity: 1;
+                }
             `)
             .appendTo("head");
     }
 }
+
 function normalize_status(status) {
     if (!status) return "";
 
