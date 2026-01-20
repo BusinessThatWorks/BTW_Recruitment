@@ -13,7 +13,8 @@
   "interview",
   "eq_test",
   "disc_test",
-  "enneagram_test"
+  "enneagram_test",
+  "sub_stages_interview"
  ],
  "fields": [
   {
@@ -64,13 +65,19 @@
    "fieldname": "enneagram_test",
    "fieldtype": "Attach",
    "label": "Enneagram Test"
+  },
+  {
+   "fetch_from": "interview.substage",
+   "fieldname": "sub_stages_interview",
+   "fieldtype": "Data",
+   "label": "Sub Stages Interview"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-20 14:25:38.317192",
+ "modified": "2026-01-20 16:03:46.808396",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
