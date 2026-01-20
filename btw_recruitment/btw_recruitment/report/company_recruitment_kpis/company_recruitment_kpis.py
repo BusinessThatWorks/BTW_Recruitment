@@ -48,24 +48,31 @@ def execute(filters=None):
         company_filters + [["client_status", "=", "Inactive"]]
     )
 
-    # ---------------- KPI 4: Companies with Open Jobs ----------------
-    company_names = frappe.get_all(
-        "DKP_Company",
-        filters=company_filters,
-        fields=["name"]
-    )
-    company_names = [c.name for c in company_names]
-
     companies_with_open_jobs = 0
-    if company_names:
+
+    if date_filter:
         companies_with_open_jobs = frappe.db.sql(
             """
-            SELECT COUNT(DISTINCT company)
-            FROM `tabDKP_Job_Opening`
-            WHERE status='Open' AND company IN %(companies)s
+            SELECT COUNT(DISTINCT jo.company_name)
+            FROM `tabDKP_Job_Opening` jo
+            WHERE jo.status = 'Open'
+            AND jo.creation BETWEEN %(from)s AND %(to)s
             """,
-            {"companies": tuple(company_names)}
+            {
+                "from": date_filter[1][0],
+                "to": date_filter[1][1],
+            }
         )[0][0] or 0
+    else:
+        companies_with_open_jobs = frappe.db.sql(
+            """
+            SELECT COUNT(DISTINCT jo.company_name)
+            FROM `tabDKP_Job_Opening` jo
+            WHERE jo.status = 'Open'
+            """
+        )[0][0] or 0
+
+
 
     # ---------------- KPI 5: Companies with Active Applications ----------------
     # companies_with_active_applications = 0
@@ -86,7 +93,7 @@ def execute(filters=None):
         {"kpi": "Total Clients", "value": total_companies},
         {"kpi": "Active Clients", "value": active_clients},
         {"kpi": "Inactive Clients", "value": inactive_clients},
-        {"kpi": "Companies with Open Jobs", "value": companies_with_open_jobs},
+        {"kpi": "Clients with Open Jobs", "value": companies_with_open_jobs},
         # {"kpi": "Companies with Active Applications", "value": companies_with_active_applications},
     ]
 
