@@ -6,6 +6,7 @@
  "field_order": [
   "candidate_details_section",
   "resume_attachment",
+  "confidence_score",
   "candidate_name",
   "department",
   "email",
@@ -352,13 +353,18 @@
    "fieldname": "recruiter_remarks",
    "fieldtype": "Small Text",
    "label": "Recruiter Remarks"
+  },
+  {
+   "fieldname": "confidence_score",
+   "fieldtype": "Data",
+   "label": "Confidence Score %"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-16 16:43:40.734904",
+ "modified": "2026-01-20 13:46:04.792282",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

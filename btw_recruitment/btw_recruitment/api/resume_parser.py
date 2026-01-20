@@ -1,3 +1,4 @@
+from pydoc import doc
 import frappe
 import PyPDF2
 import zipfile
@@ -163,6 +164,14 @@ DATE HANDLING RULES:
 - Gap example:
   - Job1 ends Oct 2023, Job2 starts Dec 2023 → gap = Nov 2023 (1 month)
 
+CRITICAL OUTPUT RULES:
+- If a date value is NOT explicitly mentioned, return null
+- Do NOT return "N/A", "Not provided", "Unknown", empty string, or placeholders
+- All date fields MUST be either:
+  - a valid date in YYYY-MM-DD format, OR
+  - null
+
+
 Resume Text:
 ----------------
 {extracted_text}
@@ -209,6 +218,45 @@ Return JSON with these fields:
     try:
         data = frappe.parse_json(json_text)
 
+        EXPECTED_FIELDS = [
+            "candidate_name",
+            "email",
+            "mobile_number",
+            "current_location",
+            "total_experience_years",
+            "current_company",
+            "current_designation",
+            "skills",
+            "highest_qualification",
+            "institute",
+            "languages_known",
+        ]
+        extracted_fields = []
+        missing_fields = []
+
+        for field in EXPECTED_FIELDS:
+            value = data.get(field)
+
+            if value is None:
+                missing_fields.append(field)
+            elif isinstance(value, str) and not value.strip():
+                missing_fields.append(field)
+            else:
+                extracted_fields.append(field)
+
+        total_fields = len(EXPECTED_FIELDS)
+        extracted_count = len(extracted_fields)
+
+        confidence_score = round((extracted_count / total_fields) * 100) if total_fields else 0
+
+        if confidence_score < 50:
+            frappe.throw(
+                f"Resume parsing confidence too low ({confidence_score}%). "
+                "Unable to reliably extract data. Please upload a clearer resume."
+            )
+
+
+
         list_fields = ["skills", "certifications","languages_known","institute",]
         for f in list_fields:
             if isinstance(data.get(f), list):
@@ -235,15 +283,50 @@ Return JSON with these fields:
         "address": "address",
         "age": "age",
     }
+    # set confidence-related fields explicitly
+    # set confidence-related fields explicitly
+    doc.set("confidence_score", confidence_score)
+    # doc.set("extracted_fields_count", extracted_count)
+    # doc.set("total_expected_fields", total_fields)
+
 
     for field, key in mapping.items():
-        if key in data:
-            doc.set(field, data[key])
+        def is_invalid_date(value):
+            if not isinstance(value, str):
+                return False
+            v = value.strip().lower().replace("_", " ")
+            return v in ["not provided", "n a", "na", "none", ""]
+
+        # usage
+        value = data.get(key)
+
+        if field == "date_of_birth" and is_invalid_date(value):
+            continue
+
+        # value = data.get(key)
+
+        # if value is None:
+        #     continue
+
+        # # prevent invalid date insert
+        # if field == "date_of_birth" and isinstance(value, str):
+        #     if value.lower() in ["not provided", "n/a", "na", "none", ""]:
+        #         continue
+
+        doc.set(field, value)
+
     doc.resume_parsed = 1
 
     doc.save()
     frappe.db.commit()
-    return {"status": "ok", "data": data}
+    return {
+        "status": "ok",
+        # "confidence_score": confidence_score,
+        # "extracted_fields": extracted_fields,
+        # "missing_fields": missing_fields,
+        "data": data,
+    }
+
 
 def ocr_image_easy(file_path):
     try:
