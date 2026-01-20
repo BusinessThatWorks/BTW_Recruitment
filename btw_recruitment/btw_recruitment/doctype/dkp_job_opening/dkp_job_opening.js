@@ -942,6 +942,7 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
         });
     }
 });
+
 // --------- CANDIDATE manual addition VALIDATIONS ----------
 frappe.ui.form.on("DKP_JobApplication_Child", {
     candidate_name(frm, cdt, cdn) {
