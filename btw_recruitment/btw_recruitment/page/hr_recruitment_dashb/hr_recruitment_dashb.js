@@ -845,6 +845,24 @@ function get_ageing_days(creation) {
 
     return diff_days >= 0 ? diff_days : 0;
 }
+function apply_ageing_filter(rows) {
+    const from = jobs_table_filters.ageing_from
+        ? parseInt(jobs_table_filters.ageing_from)
+        : null;
+
+    const to = jobs_table_filters.ageing_to
+        ? parseInt(jobs_table_filters.ageing_to)
+        : null;
+
+    return rows.filter(row => {
+        const ageing = get_ageing_days(row.creation);
+
+        if (from !== null && ageing < from) return false;
+        if (to !== null && ageing > to) return false;
+
+        return true;
+    });
+}
 let recruiter_loaded = false;
 
 // function load_recruiter_filter_options() {
@@ -1123,15 +1141,22 @@ function load_jobs_table() {
             
             status: jobs_table_filters.status,
             priority: jobs_table_filters.priority,
-            ageing_from: jobs_table_filters.ageing_from,
-            ageing_to: jobs_table_filters.ageing_to,
+            // ageing_from: jobs_table_filters.ageing_from,
+            // ageing_to: jobs_table_filters.ageing_to,
             recruiter: jobs_table_filters.recruiter
         },
         callback(r) {
             console.log("Jobs API Response:", r);
 
+            // if (r.message) {
+            //     render_jobs_table(r.message.data, r.message.total);
             if (r.message) {
-                render_jobs_table(r.message.data, r.message.total);
+            let rows = r.message.data;
+
+            // 🔥 APPLY AGEING FILTER IN JS
+            rows = apply_ageing_filter(rows);
+
+            render_jobs_table(rows, rows.length);
             } else {
                 render_jobs_table([], 0);
             }
