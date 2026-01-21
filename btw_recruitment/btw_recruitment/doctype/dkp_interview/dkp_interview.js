@@ -6,3 +6,14 @@
 
 // 	},
 // });
+frappe.ui.form.on("DKP_Interview", {
+    after_save(frm) {
+        if (frm.doc.job_opening) {
+            frappe.db.get_doc("DKP_Job_Opening", frm.doc.job_opening)
+                .then(doc => {
+                    // 🔁 force reload if opening is open anywhere
+                    frappe.model.sync(doc);
+                });
+        }
+    }
+});
