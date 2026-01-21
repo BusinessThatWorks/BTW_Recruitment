@@ -97,6 +97,33 @@ class DKP_Interview(Document):
                 },
                 update_values
             )
+        self.check_and_close_job_opening()   
 
             
+
+    def check_and_close_job_opening(self):
+        job = frappe.get_doc("DKP_Job_Opening", self.job_opening)
+
+        if not job.number_of_positions:
+            return
+
+        # 🔥 IMPORTANT: cast to int
+        total_positions = int(job.number_of_positions)
+
+        selected_count = frappe.db.count(
+            "DKP_JobApplication_Child",
+            {
+                "parent": job.name,
+                "stage": "Selected For Offer"
+            }
+        )
+
+        if selected_count >= total_positions:
+            if job.status != "Closed – Hired":
+                frappe.db.set_value(
+                    "DKP_Job_Opening",
+                    job.name,
+                    "status",
+                    "Closed – Hired"
+                )
 

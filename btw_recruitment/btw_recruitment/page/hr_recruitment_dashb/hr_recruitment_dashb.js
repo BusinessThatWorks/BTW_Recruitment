@@ -89,13 +89,17 @@ $(frappe.render_template("hr_recruitment_dashb")).appendTo(page.body);
 //         on_global_date_change();
 //     }
 // });
-$(document).ready(function() {
+$(document).ready(function () {
     const active_tab = $("#hr-dashboard-tabs .nav-link.active").data("tab");
-    if(active_tab === "candidates") {
-        // refresh_dashboard();
-        load_candidate_table();
+
+    if (active_tab === "company") {
+        load_company_table();
+        load_company_kpis();
+        load_client_type_chart();
+        load_industry_chart();
     }
 });
+
 $(document).on(
     "change",
     "#candidate-from-date, #candidate-to-date, #jobs-from-date, #jobs-to-date, #company-from-date, #company-to-date",
