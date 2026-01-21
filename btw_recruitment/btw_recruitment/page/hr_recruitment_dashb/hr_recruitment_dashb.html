@@ -133,6 +133,7 @@
 			</div>
 			<!-- Filters -->
 			<div id="jobs-filters" class="card p-3 mb-3">
+
 				<!-- ROW 1 : DATE FILTERS -->
 				<div class="row g-3 align-items-end mb-3">
 					<div class="col-md-2">
@@ -154,17 +155,18 @@
 
 				<hr class="my-2" />
 
-				<!-- ROW 2 : JOB FILTERS -->
-				<div class="row g-3 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Company</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="filter-job-company"
-                            placeholder="e.g. ABC Corp"
-                        />
+				<!-- ROW 2 : BASIC JOB FILTERS -->
+				<div class="row g-3 align-items-end mb-3">
+					<div class="col-md-3">
+						<label class="form-label">Company</label>
+						<input
+							type="text"
+							class="form-control"
+							id="filter-job-company"
+							placeholder="e.g. ABC Corp"
+						/>
 					</div>
+
 					<div class="col-md-3">
 						<label class="form-label">Designation</label>
 						<input
@@ -199,7 +201,44 @@
 						</button>
 					</div>
 				</div>
+
+				<hr class="my-2" />
+
+				<!-- ROW 3 : ADVANCED FILTERS -->
+				<div class="row g-3 align-items-start">
+
+					<!-- Ageing -->
+					<div class="col-md-2">
+						<label class="form-label">Ageing (Days)</label>
+						<input
+							type="number"
+							class="form-control"
+							id="filter-job-ageing-from"
+							placeholder="e.g. 5"
+							min="0"
+						/>
+					</div>
+
+					<!-- Priority -->
+					<div class="col-md-3">
+						<label class="form-label">Priority</label>
+						<select class="form-control" id="filter-job-priority">
+							<option value="">All</option>
+							<option value="Low">Low</option>
+							<option value="Medium">Medium</option>
+							<option value="High">High</option>
+							<option value="Critical">Critical</option>
+						</select>
+					</div>
+
+					<!-- Recruiter (MultiSelect Placeholder) -->
+					<div class="col-md-3">
+					<div id="filter-job-recruiter" class="recruiter-filter"></div>
+				</div>
+
+				</div>
 			</div>
+
 
 			<!-- Jobs table -->
 			<div id="jobs-table"></div>

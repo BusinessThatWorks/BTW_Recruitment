@@ -19,7 +19,7 @@ class DKP_Job_Opening(Document):
 
         if not recruiter_emails:
             return
-
+        cc_emails = ["sarimk360@gmail.com", "sharda.kumari@clapgrow.com"]
         subject = f"New Job Opening Assigned – {self.name}"
 
         html_content = f"""
@@ -34,6 +34,8 @@ class DKP_Job_Opening(Document):
             <li><b>Department:</b> {self.department or "-"}</li>
             <li><b>Location:</b> {self.location or "-"}</li>
             <li><b>Assigned Recruiters:</b> {', '.join(recruiter_emails)}</li>
+            
+
         </ul>
 
         <p>Regards,<br>HR Team</p>
@@ -43,6 +45,7 @@ class DKP_Job_Opening(Document):
             recipients=recruiter_emails,  # ✅ list of emails
             subject=subject,
             content=html_content,
+            cc=cc_emails,
         )
 
 
@@ -281,7 +284,7 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         match_score = (sum(category_scores) / len(category_scores)) * 100.0
 
         # Only include candidates with match_score > 0 (blacklisted are already filtered out)
-        if match_score > 0:
+        if match_score > 50:
             candidate["match_score"] = round(match_score, 1)
             candidate["match_reasons"] = match_reasons
 

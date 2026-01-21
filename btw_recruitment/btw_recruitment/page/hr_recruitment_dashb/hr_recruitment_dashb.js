@@ -31,7 +31,7 @@ const priorityColors = {
 let candidate_departments_loaded = false;
 let jobs_departments_loaded = false;
 let jobs_table_state = { limit: 20, offset: 0 };
-let jobs_table_filters = { company_name: null, designation: null, department: null, recruiter: null, status: null };
+let jobs_table_filters = { company_name: null, designation: null, department: null, recruiter: null, status: null,priority: null,ageing_from:null,ageing_to:null };
 let job_applications_table_state = { limit: 20, offset: 0 };
 let job_applications_table_filters = { company_name: null, job_opening_title: null, designation: null };
 let company_table_state = { limit: 20, offset: 0 };
@@ -175,6 +175,7 @@ $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
         load_job_kpis();
         load_jobs_department_options();
         load_jobs_table();
+        init_recruiter_filter();
         // load_recruiter_filter_options()
     }
     if (tab === "company") {
@@ -184,6 +185,44 @@ $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
         load_industry_chart();
     }
 });
+let recruiter_control = null;
+
+function init_recruiter_filter() {
+    if (recruiter_control) return;
+
+    recruiter_control = frappe.ui.form.make_control({
+        parent: $("#filter-job-recruiter"),
+        df: {
+            fieldtype: "MultiSelectList",
+            label: "Assigned Recruiter",
+            fieldname: "recruiter",
+            get_data(txt) {
+                return frappe.db.get_list("User", {
+                    fields: ["name", "full_name", "email"],
+                    filters: {
+                        enabled: 1,
+                        role_profile_name: "DKP Recruiter",
+                        name: ["like", `%${txt}%`]
+                    },
+                    limit: 20
+                }).then(res => {
+                    return res.map(u => ({
+                        value: u.name, // User name (email)
+                        label: `${u.full_name || u.name} (${u.name})`
+                    }));
+                });
+            },
+            onchange() {
+                jobs_table_filters.recruiter = recruiter_control.get_value();
+                jobs_table_state.offset = 0;
+                load_jobs_table();
+            }
+        },
+        render_input: true
+    });
+}
+
+
 // Helper function to apply candidate filters
 function apply_candidate_filters() {
     candidate_table_filters.candidate_name_search =
@@ -248,6 +287,7 @@ $(document).on("click", 'a[data-tab="jobs"]', () => {
 
     load_jobs_department_options();
     load_jobs_table();
+    init_recruiter_filter();
     // load_recruiter_filter_options();
 });
 
@@ -256,8 +296,20 @@ function apply_job_filters() {
     jobs_table_filters.company_name = $("#filter-job-company").val() || null;
     jobs_table_filters.designation = $("#filter-job-title").val() || null;
     jobs_table_filters.department = $("#filter-job-department").val() || null;
-    jobs_table_filters.recruiter = $("#filter-job-recruiter").val() || null;
+    // jobs_table_filters.recruiter = $("#filter-job-recruiter").val() || null;
     jobs_table_filters.status = $("#filter-job-status").val() || null;
+     // Multi-select recruiter value as JSON array
+    let recruiter_field = $("#filter-job-recruiter").get(0);
+    let selected_recruiters = [];
+
+    if (recruiter_field && recruiter_field.frappe_multi_select) {
+        selected_recruiters = recruiter_field.frappe_multi_select.get_values(); // always array
+    }
+
+    jobs_table_filters.recruiter = selected_recruiters.length ? JSON.stringify(selected_recruiters) : null;
+    jobs_table_filters.priority = $("#filter-job-priority").val() || null;  // <-- new
+    jobs_table_filters.ageing_from = $("#filter-job-ageing-from").val() || null;  // <-- new
+    jobs_table_filters.ageing_to = $("#filter-job-ageing-to").val() || null;
 
     jobs_table_state.offset = 0;
     load_jobs_table();
@@ -268,13 +320,14 @@ $("#apply-job-filters").click(() => {
 });
 
 // Live filtering for job filters
-$(document).on("change","#filter-job-company", "#filter-job-department, #filter-job-status, #filter-job-recruiter", function() {
+$(document).on("change", "#filter-job-company, #filter-job-department, #filter-job-status, #filter-job-recruiter, #filter-job-priority, #filter-job-ageing-from, #filter-job-ageing-to", function() {
     apply_job_filters();
 });
 
+
 // Debounced live filtering for text inputs
 let job_filter_timeout;
-$(document).on("keyup", "#filter-job-company, #filter-job-title, #filter-job-recruiter", function() {
+$(document).on("keyup", "#filter-job-company, #filter-job-title", function() {
     clearTimeout(job_filter_timeout);
     job_filter_timeout = setTimeout(function() {
         apply_job_filters();
@@ -285,18 +338,30 @@ $("#clear-job-filters").click(() => {
     $("#filter-job-company").val("");
     $("#filter-job-title").val("");
     $("#filter-job-department").val("");
-    $("#filter-job-recruiter").val("");
     $("#filter-job-status").val("");
+    $("#filter-job-priority").val("");
+    $("#filter-job-ageing-from").val("");
+    $("#filter-job-ageing-to").val("");
 
-    jobs_table_filters.company_name = null;
-    jobs_table_filters.designation = null; // <-- correct
-    jobs_table_filters.department = null;
-    jobs_table_filters.recruiter = null;
-    jobs_table_filters.status = null;
+    if (recruiter_control) {
+        recruiter_control.set_value([]);
+    }
+
+    jobs_table_filters = {
+        company_name: null,
+        designation: null,
+        department: null,
+        recruiter: null,
+        status: null,
+        priority: null,
+        ageing_from: null,
+        ageing_to: null
+    };
 
     jobs_table_state.offset = 0;
     load_jobs_table();
 });
+
 
 $(document).on("click", 'a[data-tab="company"]', function () {
     console.log("Company tab opened");
@@ -1051,8 +1116,12 @@ function load_jobs_table() {
             company_name: jobs_table_filters.company_name,
             designation: jobs_table_filters.designation,
             department: jobs_table_filters.department,
-            // recruiter: jobs_table_filters.recruiter,
-            status: jobs_table_filters.status
+            
+            status: jobs_table_filters.status,
+            priority: jobs_table_filters.priority,
+            ageing_from: jobs_table_filters.ageing_from,
+            ageing_to: jobs_table_filters.ageing_to,
+            recruiter: jobs_table_filters.recruiter
         },
         callback(r) {
             console.log("Jobs API Response:", r);
@@ -1080,6 +1149,7 @@ function render_jobs_table(data, total) {
                     <th>Designation</th>
                     <th>Department</th>
                     <th>Status</th>
+                    <th>Priority</th>
                     <th>No. of Positions</th>
                     <th>Created On</th>
                     <th>Ageing (Days)</th>
@@ -1092,7 +1162,7 @@ function render_jobs_table(data, total) {
 
     if (!data || !data.length) {
         table.find("tbody").append(`
-            <tr><td colspan="7" class="text-center text-muted">No job openings found</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">No job openings found</td></tr>
         `);
     } else {
         data.forEach(d => {
@@ -1104,6 +1174,17 @@ function render_jobs_table(data, total) {
                     <td>${d.designation || "-"}</td>
                     <td>${d.department || "-"}</td>
                     <td>${d.status || "-"}</td>
+                    <td>
+                        <span style="
+                            padding:4px 10px;
+                            border-radius:12px;
+                            color:#fff;
+                            font-weight:600;
+                            background:${priorityColors[d.priority] || "#6c757d"};
+                        ">
+                            ${d.priority || "-"}
+                        </span>
+                    </td>
                     <td>${d.number_of_positions || "-"}</td>
                     <td>${moment(d.creation).format("DD-MM-YYYY hh:mm A")}</td>
 

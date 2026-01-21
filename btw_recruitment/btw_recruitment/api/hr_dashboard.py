@@ -703,55 +703,152 @@ def get_candidate_table(
 
 from frappe.utils import cint
 
-@frappe.whitelist()
-def get_jobs_table(from_date=None, to_date=None, limit=20, offset=0,company_name=None,
-                   designation=None, department=None, recruiter=None, status=None):
+from frappe.utils import cint
+import frappe
 
+@frappe.whitelist()
+def get_jobs_table(
+    from_date=None,
+    to_date=None,
+    limit=20,
+    offset=0,
+    company_name=None,
+    designation=None,
+    department=None,
+    recruiter=None,
+    status=None,
+    priority=None,
+    ageing_from=None,
+    ageing_to=None
+):
     conditions = []
     values = []
 
+    # ---------------- Date Filters ----------------
     if from_date:
         conditions.append("creation >= %s")
         values.append(from_date + " 00:00:00")
+
     if to_date:
         conditions.append("creation <= %s")
         values.append(to_date + " 23:59:59")
+
+    # ---------------- Text Filters ----------------
     if company_name:
         conditions.append("company_name LIKE %s")
-        values.append(f"%{company_name}%")    
+        values.append(f"%{company_name}%")
+
     if designation:
         conditions.append("designation LIKE %s")
         values.append(f"%{designation}%")
+
+    # ---------------- Exact Filters ----------------
     if department:
         conditions.append("department = %s")
         values.append(department)
-    # if recruiter:
-    #     conditions.append("assign_recruiter LIKE %s")
-    #     values.append(f"%{recruiter}%")
+
     if status:
         conditions.append("status = %s")
         values.append(status)
 
+    if priority:
+        conditions.append("priority = %s")
+        values.append(priority)
+
+    # ---------------- Ageing Filter (Days) ----------------
+    if ageing_from:
+        conditions.append("DATEDIFF(CURDATE(), creation) >= %s")
+        values.append(cint(ageing_from))
+
+    if ageing_to:
+        conditions.append("DATEDIFF(CURDATE(), creation) <= %s")
+        values.append(cint(ageing_to))
+
+    # ---------------- Recruiter Filter (MultiSelect OR logic) ----------------
+    # if recruiter:
+    #     # recruiter can come as JSON string or list
+    #     if isinstance(recruiter, str):
+    #         recruiter = frappe.parse_json(recruiter)
+
+    #     recruiter_conditions = []
+    #     for r in recruiter:
+    #         recruiter_conditions.append("assign_recruiter LIKE %s")
+    #         values.append(f"%{r}%")
+
+    #     if recruiter_conditions:
+    #         conditions.append("(" + " OR ".join(recruiter_conditions) + ")")
+
+    if recruiter:
+        recruiter_list = frappe.parse_json(recruiter)
+
+        # Only apply filter if list is not empty
+        if recruiter_list:
+            placeholders = ", ".join(["%s"] * len(recruiter_list))
+
+            conditions.append(f"""
+                EXISTS (
+                    SELECT 1
+                    FROM `tabDKP_JobOpeningRecruiter_Child` r
+                    WHERE r.parent = jo.name
+                    AND r.recruiter_name IN ({placeholders})
+                )
+            """)
+
+            values.extend(recruiter_list)
+
+
+
+
+
+
+    # ---------------- WHERE Clause ----------------
     where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
 
-    # Filtered total
-    total = frappe.db.sql(f"""
-        SELECT COUNT(*) 
-        FROM `tabDKP_Job_Opening`
+    # ---------------- Total Count ----------------
+    # total = frappe.db.sql(
+    #     f"""
+    #     SELECT COUNT(*)
+    #     FROM `tabDKP_Job_Opening`
+    #     {where_clause}
+    #     """,
+    #     values
+    # )[0][0]
+    total = frappe.db.sql(
+        f"""
+        SELECT COUNT(DISTINCT jo.name)
+        FROM `tabDKP_Job_Opening` jo
         {where_clause}
-    """, values)[0][0]
+        """,
+        values
+    )[0][0]
 
-    # Get paged data
-    data = frappe.db.sql(f"""
-        SELECT name, designation, company_name, department,  
-               status, number_of_positions, creation
-        FROM `tabDKP_Job_Opening`
+    # ---------------- Paginated Data ----------------
+    data = frappe.db.sql(
+        f"""
+        SELECT
+            jo.name,
+            jo.designation,
+            jo.company_name,
+            jo.department,
+            jo.status,
+            jo.priority,
+            jo.number_of_positions,
+            jo.creation
+        FROM `tabDKP_Job_Opening` jo
         {where_clause}
-        ORDER BY creation DESC
+        ORDER BY jo.creation DESC
         LIMIT {cint(limit)} OFFSET {cint(offset)}
-    """, values, as_dict=1)
+        """,
+        values,
+        as_dict=1
+    )
 
-    return {"data": data, "total": total}
+
+    return {
+        "data": data,
+        "total": total
+    }
+
 
 # @frappe.whitelist()
 # def get_job_applications_table(from_date=None, to_date=None, limit=20, offset=0,
