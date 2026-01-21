@@ -906,7 +906,7 @@ function load_job_kpis() {
 function render_job_kpi_cards(data) {
     // Define filters info
     const kpiFilters = {
-        total_jobs: "Count of job openings with status = Open OR Hold",
+        total_jobs: "Count of job openings with status = Open + Hold",
         total_positions: "Total number of positions in job openings with status = Open",
         active_jobs: "Count of active job openings where status = Open"
     };
