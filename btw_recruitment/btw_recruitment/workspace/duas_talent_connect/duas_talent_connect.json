@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"ZKeceFKqGs\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Duas Talent Connect</span>\",\"col\":12}},{\"id\":\"TFvNPBHUDN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company\",\"col\":3}},{\"id\":\"-2_7J_w82E\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Department\",\"col\":3}},{\"id\":\"s1xx9ONikr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Candidate\",\"col\":3}},{\"id\":\"On4cDjOfwU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Job Opening\",\"col\":3}},{\"id\":\"c36z0wTAm0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Dashboards</b></span>\",\"col\":12}},{\"id\":\"TxsKCHlySx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Talent Dashboard\",\"col\":3}},{\"id\":\"LAuIigh2x5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Jobs Dashboard\",\"col\":3}},{\"id\":\"dB6IzHLynP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company Dashboard\",\"col\":3}}]",
+ "content": "[{\"id\":\"ZKeceFKqGs\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Duas Talent Connect</span>\",\"col\":12}},{\"id\":\"TFvNPBHUDN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company\",\"col\":3}},{\"id\":\"-2_7J_w82E\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Department\",\"col\":3}},{\"id\":\"s1xx9ONikr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Candidate\",\"col\":3}},{\"id\":\"On4cDjOfwU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Job Opening\",\"col\":3}},{\"id\":\"c36z0wTAm0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Dashboards</b></span>\",\"col\":12}},{\"id\":\"TxsKCHlySx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Talent Dashboard\",\"col\":3}},{\"id\":\"LAuIigh2x5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Jobs Dashboard\",\"col\":3}},{\"id\":\"dB6IzHLynP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company Dashboard\",\"col\":3}},{\"id\":\"adJ4FoPHZ7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Interview Dashboard\",\"col\":3}}]",
  "creation": "2025-11-21 12:13:12.720895",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "Duas Talent Connect",
  "links": [],
- "modified": "2026-01-09 11:49:44.637597",
+ "modified": "2026-01-22 16:11:57.336413",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "Duas Talent Connect",
@@ -25,6 +25,13 @@
  "roles": [],
  "sequence_id": 39.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Interview Dashboard",
+   "link_to": "interview-dashboard",
+   "type": "Page"
+  },
   {
    "color": "Grey",
    "doc_view": "List",

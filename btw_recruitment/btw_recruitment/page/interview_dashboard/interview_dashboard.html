@@ -1,0 +1,225 @@
+<div class="interview-dashboard-container">
+	<!-- Date Filters -->
+	
+
+	<!-- KPI Cards -->
+	<div class="row mb-4" id="interview-kpi-cards"></div>
+    <div class="card p-3 mb-3">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-3">
+				<label class="form-label">From Date</label>
+				<input type="date" class="form-control" id="interview-from-date" />
+			</div>
+			<div class="col-md-3">
+				<label class="form-label">To Date</label>
+				<input type="date" class="form-control" id="interview-to-date" />
+			</div>
+			<div class="col-md-2">
+				<button class="btn btn-outline-secondary w-100" id="interview-clear-dates">
+					Clear Dates
+				</button>
+			</div>
+		</div>
+	</div>
+	<!-- Job Openings Dashboard Table -->
+	<div class="card mb-4">
+		<div class="card-header">
+			<h4>Job Openings Summary</h4>
+		</div>
+		<div class="card-body">
+			<div id="interview-dashboard-table"></div>
+		</div>
+	</div>
+
+	<!-- Detailed Interviews Table -->
+	<!-- <div class="card">
+		<div class="card-header">
+			<h4>Interview Details</h4>
+		</div>
+		<div class="card-body">
+			<div id="interview-details-table"></div>
+		</div>
+	</div> -->
+</div>
+
+<style>
+	.interview-dashboard-container {
+		padding: 16px;
+	}
+	
+	/* KPI Cards */
+	#interview-kpi-cards {
+		display: flex;
+		gap: 16px;
+		margin-bottom: 24px;
+	}
+	
+	.kpi-card-interview {
+		flex: 1;
+		padding: 20px;
+		background: #ffffff;
+		border-radius: 8px;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+		text-align: center;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+	
+	.kpi-card-interview:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+	}
+	
+	.kpi-value-interview {
+		font-size: 32px;
+		font-weight: 700;
+		color: #1f2937;
+		margin-bottom: 8px;
+	}
+	
+	.kpi-label-interview {
+		font-size: 14px;
+		color: #6c7680;
+		font-weight: 500;
+	}
+	
+	/* Tables */
+	#interview-dashboard-table table,
+	#interview-details-table table {
+		width: 100%;
+		margin-top: 16px;
+		font-size: 13px;
+	}
+	
+	#interview-dashboard-table th,
+	#interview-details-table th {
+		background: #f8f9fa;
+		font-weight: 600;
+		padding: 12px;
+		text-align: left;
+		border-bottom: 2px solid #dee2e6;
+		white-space: nowrap;
+	}
+	
+	#interview-dashboard-table td,
+	#interview-details-table td {
+		padding: 12px;
+		border-bottom: 1px solid #dee2e6;
+		vertical-align: middle;
+	}
+	
+	#interview-dashboard-table tr:hover,
+	#interview-details-table tr:hover {
+		background-color: #f8f9fa;
+	}
+	
+	/* Pagination */
+	.pagination-container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 16px;
+		padding: 12px;
+		background: #f8f9fa;
+		border-radius: 4px;
+	}
+	
+	.pagination-info {
+		font-size: 14px;
+		color: #6c7680;
+	}
+	
+	.pagination-buttons {
+		display: flex;
+		gap: 8px;
+	}
+	
+	.pagination-buttons button {
+		padding: 6px 12px;
+		border: 1px solid #dee2e6;
+		background: #ffffff;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	
+	.pagination-buttons button:hover:not(:disabled) {
+		background: #e9ecef;
+		border-color: #adb5bd;
+	}
+	
+	.pagination-buttons button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	
+	/* Table overflow handling */
+	#interview-dashboard-table,
+	#interview-details-table {
+		overflow-x: auto;
+		width: 100%;
+	}
+	
+	#interview-dashboard-table table,
+	#interview-details-table table {
+		min-width: 100%;
+		table-layout: auto;
+	}
+	
+	/* Long text handling */
+	#interview-dashboard-table td,
+	#interview-details-table td {
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		max-width: 300px;
+	}
+	
+	/* Responsive */
+	@media (max-width: 1200px) {
+		#interview-dashboard-table table,
+		#interview-details-table table {
+			font-size: 12px;
+		}
+	}
+	
+	@media (max-width: 768px) {
+		#interview-kpi-cards {
+			flex-direction: column;
+		}
+		
+		#interview-dashboard-table table,
+		#interview-details-table table {
+			font-size: 11px;
+		}
+		
+		#interview-dashboard-table th,
+		#interview-dashboard-table td,
+		#interview-details-table th,
+		#interview-details-table td {
+			padding: 6px;
+		}
+		
+		.pagination-container {
+			flex-direction: column;
+			gap: 12px;
+			align-items: flex-start;
+		}
+		
+		.pagination-info {
+			font-size: 12px;
+		}
+	}
+	
+	/* Loading state */
+	.loading-state {
+		text-align: center;
+		padding: 40px;
+		color: #6c7680;
+	}
+	
+	/* Empty state */
+	.empty-state {
+		text-align: center;
+		padding: 40px;
+		color: #6c7680;
+	}
+</style>
