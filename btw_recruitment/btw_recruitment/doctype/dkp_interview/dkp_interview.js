@@ -7,6 +7,11 @@
 // 	},
 // });
 frappe.ui.form.on("DKP_Interview", {
+    onload(frm) {
+        if (!frm.doc.added_by) {
+            frm.set_value("added_by", frappe.session.user);
+        }
+    },
     after_save(frm) {
         if (frm.doc.job_opening) {
             frappe.db.get_doc("DKP_Job_Opening", frm.doc.job_opening)
@@ -17,3 +22,4 @@ frappe.ui.form.on("DKP_Interview", {
         }
     }
 });
+    

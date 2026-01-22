@@ -284,7 +284,7 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         match_score = (sum(category_scores) / len(category_scores)) * 100.0
 
         # Only include candidates with match_score > 0 (blacklisted are already filtered out)
-        if match_score > 50:
+        if match_score > 0:
             candidate["match_score"] = round(match_score, 1)
             candidate["match_reasons"] = match_reasons
 
