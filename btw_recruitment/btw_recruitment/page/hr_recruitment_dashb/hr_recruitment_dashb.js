@@ -1,7 +1,11 @@
-let dashboard_filters = {
-    from_date: null,
-    to_date: null,
-    stage: null 
+// let dashboard_filters = {
+//     from_date: null,
+//     to_date: null,
+// };
+const tab_date_filters = {
+    candidates: { from_date: null, to_date: null },
+    jobs: { from_date: null, to_date: null },
+    company: { from_date: null, to_date: null } // will stay null
 };
 const stageOptions = ["In Review", "Screening", "Interview", "Offered", "No Assigned Stage"];
 
@@ -100,31 +104,75 @@ $(document).ready(function () {
     }
 });
 
+// $(document).on(
+//     "change",
+//     "#candidate-from-date, #candidate-to-date, #jobs-from-date, #jobs-to-date",
+//     function () {
+//         const $tab = $(this).closest(".tab-pane");
+
+//         dashboard_filters.from_date =
+//             $tab.find('input[type="date"][id$="from-date"]').val() || null;
+
+//         dashboard_filters.to_date =
+//             $tab.find('input[type="date"][id$="to-date"]').val() || null;
+
+//         on_global_date_change();
+//     }
+// );
 $(document).on(
     "change",
-    "#candidate-from-date, #candidate-to-date, #jobs-from-date, #jobs-to-date, #company-from-date, #company-to-date",
+    "#candidate-from-date, #candidate-to-date, #jobs-from-date, #jobs-to-date",
     function () {
         const $tab = $(this).closest(".tab-pane");
+        const tab_id = $tab.attr("id"); // tab-candidates / tab-jobs
 
-        dashboard_filters.from_date =
-            $tab.find('input[type="date"][id$="from-date"]').val() || null;
+        let tab_key =
+            tab_id === "tab-candidates" ? "candidates" :
+            tab_id === "tab-jobs" ? "jobs" : null;
 
-        dashboard_filters.to_date =
-            $tab.find('input[type="date"][id$="to-date"]').val() || null;
+        if (!tab_key) return;
+
+        tab_date_filters[tab_key].from_date =
+            $tab.find('input[id$="from-date"]').val() || null;
+
+        tab_date_filters[tab_key].to_date =
+            $tab.find('input[id$="to-date"]').val() || null;
 
         on_global_date_change();
     }
 );
+
+// $(document).on(
+//     "click",
+//     "#candidate-clear-dates, #jobs-clear-dates",
+//     function () {
+//         const $tab = $(this).closest(".tab-pane");
+
+//         $tab.find('input[type="date"]').val("");
+
+//         dashboard_filters.from_date = null;
+//         dashboard_filters.to_date = null;
+
+//         on_global_date_change();
+//     }
+// );
 $(document).on(
     "click",
-    "#candidate-clear-dates, #jobs-clear-dates, #company-clear-dates",
+    "#candidate-clear-dates, #jobs-clear-dates",
     function () {
         const $tab = $(this).closest(".tab-pane");
+        const tab_id = $tab.attr("id");
+
+        let tab_key =
+            tab_id === "tab-candidates" ? "candidates" :
+            tab_id === "tab-jobs" ? "jobs" : null;
+
+        if (!tab_key) return;
 
         $tab.find('input[type="date"]').val("");
 
-        dashboard_filters.from_date = null;
-        dashboard_filters.to_date = null;
+        tab_date_filters[tab_key].from_date = null;
+        tab_date_filters[tab_key].to_date = null;
 
         on_global_date_change();
     }
@@ -167,9 +215,9 @@ $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
     $(".tab-pane").removeClass("active");
     $(`#tab-${tab}`).addClass("active");
 
-    if (tab === "overall") {
-        refresh_dashboard();
-    }
+    // if (tab === "overall") {
+    //     refresh_dashboard();
+    // }
 
     if (tab === "candidates") {
         load_candidates_tab();
@@ -199,7 +247,7 @@ function init_recruiter_filter() {
         df: {
             fieldtype: "MultiSelectList",
             label: "Assigned Recruiter",
-            fieldname: "recruiter",
+            fieldname: "recruiter_name",
             get_data(txt) {
                 return frappe.db.get_list("User", {
                     fields: ["name", "full_name", "email"],
@@ -212,7 +260,8 @@ function init_recruiter_filter() {
                 }).then(res => {
                     return res.map(u => ({
                         value: u.name, // User name (email)
-                        label: `${u.full_name || u.name} (${u.name})`
+                        label: u.full_name || u.name,
+                        description: u.name 
                     }));
                 });
             },
@@ -473,8 +522,8 @@ function load_kpis() {
         args: {
             report_name: "HR Recruitment KPIs",
             filters: {
-                from_date: dashboard_filters.from_date,
-                to_date: dashboard_filters.to_date
+                from_date: tab_date_filters.candidates.from_date,
+                to_date: tab_date_filters.candidates.to_date
             }
         },
         callback: function(r) {
@@ -571,8 +620,8 @@ function render_department_pie_chart() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidates_by_department",
         args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date,
+            from_date: tab_date_filters.candidates.from_date,
+    to_date: tab_date_filters.candidates.to_date
         },
         callback: function(r) {
             if (!r.message || r.message.length === 0) {
@@ -728,8 +777,8 @@ function load_candidate_table() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidate_table",
         args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date,
+            from_date: tab_date_filters.candidates.from_date,
+            to_date: tab_date_filters.candidates.to_date,
             limit: candidate_table_state.limit,
             offset: candidate_table_state.offset,
             department: candidate_table_filters.department,
@@ -891,8 +940,8 @@ function load_job_kpis() {
         args: {
             report_name: "HR Recruitment – Jobs KPIs",
             filters: {
-                from_date: dashboard_filters.from_date,
-                to_date: dashboard_filters.to_date
+                 from_date: tab_date_filters.jobs.from_date,
+    to_date: tab_date_filters.jobs.to_date
             }
         },
         callback(r) {
@@ -1091,8 +1140,8 @@ function render_job_charts(chart) {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_department_job_data",
         args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date
+             from_date: tab_date_filters.jobs.from_date,
+    to_date: tab_date_filters.jobs.to_date
         },
         callback(r) {
         if (!r.message || !r.message.length) return;
@@ -1131,8 +1180,8 @@ function load_jobs_table() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
         args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date,
+            from_date: tab_date_filters.jobs.from_date,
+            to_date: tab_date_filters.jobs.to_date,
             limit: jobs_table_state.limit,
             offset: jobs_table_state.offset,
             company_name: jobs_table_filters.company_name,
@@ -1259,10 +1308,10 @@ function load_company_kpis() {
         method: "frappe.desk.query_report.run",
         args: {
             report_name: "Company Recruitment KPIs",
-            filters: {
-                from_date: dashboard_filters.from_date,
-                to_date: dashboard_filters.to_date
-            }
+            // filters: {
+            //     from_date: dashboard_filters.from_date,
+            //     to_date: dashboard_filters.to_date
+            // }
         },
         callback(r) {
             if(r.message) {
@@ -1361,10 +1410,10 @@ if (!$("#company-kpi-cards").length) {
 function load_client_type_chart() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_client_type_distribution",
-        args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date
-        },
+        // args: {
+        //     from_date: dashboard_filters.from_date,
+        //     to_date: dashboard_filters.to_date
+        // },
         callback(r) {
             if(r.message) {
                 const chart_data = r.message;
@@ -1388,10 +1437,10 @@ function load_industry_chart() {
         method: "frappe.desk.query_report.run",
         args: {
             report_name: "Company Recruitment KPIs",
-            filters: {
-                from_date: dashboard_filters.from_date,
-                to_date: dashboard_filters.to_date
-            }
+            // filters: {
+            //     from_date: dashboard_filters.from_date,
+            //     to_date: dashboard_filters.to_date
+            // }
         },
         callback(r) {
             if (!r.message || !r.message.chart) return;
@@ -1429,8 +1478,8 @@ function load_company_table() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",  
         args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date,
+            // from_date: dashboard_filters.from_date,
+            // to_date: dashboard_filters.to_date,
             limit_page_length: company_table_state.limit,
             limit_start: company_table_state.offset,
             ...company_filters
