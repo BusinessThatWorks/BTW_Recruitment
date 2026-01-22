@@ -25,12 +25,17 @@ def get_interview_dashboard_kpis(from_date=None, to_date=None):
 	
 	interviews_today_count = interviews_today[0].count if interviews_today and len(interviews_today) > 0 else 0
 	
-	# 2. Candidates in "Joined" substage
 	joined_candidates = frappe.db.sql("""
-		SELECT COUNT(DISTINCT i.candidate_name) as count
-		FROM `tabDKP_Interview` i
-		WHERE i.substage = 'Joined'
+		SELECT COUNT(DISTINCT candidate_name) AS count
+		FROM `tabDKP_JobApplication_Child`
+		WHERE sub_stages_interview = 'Joined'
+		AND candidate_name IS NOT NULL
+		AND candidate_name != ''
 	""", as_dict=True)
+
+	joined_count = joined_candidates[0].count if joined_candidates else 0
+
+
 	
 	joined_count = joined_candidates[0].count if joined_candidates and len(joined_candidates) > 0 else 0
 	
@@ -81,10 +86,14 @@ def get_interview_dashboard_data(from_date=None, to_date=None, limit=20, offset=
 		open_positions = int(job.number_of_positions or 0)
 		
 		# 2. Number of CVs mapped (candidates in DKP_JobApplication_Child)
-		cvs_mapped = frappe.db.count(
-			"DKP_JobApplication_Child",
-			filters={"parent": job_name}
-		)
+		cvs_mapped = frappe.db.sql("""
+			SELECT COUNT(*) as count
+			FROM `tabDKP_JobApplication_Child`
+			WHERE parent = %s
+			AND candidate_name IS NOT NULL
+			AND candidate_name != ''
+		""", (job_name,), as_dict=True)[0].count
+
 		
 		# 3. Candidates' stages breakdown
 		stages_data = frappe.db.sql("""
@@ -120,7 +129,7 @@ def get_interview_dashboard_data(from_date=None, to_date=None, limit=20, offset=
 			"DKP_JobApplication_Child",
 			filters={
 				"parent": job_name,
-				"stage": "Joined"
+				"sub_stages_interview": "Joined"
 			}
 		)
 		

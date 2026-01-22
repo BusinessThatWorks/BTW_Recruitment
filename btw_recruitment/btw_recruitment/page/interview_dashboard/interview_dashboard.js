@@ -99,16 +99,16 @@ function render_kpi_cards(data) {
 	$container.empty();
 
 	const kpis = [
-		{
-			label: "Interviews Scheduled Today",
-			value: data.interviews_scheduled_today || 0,
-			color: "#3b82f6"
-		},
-		{
-			label: "Candidates Joined",
-			value: data.joined_candidates || 0,
-			color: "#10b981"
-		}
+		// {
+		// 	label: "Total Interviews Scheduled For Today",
+		// 	value: data.interviews_scheduled_today || 0,
+		// 	color: "#3b82f6"
+		// },
+		// {
+		// 	label: "Candidates Joined",
+		// 	value: data.joined_candidates || 0,
+		// 	color: "#10b981"
+		// }
 	];
 
 	kpis.forEach(kpi => {
@@ -175,8 +175,8 @@ function render_interview_dashboard_table(data, total) {
 					<th>No. of Open Positions</th>
 					<th>No. of CVs Mapped</th>
 					<th>Candidates' Stages</th>
-					<th>Interviews Scheduled Today</th>
-					<th>Total Interviews</th>
+					<th>Interviews Scheduled For Today</th>
+					
 					<th>Joined</th>
 				</tr>
 			</thead>
@@ -205,7 +205,6 @@ function render_interview_dashboard_table(data, total) {
 				<td>${row.cvs_mapped || 0}</td>
 				<td style="max-width: 200px; word-wrap: break-word;">${stages}</td>
 				<td>${row.interviews_scheduled_today || 0}</td>
-				<td>${row.total_interviews || 0}</td>
 				<td>${row.joined || 0}</td>
 			</tr>
 		`);
