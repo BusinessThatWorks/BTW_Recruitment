@@ -114,7 +114,7 @@ class DKP_Interview(Document):
             "DKP_JobApplication_Child",
             {
                 "parent": job.name,
-                "stage": "Selected For Offer"
+                "sub_stages_interview": "Joined"
             }
         )
 

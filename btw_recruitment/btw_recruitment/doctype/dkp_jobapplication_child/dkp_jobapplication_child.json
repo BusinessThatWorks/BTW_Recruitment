@@ -28,7 +28,7 @@
    "fieldname": "stage",
    "fieldtype": "Select",
    "label": "Stage",
-   "options": "\nSubmitted To Client\nSchedule Interview\nSelected For Offer\nRejected By Client"
+   "options": "\nSubmitted To Client\nSchedule Interview\nSelected For Offer\nRejected By Client\nRejected By Candidate\nDropout"
   },
   {
    "fieldname": "remarks",
@@ -77,7 +77,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-20 16:03:46.808396",
+ "modified": "2026-01-22 11:26:19.877058",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",

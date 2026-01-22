@@ -178,7 +178,7 @@
    "fieldname": "number_of_positions",
    "fieldtype": "Select",
    "label": "Number of Positions",
-   "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+   "options": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
    "reqd": 1
   },
   {
@@ -313,7 +313,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-20 17:50:26.390308",
+ "modified": "2026-01-22 12:08:16.428149",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

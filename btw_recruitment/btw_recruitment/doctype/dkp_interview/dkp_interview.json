@@ -48,7 +48,7 @@
    "fieldname": "stage",
    "fieldtype": "Select",
    "label": "Stage",
-   "options": "\nSelected For Offer"
+   "options": "\nSelected For Offer\nRejected By Candidate\nDropout"
   },
   {
    "fieldname": "section_break_biqn",
@@ -65,7 +65,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-20 14:13:26.781219",
+ "modified": "2026-01-22 11:27:17.235969",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
