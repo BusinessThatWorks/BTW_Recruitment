@@ -29,7 +29,6 @@
   "must_have_skills",
   "assign_recruiter",
   "cc",
-  "good_to_have_skills",
   "notes",
   "hidden_fields_section",
   "required_certifications",
@@ -123,11 +122,6 @@
    "fieldname": "must_have_skills",
    "fieldtype": "Small Text",
    "label": "Must Have Skills"
-  },
-  {
-   "fieldname": "good_to_have_skills",
-   "fieldtype": "Small Text",
-   "label": "Good to Have Skills"
   },
   {
    "fieldname": "column_break_ttxn",
@@ -313,7 +307,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-22 12:08:16.428149",
+ "modified": "2026-01-27 16:28:08.616430",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

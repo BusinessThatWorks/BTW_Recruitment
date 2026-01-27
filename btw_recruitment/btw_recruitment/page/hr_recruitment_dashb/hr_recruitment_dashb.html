@@ -19,7 +19,6 @@
 		<div class="tab-pane" id="tab-candidates">
 			<div class="hr-kpi-section mb-4">
 				<div class="row" id="hr-kpi-cards"></div>
-
 				<div id="pipeline-section"></div>
 				<div id="department-section"></div>
 			</div>
@@ -116,6 +115,9 @@
 			<!-- Jobs KPIs & Charts -->
 			<div id="jobs-dashboard-summary" >
 				<div class="row" id="job-kpi-cards"></div>
+				<div id="job-status-kpi-cards" class="status-card-row"></div>
+
+
 
 				<div class="row mt-4">
 					<div class="col-md-12">
@@ -338,6 +340,60 @@
 </div>
 
 <style>
+	.status-card-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.status-card {
+    flex: 1 1 220px; /* responsive width */
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.status-card-header {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: #4b5563; /* greyish */
+}
+
+.status-card-body {
+    display: flex;
+    justify-content: space-around;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.status-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.metric-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
 	.kpi-card {
 		padding: 10px;
 		text-align: center;

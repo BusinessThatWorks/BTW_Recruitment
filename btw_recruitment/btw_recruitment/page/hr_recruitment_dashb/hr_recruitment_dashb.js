@@ -940,46 +940,40 @@ function load_job_kpis() {
         args: {
             report_name: "HR Recruitment – Jobs KPIs",
             filters: {
-                 from_date: tab_date_filters.jobs.from_date,
-    to_date: tab_date_filters.jobs.to_date
+                from_date: tab_date_filters.jobs.from_date,
+                to_date: tab_date_filters.jobs.to_date
             }
         },
         callback(r) {
             if (r.message) {
-                render_job_kpi_cards(r.message.result[0]);
+                const result = r.message.result[0];
+
+                // TOP ROW
+                render_job_kpi_cards(result);
+
+                // STATUS CARDS (second row)
+                render_job_status_cards(result.status_cards);
+
+                // Chart
                 render_job_charts(r.message.chart);
             }
         }
     });
 }
-async function render_job_kpi_cards(data) {
-    // Define filters info
-    // const kpiFilters = {
-    //     total_jobs: "Count of Total job openings with status = Open + Hold",
-    //     total_positions: "Total number of positions in job openings with status = Open",
-    //     active_jobs: "Count of active job openings where status = Open"
-    // };
 
-    // Cards definition with key for tooltip
+function render_job_kpi_cards(data) {
+
     const cards = [
         {
-            key: "total_jobs",
             label: "Total Job Openings",
-            value: await frappe.db.count("DKP_Job_Opening"),
+            value: data.total_jobs,
             link: "/app/dkp_job_opening"
         },
         {
-            key: "total_positions",
-            label: "Total Open Positions",
+            label: "Total Positions",
             value: data.total_positions,
-            link: "/app/dkp_job_opening?status=Open"
-        },
-        // {
-        //     key: "active_jobs",
-        //     label: "Active Jobs",
-        //     value: data.active_jobs,
-        //     link: "/app/dkp_job_opening?status=Open"
-        // }
+            link: "/app/dkp_job_opening"
+        }
     ];
 
     const $row = $("#job-kpi-cards");
@@ -988,28 +982,16 @@ async function render_job_kpi_cards(data) {
     cards.forEach(card => {
         const cardHtml = `
             <div class="kpi-col">
-                ${card.link ? `
-                    <a href="${card.link}" class="kpi-link">
-                        <div class="card kpi-card">
-                            <div class="kpi-value">${card.value}</div>
-                            <div class="kpi-label">
-                                ${card.label}
-                            </div>
-                        </div>
-                    </a>
-                ` : `
-                    <div class="card kpi-card kpi-card-disabled">
-                        <div class="kpi-value">${card.value}</div>
-                        <div class="kpi-label">
-                            ${card.label}
-                            <span class="kpi-info" data-info="${kpiFilters[card.key]}">ℹ️</span>
-                        </div>
-                    </div>
-                `}
+                <div class="card kpi-card">
+                    <div class="kpi-value">${card.value}</div>
+                    <div class="kpi-label">${card.label}</div>
+                </div>
             </div>
         `;
         $(cardHtml).appendTo($row);
     });
+
+
 
     // Add styles once
     if (!$("#job-kpi-card-style").length) {
@@ -1094,6 +1076,31 @@ async function render_job_kpi_cards(data) {
             .appendTo("head");
     }
 }
+function render_job_status_cards(statusCards) {
+    const $row = $("#job-status-kpi-cards");
+    $row.empty();
+
+    statusCards.forEach(item => {
+        const cardHtml = `
+            <div class="status-card">
+                <div class="status-card-header">${item.status}</div>
+                <div class="status-card-body">
+                    <div class="status-metric">
+                        <span class="metric-label">Openings</span>
+                        <span class="metric-value">${item.openings}</span>
+                    </div>
+                    <div class="status-metric">
+                        <span class="metric-label">Positions</span>
+                        <span class="metric-value">${item.positions}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        $(cardHtml).appendTo($row);
+    });
+}
+
+
 
 function normalize_status(status) {
     if (!status) return "";
