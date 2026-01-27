@@ -952,21 +952,21 @@ function load_job_kpis() {
         }
     });
 }
-function render_job_kpi_cards(data) {
+async function render_job_kpi_cards(data) {
     // Define filters info
-    const kpiFilters = {
-        total_jobs: "Count of job openings with status = Open + Hold",
-        total_positions: "Total number of positions in job openings with status = Open",
-        active_jobs: "Count of active job openings where status = Open"
-    };
+    // const kpiFilters = {
+    //     total_jobs: "Count of Total job openings with status = Open + Hold",
+    //     total_positions: "Total number of positions in job openings with status = Open",
+    //     active_jobs: "Count of active job openings where status = Open"
+    // };
 
     // Cards definition with key for tooltip
     const cards = [
         {
             key: "total_jobs",
             label: "Total Job Openings",
-            value: data.total_jobs,
-            link: "/app/dkp_job_opening?status=Open"
+            value: await frappe.db.count("DKP_Job_Opening"),
+            link: "/app/dkp_job_opening"
         },
         {
             key: "total_positions",
@@ -994,7 +994,6 @@ function render_job_kpi_cards(data) {
                             <div class="kpi-value">${card.value}</div>
                             <div class="kpi-label">
                                 ${card.label}
-                                <span class="kpi-info" data-info="${kpiFilters[card.key]}">ℹ️</span>
                             </div>
                         </div>
                     </a>

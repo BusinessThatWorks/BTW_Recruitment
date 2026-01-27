@@ -37,11 +37,12 @@ def execute(filters=None):
 
     # total_jobs = frappe.db.count("DKP_Job_Opening", job_filters)
     # ---------------- TOTAL JOBS ----------------
-    job_filters = [["status", "in", ["Open", "On Hold"]]]  # status Open OR Hold
+    job_filters = []
     if date_filter:
         job_filters.append(["creation", *date_filter])
 
     total_jobs = frappe.db.count("DKP_Job_Opening", job_filters)
+
 
     # ---------------- ACTIVE JOBS ----------------
     # active_jobs = frappe.db.count(
@@ -92,9 +93,14 @@ def execute(filters=None):
     status_counts = []
 
     for status in statuses:
+        chart_filters = [["status", "=", status]]
+
+        if date_filter:
+            chart_filters.append(["creation", *date_filter])
+
         count = frappe.db.count(
             "DKP_Job_Opening",
-            job_filters + [["status", "=", status]]
+            chart_filters
         )
         status_counts.append(count)
 
