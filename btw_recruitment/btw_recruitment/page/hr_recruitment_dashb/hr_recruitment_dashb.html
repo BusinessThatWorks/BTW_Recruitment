@@ -1,19 +1,18 @@
 <!-- Tabs -->
-<div >
+<div>
 	<ul class="nav nav-tabs" id="hr-dashboard-tabs">
-	<li class="nav-item">
-		<a class="nav-link active" data-tab="company">Clients</a>
-	</li>
+		<li class="nav-item">
+			<a class="nav-link active" data-tab="company">Clients</a>
+		</li>
 
-	<li class="nav-item">
-		<a class="nav-link" data-tab="jobs">Jobs</a>
-	</li>
+		<li class="nav-item">
+			<a class="nav-link" data-tab="jobs">Jobs</a>
+		</li>
 
-	<li class="nav-item">
-		<a class="nav-link" data-tab="candidates">Candidates</a>
-	</li>
-</ul>
-
+		<li class="nav-item">
+			<a class="nav-link" data-tab="candidates">Candidates</a>
+		</li>
+	</ul>
 
 	<div class="tab-content pt-3">
 		<div class="tab-pane" id="tab-candidates">
@@ -113,11 +112,9 @@
 		<!-- Jobs Tab -->
 		<div class="tab-pane" id="tab-jobs">
 			<!-- Jobs KPIs & Charts -->
-			<div id="jobs-dashboard-summary" >
+			<div id="jobs-dashboard-summary">
 				<div class="row" id="job-kpi-cards"></div>
 				<div id="job-status-kpi-cards" class="status-card-row"></div>
-
-
 
 				<div class="row mt-4">
 					<div class="col-md-12">
@@ -133,7 +130,6 @@
 			</div>
 			<!-- Filters -->
 			<div id="jobs-filters" class="card p-3 mb-3">
-
 				<!-- ROW 1 : DATE FILTERS -->
 				<div class="row g-3 align-items-end mb-3">
 					<div class="col-md-2">
@@ -206,7 +202,6 @@
 
 				<!-- ROW 3 : ADVANCED FILTERS -->
 				<div class="row g-3 align-items-start">
-
 					<!-- Ageing -->
 					<div class="col-md-2">
 						<label class="form-label">Ageing (Days)</label>
@@ -233,12 +228,10 @@
 
 					<!-- Recruiter (MultiSelect Placeholder) -->
 					<div class="col-md-3">
-					<div id="filter-job-recruiter" class="recruiter-filter"></div>
-				</div>
-
+						<div id="filter-job-recruiter" class="recruiter-filter"></div>
+					</div>
 				</div>
 			</div>
-
 
 			<!-- Jobs table -->
 			<div id="jobs-table"></div>
@@ -281,7 +274,6 @@
 						</button>
 					</div>
 				</div> -->
-
 
 				<!-- ROW 2 : COMPANY FILTERS -->
 				<div class="row g-3 align-items-end">
@@ -341,58 +333,60 @@
 
 <style>
 	.status-card-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 16px;
-}
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px;
+		margin-top: 16px;
+	}
 
-.status-card {
-    flex: 1 1 220px; /* responsive width */
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    padding: 16px;
-    text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+	.status-card {
+		flex: 1 1 220px; /* responsive width */
+		background: #fff;
+		border-radius: 10px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		padding: 16px;
+		text-align: center;
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+	}
 
-.status-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
+	.status-card:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+	}
 
-.status-card-header {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 12px;
-    color: #4b5563; /* greyish */
-}
+	.status-card-header {
+		font-weight: 600;
+		font-size: 14px;
+		margin-bottom: 12px;
+		color: #4b5563; /* greyish */
+	}
 
-.status-card-body {
-    display: flex;
-    justify-content: space-around;
-    font-size: 16px;
-    font-weight: 500;
-}
+	.status-card-body {
+		display: flex;
+		justify-content: space-around;
+		font-size: 16px;
+		font-weight: 500;
+	}
 
-.status-metric {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+	.status-metric {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
 
-.metric-label {
-    font-size: 12px;
-    color: #6b7280;
-    margin-bottom: 4px;
-}
+	.metric-label {
+		font-size: 12px;
+		color: #6b7280;
+		margin-bottom: 4px;
+	}
 
-.metric-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #111827;
-}
+	.metric-value {
+		font-size: 18px;
+		font-weight: 700;
+		color: #111827;
+	}
 
 	.kpi-card {
 		padding: 10px;
