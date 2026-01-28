@@ -65,13 +65,13 @@
   {
    "fieldname": "added_by",
    "fieldtype": "Data",
-   "label": "Added By"
+   "label": "Recruiter"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-22 15:28:34.653950",
+ "modified": "2026-01-28 11:53:10.589822",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

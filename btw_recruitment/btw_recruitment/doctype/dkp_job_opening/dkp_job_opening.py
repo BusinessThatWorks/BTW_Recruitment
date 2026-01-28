@@ -19,7 +19,7 @@ class DKP_Job_Opening(Document):
 
         if not recruiter_emails:
             return
-        cc_emails = ["sarimk360@gmail.com", "sharda.kumari@clapgrow.com"]
+        # cc_emails = ["sarimk360@gmail.com", "sharda.kumari@clapgrow.com"]
         subject = f"New Job Opening Assigned – {self.name}"
 
         html_content = f"""
@@ -45,7 +45,7 @@ class DKP_Job_Opening(Document):
             recipients=recruiter_emails,  # ✅ list of emails
             subject=subject,
             content=html_content,
-            cc=cc_emails,
+            # cc=cc_emails,
         )
 
 
