@@ -148,23 +148,23 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"btw_recruitment.tasks.all"
-# 	],
-# 	"daily": [
-# 		"btw_recruitment.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"btw_recruitment.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"btw_recruitment.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"btw_recruitment.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	# "all": [
+	# 	"btw_recruitment.tasks.all"
+	# ],
+	"daily": [
+		"btw_recruitment.btw_recruitment.api.company_rules.mark_inactive_companies"
+	],
+	# "hourly": [
+	# 	"btw_recruitment.tasks.hourly"
+	# ],
+	# "weekly": [
+	# 	"btw_recruitment.tasks.weekly"
+	# ],
+	# "monthly": [
+	# 	"btw_recruitment.tasks.monthly"
+	# ],
+}
 
 # Testing
 # -------

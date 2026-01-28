@@ -14,6 +14,16 @@ frappe.ui.form.on("DKP_Job_Opening", {
         show_opening_candidate_suggestions(frm);
     }
 });
+frappe.ui.form.on("DKP_Job_Opening", {
+    after_save(frm) {
+        if (!frm.doc.company_name) return;
+
+        frappe.call({
+            method: "btw_recruitment.btw_recruitment.api.company_rules.mark_company_active",
+            args: { company: frm.doc.company_name },
+        });
+    }
+});
 
 // --------- SUGGEST CANDIDATES FOR JOB OPENING ----------
 
