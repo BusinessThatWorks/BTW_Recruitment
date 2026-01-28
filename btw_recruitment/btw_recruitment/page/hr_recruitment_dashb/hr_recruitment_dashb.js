@@ -40,7 +40,7 @@ const candidate_table_state = {
 };
 
 let jobs_table_state = { limit: 15, offset: 0 };
-let jobs_table_filters = { company_name: null, designation: null, department: null, recruiter: null, status: null,priority: null,ageing_from:null,ageing_to:null };
+let jobs_table_filters = { company_name: null, designation: null, department: null, recruiter: null, status: null,priority: null,ageing: null };
 let company_table_state = { limit: 15, offset: 0 };
 let company_filters = {
     company_name: null,
@@ -286,8 +286,8 @@ function apply_job_filters() {
 
     jobs_table_filters.recruiter = selected_recruiters.length ? JSON.stringify(selected_recruiters) : null;
     jobs_table_filters.priority = $("#filter-job-priority").val() || null;  // <-- new
-    jobs_table_filters.ageing_from = $("#filter-job-ageing-from").val() || null;  // <-- new
-    jobs_table_filters.ageing_to = $("#filter-job-ageing-to").val() || null;
+    jobs_table_filters.ageing = $("#filter-job-ageing").val() || null;
+
 
     jobs_table_state.offset = 0;
     load_jobs_table();
@@ -298,7 +298,7 @@ $("#apply-job-filters").click(() => {
 });
 
 // Live filtering for job filters
-$(document).on("change", "#filter-job-company, #filter-job-department, #filter-job-status, #filter-job-recruiter, #filter-job-priority, #filter-job-ageing-from, #filter-job-ageing-to", function() {
+$(document).on("change", "#filter-job-company, #filter-job-department, #filter-job-status, #filter-job-recruiter, #filter-job-priority, #filter-job-ageing", function() {
     apply_job_filters();
 });
 
@@ -318,8 +318,8 @@ $("#clear-job-filters").click(() => {
     $("#filter-job-department").val("");
     $("#filter-job-status").val("");
     $("#filter-job-priority").val("");
-    $("#filter-job-ageing-from").val("");
-    $("#filter-job-ageing-to").val("");
+    $("#filter-job-ageing").val("");
+
 
     if (recruiter_control) {
         recruiter_control.set_value([]);
@@ -332,8 +332,8 @@ $("#clear-job-filters").click(() => {
         recruiter: null,
         status: null,
         priority: null,
-        ageing_from: null,
-        ageing_to: null
+        ageing: null
+
     };
 
     jobs_table_state.offset = 0;
@@ -463,7 +463,6 @@ function load_kpis() {
             }
 
             render_department_pie_chart();
-            render_urgent_openings_table();
         }
     });
 }
@@ -577,88 +576,6 @@ function render_department_pie_chart() {
                 },
                 type: "pie"
             });
-        }
-    });
-}
-function render_urgent_openings_table(callback) {
-    const $section = $("#urgent-openings-section");
-    $section.empty();
-
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_urgent_openings",
-        args: {
-            from_date: dashboard_filters.from_date,
-            to_date: dashboard_filters.to_date
-        },
-        callback: function (r) {
-
-            // Empty state
-            if (!r.message || r.message.length === 0) {
-                const empty_card = $(`
-                    <div class="card" style="margin-top:20px; padding:16px;">
-                        <h4>🚨 Urgent Openings</h4>
-                        <div class="text-muted text-center">
-                            No urgent openings
-                        </div>
-                    </div>
-                `);
-
-                $section.append(empty_card);
-                if (callback) callback();
-                return;
-            }
-
-            const table_container = $(`
-                <div class="card" style="margin-top:20px; padding:16px; margin-bottom: 20px;">
-                    <h4>🚨 Urgent Openings</h4>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Job Opening</th>
-                                <th>Company</th>
-                                <th>Priority</th>
-                                <th>Positions</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="urgent-openings-body"></tbody>
-                    </table>
-                </div>
-            `);
-
-            $section.append(table_container);
-
-            const tbody = table_container.find("#urgent-openings-body");
-
-            r.message.forEach((row, index) => {
-                tbody.append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>
-                            <a href="/app/dkp_job_opening/${row.name}">
-                                ${row.job_title || row.name}
-                            </a>
-                        </td>
-                        <td>${row.company_name || "-"}</td>
-                        <td>
-                            <span style="
-                                padding:4px 10px;
-                                border-radius:12px;
-                                color:#fff;
-                                font-weight:600;
-                                background:${priorityColors[row.priority] || "#6c757d"};
-                            ">
-                                ${row.priority || "-"}
-                            </span>
-                        </td>
-                        <td>${row.number_of_positions || "0"}</td>
-                        <td>${row.status || "-"}</td>
-                    </tr>
-                `);
-            });
-
-            if (callback) callback();
         }
     });
 }
@@ -815,24 +732,24 @@ function get_ageing_days(creation) {
 
     return diff_days >= 0 ? diff_days : 0;
 }
-function apply_ageing_filter(rows) {
-    const from = jobs_table_filters.ageing_from
-        ? parseInt(jobs_table_filters.ageing_from)
-        : null;
+// function apply_ageing_filter(rows) {
+//     const from = jobs_table_filters.ageing_from
+//         ? parseInt(jobs_table_filters.ageing_from)
+//         : null;
 
-    const to = jobs_table_filters.ageing_to
-        ? parseInt(jobs_table_filters.ageing_to)
-        : null;
+//     const to = jobs_table_filters.ageing_to
+//         ? parseInt(jobs_table_filters.ageing_to)
+//         : null;
 
-    return rows.filter(row => {
-        const ageing = get_ageing_days(row.creation);
+//     return rows.filter(row => {
+//         const ageing = get_ageing_days(row.creation);
 
-        if (from !== null && ageing < from) return false;
-        if (to !== null && ageing > to) return false;
+//         if (from !== null && ageing < from) return false;
+//         if (to !== null && ageing > to) return false;
 
-        return true;
-    });
-}
+//         return true;
+//     });
+// }
 let recruiter_loaded = false;
 
 function load_job_kpis() {
@@ -1083,7 +1000,7 @@ function render_job_charts(chart) {
 }
 function load_jobs_table() {
     console.log("Loading Jobs Table...", jobs_table_filters, jobs_table_state);
-
+    console.log("Ageing filter value:", jobs_table_filters.ageing);
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
         args: {
@@ -1094,20 +1011,15 @@ function load_jobs_table() {
             company_name: jobs_table_filters.company_name,
             designation: jobs_table_filters.designation,
             department: jobs_table_filters.department,
-            
             status: jobs_table_filters.status,
             priority: jobs_table_filters.priority,
-            recruiter: jobs_table_filters.recruiter
+            recruiter: jobs_table_filters.recruiter,
+            ageing: jobs_table_filters.ageing
         },
         callback(r) {
-            console.log("Jobs API Response:", r);
 
             if (r.message) {
             let rows = r.message.data;
-
-            // 🔥 APPLY AGEING FILTER IN JS
-            rows = apply_ageing_filter(rows);
-
             render_jobs_table(rows, r.message.total || 0);
             } else {
                 render_jobs_table([], 0);

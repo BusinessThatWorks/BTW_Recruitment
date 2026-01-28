@@ -765,8 +765,7 @@ def get_jobs_table(
     recruiter=None,
     status=None,
     priority=None,
-    ageing_from=None,
-    ageing_to=None
+    ageing=None
 ):
     conditions = []
     values = []
@@ -803,28 +802,10 @@ def get_jobs_table(
         values.append(priority)
 
     # ---------------- Ageing Filter (Days) ----------------
-    if ageing_from:
-        conditions.append("DATEDIFF(CURDATE(), creation) >= %s")
-        values.append(cint(ageing_from))
-
-    if ageing_to:
-        conditions.append("DATEDIFF(CURDATE(), creation) <= %s")
-        values.append(cint(ageing_to))
-
-    # ---------------- Recruiter Filter (MultiSelect OR logic) ----------------
-    # if recruiter:
-    #     # recruiter can come as JSON string or list
-    #     if isinstance(recruiter, str):
-    #         recruiter = frappe.parse_json(recruiter)
-
-    #     recruiter_conditions = []
-    #     for r in recruiter:
-    #         recruiter_conditions.append("assign_recruiter LIKE %s")
-    #         values.append(f"%{r}%")
-
-    #     if recruiter_conditions:
-    #         conditions.append("(" + " OR ".join(recruiter_conditions) + ")")
-
+    if ageing not in (None, "", "null"):
+        conditions.append("DATEDIFF(CURDATE(), jo.creation) >= %s")
+        values.append(cint(ageing))
+    # ---------------- Recruiter Filter (Multi-Select) ----------------
     if recruiter:
         recruiter_list = frappe.parse_json(recruiter)
 
@@ -843,23 +824,9 @@ def get_jobs_table(
 
             values.extend(recruiter_list)
 
-
-
-
-
-
     # ---------------- WHERE Clause ----------------
     where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
 
-    # ---------------- Total Count ----------------
-    # total = frappe.db.sql(
-    #     f"""
-    #     SELECT COUNT(*)
-    #     FROM `tabDKP_Job_Opening`
-    #     {where_clause}
-    #     """,
-    #     values
-    # )[0][0]
     total = frappe.db.sql(
         f"""
         SELECT COUNT(DISTINCT jo.name)
