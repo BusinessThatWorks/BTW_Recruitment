@@ -107,15 +107,13 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
 
     all_candidates = frappe.get_all(
         "DKP_Candidate",
-        filters=candidate_filters,
+        # filters=candidate_filters,
         fields=[
             "name",
             "candidate_name",
             "current_designation",
             "total_experience_years",
             "skills_tags",
-            "primary_skill_set",
-            "secondary_skill_set",
             "key_certifications",
             "current_location",
             "department",
@@ -133,7 +131,10 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
     matched_candidates = []
 
     for candidate in all_candidates:
+        # We'll keep per-category scores with explicit weights so that
+        # skills can be prioritized over other criteria.
         category_scores: list[float] = []
+        category_weights: list[float] = []
         match_reasons: list[str] = []
 
         # 1. Designation match
@@ -143,22 +144,32 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
                 or candidate.current_designation.lower() in criteria["designation"].lower()
             ):
                 category_scores.append(1.0)
+                category_weights.append(1.0)
                 match_reasons.append("Designation match")
             else:
                 category_scores.append(0.0)
+                category_weights.append(1.0)
 
         # 2. Experience match
         candidate_exp = candidate.total_experience_years or 0
         if criteria["min_experience"] <= candidate_exp <= criteria["max_experience"]:
             category_scores.append(1.0)
+            category_weights.append(1.0)
             match_reasons.append("Experience within range")
         elif candidate_exp >= criteria["min_experience"]:
             category_scores.append(0.5)
+            category_weights.append(1.0)
             match_reasons.append("Experience above minimum")
         else:
             category_scores.append(0.0)
+            category_weights.append(1.0)
 
-        # 3. Skills match
+        # 3. Skills match (PRIORITY)
+        #    Matching is now based ONLY on:
+        #    - Job Opening: must_have_skills
+        #    - Candidate: skills_tags
+        #    Other skill fields (good_to_have_skills, primary_skill_set,
+        #    secondary_skill_set) are ignored for matching.
         # Parse skills - handle comma, semicolon, or newline separated
         def parse_skills(skills_str):
             if not skills_str:
@@ -171,39 +182,31 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             return [s.strip().lower() for s in skills_str.split() if s.strip()]
 
         must_have_skills = parse_skills(criteria["must_have_skills"])
-        good_to_have_skills = parse_skills(criteria["good_to_have_skills"])
 
-        # Build candidate skills string
-        candidate_skills = ""
-        if candidate.skills_tags:
-            candidate_skills += " " + candidate.skills_tags.lower()
-        if candidate.primary_skill_set:
-            candidate_skills += " " + candidate.primary_skill_set.lower()
-        if candidate.secondary_skill_set:
-            candidate_skills += " " + candidate.secondary_skill_set.lower()
+        # Build candidate skills string using only skills_tags
+        candidate_skills = (candidate.skills_tags or "").lower()
 
-        # Check for skill matches (partial matching)
-        must_have_matches = sum(1 for skill in must_have_skills if skill in candidate_skills)
-        good_to_have_matches = sum(1 for skill in good_to_have_skills if skill in candidate_skills)
+        # Check for skill matches (partial matching) only against must-have skills
+        must_have_matches = sum(1 for skill in must_have_skills if skill and skill in candidate_skills)
 
+        # If there are must-have skills defined on the opening, we will
+        # ONLY consider candidates that match at least one of them.
+        # This makes skills the primary eligibility gate.
         skill_score = None
-        if must_have_skills or good_to_have_skills:
-            # weight must-have more than good-to-have but keep result 0–1
-            base_score = 0.0
-            weight_total = 0.0
-            if must_have_skills:
-                base_score += (must_have_matches / len(must_have_skills)) * 0.5
-                weight_total += 0.5
-            if good_to_have_skills:
-                base_score += (good_to_have_matches / len(good_to_have_skills)) * 0.5
-                weight_total += 0.5
-            if weight_total:
-                skill_score = min(1.0, base_score / weight_total)
-                category_scores.append(skill_score)
-                if must_have_skills and must_have_matches > 0:
-                    match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
-                if good_to_have_skills and good_to_have_matches > 0:
-                    match_reasons.append(f"{good_to_have_matches}/{len(good_to_have_skills)} good-to-have skills")
+        if must_have_skills:
+            if must_have_matches == 0:
+                # No overlap with must-have skills → exclude this candidate
+                continue
+
+            skill_score = min(1.0, must_have_matches / len(must_have_skills))
+
+            # Give skills a higher weight than other categories so they
+            # dominate the final score used in the suggestion dialog.
+            SKILL_WEIGHT = 3.0
+            category_scores.append(skill_score)
+            category_weights.append(SKILL_WEIGHT)
+
+            match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
 
         # 4. Certifications match
         if criteria["required_certifications"]:
@@ -222,9 +225,11 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             if cert_matches > 0:
                 cert_score = min(1.0, (cert_matches / len(required_certs)))
                 category_scores.append(cert_score)
+                category_weights.append(1.0)
                 match_reasons.append(f"{cert_matches}/{len(required_certs)} certifications")
             else:
                 category_scores.append(0.0)
+                category_weights.append(1.0)
 
         # 5. Location match
         if criteria["location"] and candidate.current_location:
@@ -233,9 +238,11 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
                 or candidate.current_location.lower() in criteria["location"].lower()
             ):
                 category_scores.append(1.0)
+                category_weights.append(1.0)
                 match_reasons.append("Location match")
             else:
                 category_scores.append(0.0)
+                category_weights.append(1.0)
 
         # 6. Gender match
         gender_pref = criteria.get("gender_preference")
@@ -243,9 +250,11 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         if gender_pref and gender_pref not in ("NA", "Any"):
             if cand_gender and cand_gender == gender_pref:
                 category_scores.append(1.0)
+                category_weights.append(1.0)
                 match_reasons.append(f"Gender match ({cand_gender})")
             else:
                 category_scores.append(0.0)
+                category_weights.append(1.0)
 
         # 7. CTC match (using expected_ctc if available, else current_ctc)
         def parse_number(raw):
@@ -272,16 +281,26 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
                 in_range = False
             if in_range:
                 category_scores.append(1.0)
+                category_weights.append(1.0)
                 match_reasons.append("CTC within range")
             else:
                 category_scores.append(0.0)
+                category_weights.append(1.0)
 
-        # Compute final score as average of category scores (equal weight)
-        category_scores = [s for s in category_scores if s is not None]
-        if not category_scores:
+        # Compute final score as weighted average of category scores
+        # (skills have higher weight via category_weights).
+        valid_pairs = [
+            (score, weight)
+            for score, weight in zip(category_scores, category_weights)
+            if score is not None and weight is not None
+        ]
+
+        if not valid_pairs:
             continue
 
-        match_score = (sum(category_scores) / len(category_scores)) * 100.0
+        total_weight = sum(w for _, w in valid_pairs)
+        weighted_sum = sum(s * w for s, w in valid_pairs)
+        match_score = (weighted_sum / total_weight) * 100.0
 
         # Only include candidates with match_score > 0 (blacklisted are already filtered out)
         if match_score > 0:
@@ -386,11 +405,11 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
     """, values, as_dict=True)
 
     return {
-    "success": True,
-    "openings": openings,
-    "total": len(openings),
-    "days_used": days
-}
+        "success": True,
+        "openings": openings,
+        "total": len(openings),
+        "days_used": days,
+    }
 
 @frappe.whitelist()
 def get_candidate_previous_openings_count(candidate_name, current_job_opening=None):
