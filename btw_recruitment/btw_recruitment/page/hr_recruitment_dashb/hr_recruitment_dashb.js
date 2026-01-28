@@ -1060,6 +1060,12 @@ function render_jobs_table(data, total) {
     } else {
         data.forEach(d => {
             const ageing = get_ageing_days(d.creation);
+
+            // Move style calculation inside the loop
+            let ageing_cell_style = "";
+            if (ageing > 45) {
+                ageing_cell_style = "background-color: #f8d7da; font-weight:600;";
+            }
             table.find("tbody").append(`
                 <tr>
                     <td><a href="/app/dkp_job_opening/${d.name}">${d.name || "-"}</a></td>
@@ -1081,7 +1087,7 @@ function render_jobs_table(data, total) {
                     <td>${d.number_of_positions || "-"}</td>
                     <td>${moment(d.creation).format("DD-MM-YYYY hh:mm A")}</td>
 
-                    <td>${ageing}</td>
+                    <td style="${ageing_cell_style}">${ageing}</td>
                 </tr>
             `);
         });
