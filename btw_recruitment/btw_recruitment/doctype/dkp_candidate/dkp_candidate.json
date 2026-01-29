@@ -43,11 +43,6 @@
   "reason_for_change",
   "recruiter_remarks",
   "added_by",
-  "job_applications_section",
-  "secondary_skill_set",
-  "resume_parsed",
-  "primary_skill_set",
-  "address",
   "test_tab",
   "eq_test_upload",
   "enneagram_upload",
@@ -73,14 +68,12 @@
   {
    "fieldname": "email",
    "fieldtype": "Data",
-   "label": "Email",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Email"
   },
   {
    "fieldname": "mobile_number",
    "fieldtype": "Data",
-   "label": "Mobile Number",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Mobile Number"
   },
   {
    "fieldname": "alternate_phone",
@@ -90,8 +83,7 @@
   {
    "fieldname": "current_location",
    "fieldtype": "Data",
-   "label": "Current Location",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Current Location"
   },
   {
    "fieldname": "preferred_locationselect_upto_3_section",
@@ -113,20 +105,17 @@
   {
    "fieldname": "total_experience_years",
    "fieldtype": "Float",
-   "label": "Total Experience (Years)",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Total Experience (Years)"
   },
   {
    "fieldname": "current_company",
    "fieldtype": "Data",
-   "label": "Current Company",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Current Company"
   },
   {
    "fieldname": "current_designation",
    "fieldtype": "Data",
-   "label": "Current Designation",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Current Designation"
   },
   {
    "fieldname": "last_working_day",
@@ -146,8 +135,7 @@
   {
    "fieldname": "highest_qualification",
    "fieldtype": "Data",
-   "label": "Highest Qualification",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Highest Qualification"
   },
   {
    "fieldname": "institute__university",
@@ -159,7 +147,6 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Gender",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1",
    "options": "\nMale\nFemale\nNot Disclosed",
    "placeholder": " "
   },
@@ -172,14 +159,7 @@
    "fieldname": "resume_source",
    "fieldtype": "Select",
    "label": "Resume Source",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1",
    "options": "\nNaukri\nLinkedIn\nIndeed\nReferral\nWalk-in\nInternal DB\nOther"
-  },
-  {
-   "fieldname": "job_applications_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Hidden Fields"
   },
   {
    "fieldname": "languages",
@@ -187,24 +167,16 @@
    "label": "Languages"
   },
   {
-   "fieldname": "resume_parsed",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Resume Parsed"
-  },
-  {
    "fieldname": "currently_employed",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Currently Employed",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1",
    "options": "\nYes\nNo"
   },
   {
    "fieldname": "official_notice_period_days",
    "fieldtype": "Data",
-   "label": "Official Notice Period (Days)",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Official Notice Period (Days)"
   },
   {
    "fieldname": "serving_notice",
@@ -214,22 +186,9 @@
    "options": "\nYes\nNo"
   },
   {
-   "fieldname": "primary_skill_set",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Primary Skill Set"
-  },
-  {
-   "fieldname": "secondary_skill_set",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Secondary Skill set"
-  },
-  {
    "fieldname": "communication_skill",
    "fieldtype": "Select",
    "label": "Communication Skill",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1",
    "options": "\nGood\nAverage\nBad"
   },
   {
@@ -237,19 +196,12 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Department",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1",
    "options": "DKP_Department"
   },
   {
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
    "label": "Date Of Birth"
-  },
-  {
-   "fieldname": "address",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Address"
   },
   {
    "fieldname": "marital_status",
@@ -316,8 +268,7 @@
    "fieldname": "expected_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Expected CTC Monthly",
-   "mandatory_depends_on": "eval:doc.resume_parsed == 1"
+   "label": "Expected CTC Monthly"
   },
   {
    "fieldname": "disc_score",
@@ -364,7 +315,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-20 13:46:04.792282",
+ "modified": "2026-01-29 14:14:47.018501",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

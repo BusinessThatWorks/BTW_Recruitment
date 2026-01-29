@@ -53,21 +53,22 @@ frappe.ui.form.on("DKP_Candidate", {
         if (!frm.doc.resume_parsed) return;
 
         const manual_fields = [
-            "alternate_phone",
+            "department",
+            "email",
+            "mobile_number",
             "gender",
-            "current_ctc",
-            "expected_ctc",
-            "notice_period_days",
-            "last_working_day",
-            "resume_source",
+            "current_location",
+            "total_experience_years",
+            "highest_qualification",
+            "current_designation",
+            "current_company",
             "currently_employed",
-            "official_notice_period_days",
-            "serving_notice",
-            "marital_status",
-            "primary_skill_set",
-            "secondary_skill_set",
+            "expected_ctc_monthly",
             "communication_skill",
-            "remarks"
+            "resume_source",
+            "official_notice_period_days",
+            "serving_notice"
+            
         ];
 
         manual_fields.forEach(fieldname => {
