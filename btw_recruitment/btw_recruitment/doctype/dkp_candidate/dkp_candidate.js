@@ -47,10 +47,10 @@ frappe.ui.form.on("DKP_Candidate", {
     refresh(frm) {
 
         // ALWAYS remove old highlights first
-        removeHighlights(frm);
+        // removeHighlights(frm);
 
         // highlight only AFTER resume parsing
-        if (!frm.doc.resume_parsed) return;
+        // if (!frm.doc.resume_parsed) return;
 
         const manual_fields = [
             "department",
@@ -68,7 +68,6 @@ frappe.ui.form.on("DKP_Candidate", {
             "resume_source",
             "official_notice_period_days",
             "serving_notice"
-            
         ];
 
         manual_fields.forEach(fieldname => {
@@ -86,7 +85,7 @@ frappe.ui.form.on("DKP_Candidate", {
                 // field input
                 if (field.$input) {
                     field.$input.css({
-                        "border": "2px solid #ff4d4d",
+                        "border": "1px solid #ffa0a0",
                         "background-color": "#ffecec",
                         "border-radius": "4px"
                     });
