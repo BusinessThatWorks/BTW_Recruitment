@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "autoname": "{company_name}.-.{designation}.-.##",
  "creation": "2025-11-15 11:43:20.822307",
  "doctype": "DocType",
@@ -307,7 +308,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-27 16:28:08.616430",
+ "modified": "2026-01-30 21:56:00.480618",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "creation": "2025-11-15 11:17:22.152657",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -314,7 +315,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-29 15:04:17.381047",
+ "modified": "2026-01-30 21:51:22.252720",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
