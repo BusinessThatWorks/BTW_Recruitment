@@ -1,3 +1,5 @@
+// sorting js -
+
 // let dashboard_filters = {
 //     from_date: null,
 //     to_date: null,
@@ -50,6 +52,19 @@ let company_filters = {
     city: null,
     client_status: null
 };
+
+// Sort state for each tab (sort_by: field name, order: 'asc' | 'desc')
+let candidate_sort = { sort_by: 'creation', order: 'desc' };
+let jobs_sort = { sort_by: 'creation', order: 'desc' };
+let company_sort = { sort_by: 'creation', order: 'desc' };
+
+function sortable_th(label, field, current_sort) {
+    const is_active = current_sort && current_sort.sort_by === field;
+    const arrow = !is_active ? '↕' : (current_sort.order === 'asc' ? '↑' : '↓');
+    const title = `Sort by ${label} (click to toggle)`;
+    const activeClass = is_active ? ' active' : '';
+    return `<th class="sortable-th${activeClass}" data-sort="${field}" title="${title}">${label} <span class="sort-arrow">${arrow}</span></th>`;
+}
 
 
 frappe.pages['hr-recruitment-dashb'].on_page_load = function(wrapper) {
@@ -624,7 +639,9 @@ function load_candidate_table() {
             min_experience: candidate_table_filters.min_experience,
             max_experience: candidate_table_filters.max_experience,
             search_text: candidate_table_filters.search_text,
-            candidate_name_search: candidate_table_filters.candidate_name_search
+            candidate_name_search: candidate_table_filters.candidate_name_search,
+            sort_by: candidate_sort.sort_by,
+            sort_order: candidate_sort.order
         },
         callback(r) {
             if (r.message) {
@@ -637,22 +654,27 @@ function render_candidate_table(data, total) {
     const $container = $("#candidates-table");
     $container.empty();
 
-    // ---------------- Table ----------------
+    const thead = `
+         <thead>
+        <tr>
+            ${sortable_th('Candidate', 'candidate_name', candidate_sort)}
+
+            <th>Department</th>
+            <th>Designation</th>
+
+            ${sortable_th('Experience (Yrs)', 'total_experience_years', candidate_sort)}
+
+            <th>Skills(tags)</th>
+            
+            <th>Certifications</th>
+
+            ${sortable_th('Created On', 'creation', candidate_sort)}
+        </tr>
+    </thead>
+    `;
     const table = $(`
         <table class="table table-bordered table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Candidate</th>
-                    <th>Department</th>
-                    <th>Designation</th>
-                    <th>Experience (Yrs)</th>
-                    <th>Skills(tags)</th>
-                    <th>Primary Skill</th>
-                    <th>Secondary Skill</th>
-                    <th>Certifications</th>
-                    <th>Created On</th>
-                </tr>
-            </thead>
+            ${thead}
             <tbody></tbody>
         </table>
     `);
@@ -678,8 +700,6 @@ function render_candidate_table(data, total) {
                     <td>${d.current_designation || "-"}</td>
                     <td>${d.total_experience_years ?? "-"}</td>
                     <td>${d.skills_tags || "-"}</td>
-                    <td>${d.primary_skill_set || "-"}</td>
-                    <td>${d.secondary_skill_set || "-"}</td>
                     <td>${d.key_certifications || "-"}</td>
                     <td>${frappe.datetime.str_to_user(d.creation)}</td>
                 </tr>
@@ -688,6 +708,18 @@ function render_candidate_table(data, total) {
     }
 
     $container.append(table);
+
+    table.find('.sortable-th').on('click', function() {
+        const field = $(this).data('sort');
+        if (candidate_sort.sort_by === field) {
+            candidate_sort.order = candidate_sort.order === 'asc' ? 'desc' : 'asc';
+        } else {
+            candidate_sort.sort_by = field;
+            candidate_sort.order = 'asc';
+        }
+        candidate_table_state.offset = 0;
+        load_candidate_table();
+    });
 
     // ---------------- Pagination ----------------
     const total_pages = Math.ceil(total / candidate_table_state.limit);
@@ -999,8 +1031,6 @@ function render_job_charts(chart) {
     });
 }
 function load_jobs_table() {
-    console.log("Loading Jobs Table...", jobs_table_filters, jobs_table_state);
-    console.log("Ageing filter value:", jobs_table_filters.ageing);
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
         args: {
@@ -1014,13 +1044,13 @@ function load_jobs_table() {
             status: jobs_table_filters.status,
             priority: jobs_table_filters.priority,
             recruiter: jobs_table_filters.recruiter,
-            ageing: jobs_table_filters.ageing
+            ageing: jobs_table_filters.ageing,
+            sort_by: jobs_sort.sort_by,
+            sort_order: jobs_sort.order
         },
         callback(r) {
-
             if (r.message) {
-            let rows = r.message.data;
-            render_jobs_table(rows, r.message.total || 0);
+                render_jobs_table(r.message.data, r.message.total || 0);
             } else {
                 render_jobs_table([], 0);
             }
@@ -1029,26 +1059,27 @@ function load_jobs_table() {
 }
 
 function render_jobs_table(data, total) {
-    console.log("render_jobs_table called with data:", data);
     const $container = $("#jobs-table");
     $container.empty();
 
+    const thead = `
+        <thead>
+    <tr>
+        ${sortable_th('Job Opening', 'name', jobs_sort)}
+        <th>Company</th>
+        <th>Designation</th>
+        <th>Department</th>
+        <th>Status</th>
+        <th>Priority</th>
+        ${sortable_th('No. of Positions', 'number_of_positions', jobs_sort)}
+        ${sortable_th('Created On', 'creation', jobs_sort)}
+        ${sortable_th('Ageing (Days)', 'creation', jobs_sort)}
+    </tr>
+</thead>
+    `;
     const table = $(`
         <table class="table table-bordered table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Job Opening</th>
-                    <th>Company</th>
-                    <th>Designation</th>
-                    <th>Department</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>No. of Positions</th>
-                    <th>Created On</th>
-                    <th>Ageing (Days)</th>
-
-                </tr>
-            </thead>
+            ${thead}
             <tbody></tbody>
         </table>
     `);
@@ -1094,6 +1125,18 @@ function render_jobs_table(data, total) {
     }
 
     $container.append(table);
+
+    table.find('.sortable-th').on('click', function() {
+        const field = $(this).data('sort');
+        if (jobs_sort.sort_by === field) {
+            jobs_sort.order = jobs_sort.order === 'asc' ? 'desc' : 'asc';
+        } else {
+            jobs_sort.sort_by = field;
+            jobs_sort.order = 'asc';
+        }
+        jobs_table_state.offset = 0;
+        load_jobs_table();
+    });
 
     // Pagination
     const total_pages = Math.ceil(total / jobs_table_state.limit);
@@ -1282,14 +1325,14 @@ function load_industry_chart() {
     });
 }
 function load_company_table() {
-    console.log("Loading Company Table...", company_filters, company_table_state);
-
     frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",  
+        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
         args: {
             limit_page_length: company_table_state.limit,
             limit_start: company_table_state.offset,
-            ...company_filters
+            ...company_filters,
+            sort_by: company_sort.sort_by,
+            sort_order: company_sort.order
         },
         callback(r) {
             render_company_table(r.message.data, r.message.total);
@@ -1298,25 +1341,29 @@ function load_company_table() {
 }
 
 // Render Table + Pagination
-function render_company_table(data,total) {
+function render_company_table(data, total) {
     const $container = $("#company-table");
     $container.empty();
 
+    const thead = `
+        
+        <thead>
+            <tr>
+                ${sortable_th('Company', 'company_name', company_sort)}
+                <th>Client Type</th>
+                <th>Industry</th>
+                <th>Location</th>
+                <th>Billing Email</th>
+                <th>Billing Phone</th>
+                <th>Status</th>
+                <th>Fee Type</th>
+                <th>Replacement</th>
+            </tr>
+        </thead>
+    `;
     const table = $(`
         <table class="table table-bordered table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Company</th>
-                    <th>Client Type</th>
-                    <th>Industry</th>
-                    <th>Location</th>
-                    <th>Billing Email</th>
-                    <th>Billing Phone</th>
-                    <th>Status</th>
-                    <th>Fee Type</th>
-                    <th>Replacement</th>
-                </tr>
-            </thead>
+            ${thead}
             <tbody></tbody>
         </table>
     `);
@@ -1344,6 +1391,18 @@ function render_company_table(data,total) {
     }
 
     $container.append(table);
+
+    table.find('.sortable-th').on('click', function() {
+        const field = $(this).data('sort');
+        if (company_sort.sort_by === field) {
+            company_sort.order = company_sort.order === 'asc' ? 'desc' : 'asc';
+        } else {
+            company_sort.sort_by = field;
+            company_sort.order = 'asc';
+        }
+        company_table_state.offset = 0;
+        load_company_table();
+    });
 
     // Pagination like jobs
     const total_pages = Math.ceil((total || 0) / company_table_state.limit);
