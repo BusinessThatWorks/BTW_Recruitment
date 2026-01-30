@@ -99,15 +99,20 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
     }
 
     # Get all candidates (excluding blacklisted and already added)
-    candidate_filters = {"blacklisted": "No"}
-
+    candidate_filters = {}
+    or_filters = [
+        ["blacklisted", "=", "No"],
+        ["blacklisted", "=", ""],
+        ["blacklisted", "is", "not set"],
+    ]
 
     if existing_candidates:
         candidate_filters["name"] = ["not in", existing_candidates]
 
     all_candidates = frappe.get_all(
         "DKP_Candidate",
-        # filters=candidate_filters,
+        filters=candidate_filters,
+        or_filters=or_filters,
         fields=[
             "name",
             "candidate_name",
@@ -150,19 +155,23 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
                 category_scores.append(0.0)
                 category_weights.append(1.0)
 
-        # 2. Experience match
-        candidate_exp = candidate.total_experience_years or 0
-        if criteria["min_experience"] <= candidate_exp <= criteria["max_experience"]:
-            category_scores.append(1.0)
-            category_weights.append(1.0)
-            match_reasons.append("Experience within range")
-        elif candidate_exp >= criteria["min_experience"]:
-            category_scores.append(0.5)
-            category_weights.append(1.0)
-            match_reasons.append("Experience above minimum")
-        else:
-            category_scores.append(0.0)
-            category_weights.append(1.0)
+        # 2. Experience match (only when job has a meaningful range, else it dilutes the score)
+        min_exp = criteria["min_experience"]
+        max_exp = criteria["max_experience"]
+        experience_is_relevant = min_exp > 0 or max_exp < 99
+        if experience_is_relevant:
+            candidate_exp = candidate.total_experience_years or 0
+            if min_exp <= candidate_exp <= max_exp:
+                category_scores.append(1.0)
+                category_weights.append(1.0)
+                match_reasons.append("Experience within range")
+            elif candidate_exp >= min_exp:
+                category_scores.append(0.5)
+                category_weights.append(1.0)
+                match_reasons.append("Experience above minimum")
+            else:
+                category_scores.append(0.0)
+                category_weights.append(1.0)
 
         # 3. Skills match (PRIORITY)
         #    Matching is now based ONLY on:
@@ -200,11 +209,9 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
 
             skill_score = min(1.0, must_have_matches / len(must_have_skills))
 
-            # Give skills a higher weight than other categories so they
-            # dominate the final score used in the suggestion dialog.
-            SKILL_WEIGHT = 3.0
+            # Equal weight: match % is (sum of category scores) / (number of criteria) * 100
             category_scores.append(skill_score)
-            category_weights.append(SKILL_WEIGHT)
+            category_weights.append(1.0)
 
             match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
 
