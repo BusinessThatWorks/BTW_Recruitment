@@ -55,9 +55,42 @@
 #         )
 import frappe
 from frappe.model.document import Document
-
+from frappe.model.naming import make_autoname
 
 class DKP_Interview(Document):
+    def autoname(self):
+        """
+        Name Format:
+        <Company> - <Candidate Name>
+        if duplicate -> add -01, -02...
+        """
+
+        if not self.job_opening or not self.candidate_name:
+            # fallback safe naming
+            self.name = make_autoname("INT-.#####")
+            return
+
+        # 1) Company from Job Opening
+        company = frappe.db.get_value("DKP_Job_Opening", self.job_opening, "company_name") or ""
+
+        # 2) Candidate Display Name (not ID)
+        # candidate_name field is Link to DKP_Candidate, so it stores docname.
+        candidate_display = frappe.db.get_value("DKP_Candidate", self.candidate_name, "candidate_name") \
+            or self.candidate_name
+
+        # cleanup
+        company = (company or "").strip()
+        candidate_display = (candidate_display or "").strip()
+
+        base = f"{company} - {candidate_display}".strip(" -")
+
+        # 3) unique naming with suffix -01, -02...
+        # pattern expects # at end
+        # if base exists -> base-01, base-02...
+        if frappe.db.exists("DKP_Interview", base):
+            self.name = make_autoname(base + "-.##")
+        else:
+            self.name = base
 
     def after_insert(self):
         # 🔗 Interview link set
