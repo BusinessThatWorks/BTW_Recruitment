@@ -458,9 +458,20 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                     <div><strong>Expected CTC:</strong> ${candidate.expected_ctc || "-"}</div>
                                 </div>
                                 <div class="ml-4 mt-2">
-                                    <small style="color: #6c757d;">
-                                        <strong>Match Reasons:</strong> ${candidate.match_reasons.join(", ")}
-                                    </small>
+                                    <div class="mb-1">
+                                        <small style="color: #6c757d;">
+                                            <strong>Match Reasons:</strong> ${candidate.match_reasons.join(", ")}
+                                        </small>
+                                    </div>
+                                    ${(candidate.matched_skills && candidate.matched_skills.length)
+                                        ? `
+                                    <div class="mb-1">
+                                        <small style="color: #6c757d;">
+                                            <strong>Matched Skills:</strong> <span class="text-primary">${candidate.matched_skills.join(", ")}</span>
+                                        </small>
+                                    </div>
+                                    `
+                                        : ""}
                                     ${
                                         is_no_poach
                                             ? `

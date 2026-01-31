@@ -141,6 +141,7 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         category_scores: list[float] = []
         category_weights: list[float] = []
         match_reasons: list[str] = []
+        matched_skill_names: list[str] = []
 
         # 1. Designation match
         # if criteria["designation"] and candidate.current_designation:
@@ -214,7 +215,10 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         candidate_skills = (candidate.skills_tags or "").lower()
 
         # Check for skill matches (partial matching) only against must-have skills
-        must_have_matches = sum(1 for skill in must_have_skills if skill and skill in candidate_skills)
+        matched_skill_names = [
+            skill for skill in must_have_skills if skill and skill in candidate_skills
+        ]
+        must_have_matches = len(matched_skill_names)
 
         # If there are must-have skills defined on the opening, we will
         # ONLY consider candidates that match at least one of them.
@@ -363,6 +367,7 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         if match_score > 0:
             candidate["match_score"] = round(match_score, 1)
             candidate["match_reasons"] = match_reasons
+            candidate["matched_skills"] = [s.strip().title() for s in matched_skill_names]
 
             # Check no-poach status
             no_poach_flag = frappe.db.get_value(
