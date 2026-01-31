@@ -143,17 +143,35 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         match_reasons: list[str] = []
 
         # 1. Designation match
-        if criteria["designation"] and candidate.current_designation:
-            if (
-                criteria["designation"].lower() in candidate.current_designation.lower()
-                or candidate.current_designation.lower() in criteria["designation"].lower()
-            ):
-                category_scores.append(1.0)
-                category_weights.append(1.0)
-                match_reasons.append("Designation match")
+        # if criteria["designation"] and candidate.current_designation:
+        #     if (
+        #         criteria["designation"].lower() in candidate.current_designation.lower()
+        #         or candidate.current_designation.lower() in criteria["designation"].lower()
+        #     ):
+        #         category_scores.append(1.0)
+        #         category_weights.append(1.0)
+        #         match_reasons.append("Designation match")
+        #     else:
+        #         category_scores.append(0.0)
+        #         category_weights.append(1.0)
+        if criteria["designation"]:
+            if candidate.current_designation:
+                if (
+                    criteria["designation"].lower() in candidate.current_designation.lower()
+                    or candidate.current_designation.lower() in criteria["designation"].lower()
+                ):
+                    category_scores.append(1.0)
+                    category_weights.append(1.0)
+                    match_reasons.append("Designation match")
+                else:
+                    category_scores.append(0.0)
+                    category_weights.append(1.0)
             else:
+                # candidate missing designation => penalty
                 category_scores.append(0.0)
                 category_weights.append(1.0)
+                match_reasons.append("Designation missing")
+
 
         # 2. Experience match (only when job has a meaningful range, else it dilutes the score)
         min_exp = criteria["min_experience"]
@@ -216,40 +234,68 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
 
         # 4. Certifications match
+        # 4. Certifications match
         if criteria["required_certifications"]:
-            # Parse certifications similar to skills
             certs_str = criteria["required_certifications"]
             required_certs = []
+
             for delimiter in [",", ";", "\n"]:
                 if delimiter in certs_str:
                     required_certs = [c.strip().lower() for c in certs_str.split(delimiter) if c.strip()]
                     break
+
             if not required_certs:
                 required_certs = [c.strip().lower() for c in certs_str.split() if c.strip()]
 
-            candidate_certs = (candidate.key_certifications or "").lower()
-            cert_matches = sum(1 for cert in required_certs if cert in candidate_certs)
-            if cert_matches > 0:
-                cert_score = min(1.0, (cert_matches / len(required_certs)))
-                category_scores.append(cert_score)
-                category_weights.append(1.0)
-                match_reasons.append(f"{cert_matches}/{len(required_certs)} certifications")
-            else:
+            candidate_certs = (candidate.key_certifications or "").lower().strip()
+
+            if not candidate_certs:
+                # candidate missing certifications => penalty only once
                 category_scores.append(0.0)
                 category_weights.append(1.0)
+                match_reasons.append("Certifications missing")
+            else:
+                cert_matches = sum(1 for cert in required_certs if cert and cert in candidate_certs)
+
+                if cert_matches > 0:
+                    cert_score = min(1.0, cert_matches / len(required_certs))
+                    category_scores.append(cert_score)
+                    category_weights.append(1.0)
+                    match_reasons.append(f"{cert_matches}/{len(required_certs)} certifications")
+                else:
+                    category_scores.append(0.0)
+                    category_weights.append(1.0)
+
 
         # 5. Location match
-        if criteria["location"] and candidate.current_location:
-            if (
-                criteria["location"].lower() in candidate.current_location.lower()
-                or candidate.current_location.lower() in criteria["location"].lower()
-            ):
-                category_scores.append(1.0)
-                category_weights.append(1.0)
-                match_reasons.append("Location match")
+        # if criteria["location"] and candidate.current_location:
+        #     if (
+        #         criteria["location"].lower() in candidate.current_location.lower()
+        #         or candidate.current_location.lower() in criteria["location"].lower()
+        #     ):
+        #         category_scores.append(1.0)
+        #         category_weights.append(1.0)
+        #         match_reasons.append("Location match")
+        #     else:
+        #         category_scores.append(0.0)
+        #         category_weights.append(1.0)
+        if criteria["location"]:
+            if candidate.current_location:
+                if (
+                    criteria["location"].lower() in candidate.current_location.lower()
+                    or candidate.current_location.lower() in criteria["location"].lower()
+                ):
+                    category_scores.append(1.0)
+                    category_weights.append(1.0)
+                    match_reasons.append("Location match")
+                else:
+                    category_scores.append(0.0)
+                    category_weights.append(1.0)
             else:
                 category_scores.append(0.0)
                 category_weights.append(1.0)
+                match_reasons.append("Location missing")
+
 
         # 6. Gender match
         gender_pref = criteria.get("gender_preference")
@@ -281,6 +327,10 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         cand_ctc = parse_number(candidate.expected_ctc or candidate.current_ctc)
 
         if cand_ctc is not None and (min_ctc is not None or max_ctc is not None):
+            if cand_ctc is None:
+                category_scores.append(0.0)
+                category_weights.append(1.0)
+                match_reasons.append("CTC missing")
             in_range = True
             if min_ctc is not None and cand_ctc < min_ctc:
                 in_range = False
