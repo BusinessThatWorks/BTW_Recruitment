@@ -338,46 +338,31 @@ function render_interview_dashboard_table(data, total) {
 // 	});
 // }
 
-// function render_pagination($container, state, callback) {
-// 	const total_pages = Math.ceil(state.total / state.limit);
-// 	const current_page = Math.floor(state.offset / state.limit) + 1;
-// 	const start_record = state.offset + 1;
-// 	const end_record = Math.min(state.offset + state.limit, state.total);
-	
-// 	// Generate unique identifier for this pagination instance
-// 	const pagination_id = "pagination-" + Math.random().toString(36).substr(2, 9);
-	
-// 	const pagination = $(`
-// 		<div class="pagination-container" data-pagination-id="${pagination_id}">
-// 			<div class="pagination-info">
-// 				Showing ${start_record} to ${end_record} of ${state.total} entries
-// 			</div>
-// 			<div class="pagination-buttons">
-// 				<button class="pagination-prev-btn" data-pagination-id="${pagination_id}" ${state.offset === 0 ? 'disabled' : ''}>
-// 					Previous
-// 				</button>
-// 				<span style="padding: 6px 12px; font-size: 14px;">
-// 					Page ${current_page} of ${total_pages || 1}
-// 				</span>
-// 				<button class="pagination-next-btn" data-pagination-id="${pagination_id}" ${current_page >= total_pages ? 'disabled' : ''}>
-// 					Next
-// 				</button>
-// 			</div>
-// 		</div>
-// 	`);
-	
-// 	$container.append(pagination);
-	
-// 	// Event handlers using data attributes
-// 	pagination.find(".pagination-prev-btn").on("click", function() {
-// 		if (state.offset > 0) {
-// 			callback('prev');
-// 		}
-// 	});
-	
-// 	pagination.find(".pagination-next-btn").on("click", function() {
-// 		if (current_page < total_pages) {
-// 			callback('next');
-// 		}
-// 	});
-// }
+function render_pagination($container, state, callback) {
+	const total_pages = Math.ceil(state.total / state.limit) || 1;
+	const current_page = Math.floor(state.offset / state.limit) + 1;
+	const start_record = state.total === 0 ? 0 : state.offset + 1;
+	const end_record = Math.min(state.offset + state.limit, state.total);
+
+	const pagination = $(`
+		<div class="pagination-container">
+			<div class="pagination-info">
+				Showing ${start_record} to ${end_record} of ${state.total} entries
+			</div>
+			<div class="pagination-buttons">
+				<button class="pagination-prev-btn" ${state.offset === 0 ? 'disabled' : ''}>Previous</button>
+				<span style="padding: 6px 12px; font-size: 14px;">Page ${current_page} of ${total_pages}</span>
+				<button class="pagination-next-btn" ${current_page >= total_pages ? 'disabled' : ''}>Next</button>
+			</div>
+		</div>
+	`);
+
+	$container.append(pagination);
+
+	pagination.find(".pagination-prev-btn").on("click", function() {
+		if (state.offset > 0) callback('prev');
+	});
+	pagination.find(".pagination-next-btn").on("click", function() {
+		if (current_page < total_pages) callback('next');
+	});
+}
