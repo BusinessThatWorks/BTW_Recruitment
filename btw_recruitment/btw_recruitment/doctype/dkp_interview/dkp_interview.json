@@ -11,7 +11,6 @@
   "column_break_pjqm",
   "joining_date",
   "stage",
-  "substage",
   "section_break_biqn",
   "interview_child_table"
  ],
@@ -48,19 +47,12 @@
   {
    "fieldname": "stage",
    "fieldtype": "Select",
-   "label": "Stage",
-   "options": "\nSelected For Offer\nRejected By Candidate\nDropout"
+   "label": "Interview Stages",
+   "options": "\nSelected For Offer\nRejected By Client\nOffered\nOffer Accepted\nOffer Declined\nJoined\nOffer Drop\nJoined And Left"
   },
   {
    "fieldname": "section_break_biqn",
    "fieldtype": "Section Break"
-  },
-  {
-   "depends_on": "eval:doc.stage == \"Selected For Offer\"",
-   "fieldname": "substage",
-   "fieldtype": "Select",
-   "label": "SubStage",
-   "options": "\nOffer accepted by candidate\nOffer rejected by candidate\nOffer withdrawn by client\nOffer accepted but client didnt turn up on day of joining\nJoined\nJoined and left"
   },
   {
    "fieldname": "added_by",
@@ -71,7 +63,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-28 11:53:10.589822",
+ "modified": "2026-02-02 15:10:06.841398",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

@@ -115,11 +115,9 @@ class DKP_Interview(Document):
 
         update_values = {}
 
+        # Interview.stage -> Job Opening child table: sub_stages_interview
         if self.stage:
-            update_values["stage"] = self.stage
-
-        if self.substage:
-            update_values["sub_stages_interview"] = self.substage  # ✅ correct fieldname
+            update_values["sub_stages_interview"] = self.stage
 
         if update_values:
             frappe.db.set_value(
@@ -129,8 +127,31 @@ class DKP_Interview(Document):
                     "candidate_name": self.candidate_name
                 },
                 update_values
-            )
-        self.check_and_close_job_opening()   
+            )    
+
+    # def sync_stage_to_opening(self):
+    #     if not self.job_opening or not self.candidate_name:
+    #         return
+
+    #     update_values = {}
+
+    #     if self.stage:
+    #         update_values["stage"] = self.stage
+
+    #     if self.substage:
+    #         update_values["sub_stages_interview"] = self.substage  # ✅ correct fieldname
+
+    #     if update_values:
+    #         frappe.db.set_value(
+    #             "DKP_JobApplication_Child",
+    #             {
+    #                 "parent": self.job_opening,
+    #                 "candidate_name": self.candidate_name
+    #             },
+    #             update_values
+    #         )
+    
+        self.check_and_close_job_opening()
 
             
 
