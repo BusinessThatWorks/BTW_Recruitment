@@ -174,7 +174,7 @@ $(document).on("click", "#hr-dashboard-tabs .nav-link", function () {
         load_company_table();
         load_company_kpis();
         load_client_type_chart();
-        load_industry_chart();
+        // load_industry_chart();
     }
 });
 let recruiter_control = null;
@@ -473,11 +473,11 @@ function load_kpis() {
             render_kpi_cards(r.message.result[0]);
 
             // Charts & Tables (each owns its section)
-            if (r.message.chart) {
-                render_stage_chart(r.message.chart);
-            }
+            // if (r.message.chart) {
+            //     render_stage_chart(r.message.chart);
+            // }
 
-            render_department_pie_chart();
+            // render_department_pie_chart();
         }
     });
 }
@@ -594,91 +594,91 @@ function render_stage_chart(chart_data) {
 //         }
 //     });
 // }
-function render_department_pie_chart() {
-    const $section = $("#department-section");
-    $section.empty();
+// function render_department_pie_chart() {
+//     const $section = $("#department-section");
+//     $section.empty();
 
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidates_by_department",
-        args: {
-            from_date: tab_date_filters.candidates.from_date,
-            to_date: tab_date_filters.candidates.to_date
-        },
-        callback: function(r) {
+//     frappe.call({
+//         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidates_by_department",
+//         args: {
+//             from_date: tab_date_filters.candidates.from_date,
+//             to_date: tab_date_filters.candidates.to_date
+//         },
+//         callback: function(r) {
 
-            // ===== DEBUG START =====
-            console.log("Department API response:", r.message);
+//             // ===== DEBUG START =====
+//             console.log("Department API response:", r.message);
 
-            (r.message || []).forEach((d, i) => {
-                const dept = (d && d.department != null) ? String(d.department) : "";
-                const cnt = d ? d.count : null;
+//             (r.message || []).forEach((d, i) => {
+//                 const dept = (d && d.department != null) ? String(d.department) : "";
+//                 const cnt = d ? d.count : null;
 
-                if (!dept || dept.trim() === "") {
-                    console.warn("Blank department found at index:", i, d);
-                }
-                if (cnt == null || isNaN(cnt) || Number(cnt) <= 0) {
-                    console.warn("Invalid count found:", i, d);
-                }
-            });
-            // ===== DEBUG END =====
+//                 if (!dept || dept.trim() === "") {
+//                     console.warn("Blank department found at index:", i, d);
+//                 }
+//                 if (cnt == null || isNaN(cnt) || Number(cnt) <= 0) {
+//                     console.warn("Invalid count found:", i, d);
+//                 }
+//             });
+//             // ===== DEBUG END =====
 
 
-            if (!r.message || r.message.length === 0) {
-                $section.append(`
-                    <div class="card p-3 text-muted text-center">
-                        No department data
-                    </div>
-                `);
-                return;
-            }
+//             if (!r.message || r.message.length === 0) {
+//                 $section.append(`
+//                     <div class="card p-3 text-muted text-center">
+//                         No department data
+//                     </div>
+//                 `);
+//                 return;
+//             }
 
-            // ===== CLEAN DATA (removes white slice issue) =====
-            let rows = (r.message || []).filter(d => {
-                if (!d) return false;
+//             // ===== CLEAN DATA (removes white slice issue) =====
+//             let rows = (r.message || []).filter(d => {
+//                 if (!d) return false;
 
-                const dept = (d.department != null) ? String(d.department).trim() : "";
-                const cnt = Number(d.count);
+//                 const dept = (d.department != null) ? String(d.department).trim() : "";
+//                 const cnt = Number(d.count);
 
-                // filter out blank/invalid departments and counts
-                if (!dept) return false;
-                if (!cnt || isNaN(cnt) || cnt <= 0) return false;
+//                 // filter out blank/invalid departments and counts
+//                 if (!dept) return false;
+//                 if (!cnt || isNaN(cnt) || cnt <= 0) return false;
 
-                return true;
-            });
+//                 return true;
+//             });
 
-            // If everything filtered out, show message
-            if (!rows.length) {
-                $section.append(`
-                    <div class="card p-3 text-muted text-center">
-                        No valid department data
-                    </div>
-                `);
-                return;
-            }
+//             // If everything filtered out, show message
+//             if (!rows.length) {
+//                 $section.append(`
+//                     <div class="card p-3 text-muted text-center">
+//                         No valid department data
+//                     </div>
+//                 `);
+//                 return;
+//             }
 
-            const labels = rows.map(d => String(d.department).trim());
-            const values = rows.map(d => Number(d.count));
-            // ===============================================
+//             const labels = rows.map(d => String(d.department).trim());
+//             const values = rows.map(d => Number(d.count));
+//             // ===============================================
 
-            const chart_container = $(`
-                <div class="card" style="padding:16px; margin-top: 20px;">
-                    <h4>Candidates by Department</h4>
-                    <div id="department-pie-chart"></div>
-                </div>
-            `);
+//             const chart_container = $(`
+//                 <div class="card" style="padding:16px; margin-top: 20px;">
+//                     <h4>Candidates by Department</h4>
+//                     <div id="department-pie-chart"></div>
+//                 </div>
+//             `);
 
-            $section.append(chart_container);
+//             $section.append(chart_container);
 
-            frappe.utils.make_chart("#department-pie-chart", {
-                data: {
-                    labels: labels,
-                    datasets: [{ name: "Candidates", values }]
-                },
-                type: "pie"
-            });
-        }
-    });
-}
+//             frappe.utils.make_chart("#department-pie-chart", {
+//                 data: {
+//                     labels: labels,
+//                     datasets: [{ name: "Candidates", values }]
+//                 },
+//                 type: "pie"
+//             });
+//         }
+//     });
+// }
 
 // adding candidate table state and filters
 
@@ -1374,42 +1374,42 @@ function load_client_type_chart() {
 }
 
 // ---------------- Industry Chart ----------------
-function load_industry_chart() {
-    frappe.call({
-        method: "frappe.desk.query_report.run",
-        args: {
-            report_name: "Company Recruitment KPIs",
-        },
-        callback(r) {
-            if (!r.message || !r.message.chart) return;
+// function load_industry_chart() {
+//     frappe.call({
+//         method: "frappe.desk.query_report.run",
+//         args: {
+//             report_name: "Company Recruitment KPIs",
+//         },
+//         callback(r) {
+//             if (!r.message || !r.message.chart) return;
 
-            const chart = r.message.chart;
-            const labels = chart.data.labels;
-            const values = chart.data.datasets[0].values;
+//             const chart = r.message.chart;
+//             const labels = chart.data.labels;
+//             const values = chart.data.datasets[0].values;
 
-            // ✅ Same proven pattern
-            const datasets = labels.map((label, index) => ({
-                name: label,
-                values: labels.map((_, i) => i === index ? values[index] : 0),
-                chartType: "bar"
-            }));
+//             // ✅ Same proven pattern
+//             const datasets = labels.map((label, index) => ({
+//                 name: label,
+//                 values: labels.map((_, i) => i === index ? values[index] : 0),
+//                 chartType: "bar"
+//             }));
 
-            new frappe.Chart("#industry-chart", {
-                title: "Industry-wise Client Count",
-                data: {
-                    labels,
-                    datasets
-                },
-                type: "bar",
-                height: 250,
-                barOptions: {
-                    stacked: true,
-                    spaceRatio: 0.75
-                }
-            });
-        }
-    });
-}
+//             new frappe.Chart("#industry-chart", {
+//                 title: "Industry-wise Client Count",
+//                 data: {
+//                     labels,
+//                     datasets
+//                 },
+//                 type: "bar",
+//                 height: 250,
+//                 barOptions: {
+//                     stacked: true,
+//                     spaceRatio: 0.75
+//                 }
+//             });
+//         }
+//     });
+// }
 function load_company_table() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
