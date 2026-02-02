@@ -1,21 +1,44 @@
 # soring api chnages -
 
 # ```python
+# import frappe
+# @frappe.whitelist()
+# def get_candidates_by_department(from_date=None, to_date=None):
+#     filters = {}
+#     # Optional: filter by date if provided
+#     if from_date and to_date:
+#         filters["creation"] = ["between", [from_date, to_date]]
+#     # Fetch candidate counts grouped by department
+#     data = frappe.db.sql("""
+#         SELECT department, COUNT(name) as count
+#         FROM `tabDKP_Candidate`
+#         WHERE department IS NOT NULL
+#         GROUP BY department
+#     """, as_dict=1)
+#     return data
 import frappe
+
 @frappe.whitelist()
 def get_candidates_by_department(from_date=None, to_date=None):
-    filters = {}
-    # Optional: filter by date if provided
+    filters = ""
+    values = {}
+
     if from_date and to_date:
-        filters["creation"] = ["between", [from_date, to_date]]
-    # Fetch candidate counts grouped by department
-    data = frappe.db.sql("""
-        SELECT department, COUNT(name) as count
-        FROM `tabDKP_Candidate`
-        WHERE department IS NOT NULL
-        GROUP BY department
-    """, as_dict=1)
+        filters = " AND creation BETWEEN %(from_date)s AND %(to_date)s"
+        values.update({"from_date": from_date, "to_date": to_date})
+
+    data = frappe.db.sql(f"""
+    SELECT 
+        IFNULL(NULLIF(TRIM(department), ''), 'Not Set') as department,
+        COUNT(name) as count
+    FROM `tabDKP_Candidate`
+    WHERE 1=1
+    {filters}
+    GROUP BY IFNULL(NULLIF(TRIM(department), ''), 'Not Set')
+""", values=values, as_dict=1)
+
     return data
+
 @frappe.whitelist()
 def get_urgent_openings(from_date=None, to_date=None):
     filters = [
