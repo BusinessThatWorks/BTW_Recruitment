@@ -266,8 +266,92 @@ def format_time_12h(t):
 # 		"data": data,
 # 		"total": total
 # 	}
+# @frappe.whitelist()
+# def get_interview_details(from_date=None, to_date=None, search=None, limit=20, offset=0):
+#     """
+#     Get detailed interview information with pagination:
+#     - Interview date, time
+#     - Candidate name with link
+#     - Job opening
+#     - Job Application stage + substage
+#     - Interview stage
+#     - Interviewer email
+#     - Feedback
+#     """
+#     limit = int(limit)
+#     offset = int(offset)
+    
+#     # Build date condition
+#     date_condition = ""
+#     values = []
+#     if from_date and to_date:
+#         date_condition = " AND ic.interview_date BETWEEN %s AND %s"
+#         values = [from_date, to_date]
+# 	if search:
+			
+
+#     # Base FROM and JOINs
+#     base_from_where = """
+#         FROM `tabDKP_Interview_Child` ic
+#         INNER JOIN `tabDKP_Interview` i ON i.name = ic.parent
+#         LEFT JOIN `tabDKP_Job_Opening` jo ON jo.name = i.job_opening
+#         LEFT JOIN `tabDKP_Candidate` c ON c.name = i.candidate_name
+#         LEFT JOIN `tabDKP_JobApplication_Child` jc 
+#             ON jc.parent = i.job_opening AND jc.candidate_name = i.candidate_name
+#         WHERE 1=1
+#     """
+
+#     # Total count
+#     total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition
+#     total_result = frappe.db.sql(total_query, values, as_dict=True)
+#     total = total_result[0].count if total_result else 0
+
+#     # Select query with job application stage included
+#     select_query = f"""
+#         SELECT 
+#             ic.name as interview_child_name,
+#             ic.interview_date,
+#             ic.from as interview_from_time,
+#             ic.to as interview_to_time,
+#             ic.interview_stage,
+#             ic.interviewer_email,
+#             ic.feedback,
+#             i.name as interview_name,
+#             i.candidate_name,
+#             i.job_opening,
+#             i.stage as interview_stage_main,
+#             i.substage,
+#             jc.stage as job_application_stage,
+#             jc.sub_stages_interview as job_application_substage,
+#             jo.designation,
+#             jo.company_name,
+#             c.candidate_name as candidate_display_name
+#         {base_from_where} {date_condition}
+#         ORDER BY ic.interview_date DESC, ic.from DESC
+#         LIMIT %s OFFSET %s
+#     """
+
+#     # Fetch data
+#     values_with_pagination = values + [limit, offset]
+#     data = frappe.db.sql(select_query, values_with_pagination, as_dict=True)
+
+#     # Format time (12-hour) and add time range
+#     for row in data:
+#         from_fmt = format_time_12h(row.get("interview_from_time"))
+#         to_fmt = format_time_12h(row.get("interview_to_time"))
+
+#         row["interview_from_time"] = from_fmt or ""
+#         row["interview_to_time"] = to_fmt or ""
+#         row["interview_time_range"] = f"{from_fmt} - {to_fmt}" if from_fmt and to_fmt else from_fmt or to_fmt or "-"
+
+#     return {
+#         "data": data,
+#         "total": total
+#     }
+import frappe
+
 @frappe.whitelist()
-def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
+def get_interview_details(from_date=None, to_date=None, search=None, limit=20, offset=0):
     """
     Get detailed interview information with pagination:
     - Interview date, time
@@ -277,16 +361,28 @@ def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
     - Interview stage
     - Interviewer email
     - Feedback
+    Supports:
+    - Date filtering (from_date, to_date)
+    - Search filtering by Job Opening only
     """
+
     limit = int(limit)
     offset = int(offset)
     
+    values = []
+
     # Build date condition
     date_condition = ""
-    values = []
     if from_date and to_date:
         date_condition = " AND ic.interview_date BETWEEN %s AND %s"
-        values = [from_date, to_date]
+        values.extend([from_date, to_date])
+
+    # Build search condition (Job Opening only)
+    search_condition = ""
+    if search:
+        search_like = f"%{search}%"
+        search_condition = " AND LOWER(i.job_opening) LIKE LOWER(%s)"
+        values.append(search_like)
 
     # Base FROM and JOINs
     base_from_where = """
@@ -299,12 +395,12 @@ def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
         WHERE 1=1
     """
 
-    # Total count
-    total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition
+    # Total count query
+    total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition + search_condition
     total_result = frappe.db.sql(total_query, values, as_dict=True)
     total = total_result[0].count if total_result else 0
 
-    # Select query with job application stage included
+    # Select query
     select_query = f"""
         SELECT 
             ic.name as interview_child_name,
@@ -324,13 +420,15 @@ def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
             jo.designation,
             jo.company_name,
             c.candidate_name as candidate_display_name
-        {base_from_where} {date_condition}
+        {base_from_where} {date_condition} {search_condition}
         ORDER BY ic.interview_date DESC, ic.from DESC
         LIMIT %s OFFSET %s
     """
 
-    # Fetch data
+    # Append pagination values
     values_with_pagination = values + [limit, offset]
+
+    # Fetch data
     data = frappe.db.sql(select_query, values_with_pagination, as_dict=True)
 
     # Format time (12-hour) and add time range
@@ -346,6 +444,7 @@ def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
         "data": data,
         "total": total
     }
+
 
 # import frappe
 # import io

@@ -85,6 +85,9 @@ let job_openings_table_state = {
 let summary_table_filters = {
 	search: ""
 };
+let details_table_filters = {
+	search: ""
+};
 
 // Pagination state for details table
 let interview_details_table_state = {
@@ -156,6 +159,7 @@ frappe.pages['interview-dashboard'].on_page_load = function (wrapper) {
 
 	$(frappe.render_template("interview_dashboard")).appendTo(page.body);
 	bind_summary_search();
+	bind_details_search();   // <-- bind second table search
 
 	init_interview_tabs_force_click();
 	bind_global_filters();
@@ -246,6 +250,35 @@ function bind_summary_search() {
 		load_interview_dashboard_data();
 	});
 }
+let details_search_timer = null;
+
+function bind_details_search() {
+    $(document).off("input.interview", "#details-search");
+    $(document).off("click.interview", "#details-search-clear");
+
+    $(document).on("input.interview", "#details-search", function () {
+        clearTimeout(details_search_timer);
+
+        details_search_timer = setTimeout(() => {
+            details_table_filters.search = ($("#details-search").val() || "").trim();
+
+            // Reset pagination
+            interview_details_table_state.offset = 0;
+
+            // Reload details table
+            load_interview_details_data();
+        }, 300);
+    });
+
+    $(document).on("click.interview", "#details-search-clear", function () {
+        $("#details-search").val("");
+        details_table_filters.search = "";
+
+        interview_details_table_state.offset = 0;
+        load_interview_details_data();
+    });
+}
+
 
 function load_interview_dashboard_data() {
 	const $container = $("#interview-dashboard-table");
@@ -355,6 +388,7 @@ function load_interview_details_data() {
 		args: {
 			from_date: interview_dashboard_filters.from_date,
 			to_date: interview_dashboard_filters.to_date,
+			search: details_table_filters.search,
 			limit: interview_details_table_state.limit,
 			offset: interview_details_table_state.offset
 		},
