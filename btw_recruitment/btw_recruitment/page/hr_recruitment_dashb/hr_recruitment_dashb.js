@@ -552,6 +552,48 @@ function render_stage_chart(chart_data) {
 
 
 
+// function render_department_pie_chart() {
+//     const $section = $("#department-section");
+//     $section.empty();
+
+//     frappe.call({
+//         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidates_by_department",
+//         args: {
+//             from_date: tab_date_filters.candidates.from_date,
+//     to_date: tab_date_filters.candidates.to_date
+//         },
+//         callback: function(r) {
+//             if (!r.message || r.message.length === 0) {
+//                 $section.append(`
+//                     <div class="card p-3 text-muted text-center">
+//                         No department data
+//                     </div>
+//                 `);
+//                 return;
+//             }
+
+//             const labels = r.message.map(d => d.department);
+//             const values = r.message.map(d => d.count);
+
+//             const chart_container = $(`
+//                 <div class="card" style="padding:16px; margin-top: 20px;">
+//                     <h4>Candidates by Department</h4>
+//                     <div id="department-pie-chart"></div>
+//                 </div>
+//             `);
+
+//             $section.append(chart_container);
+
+//             frappe.utils.make_chart("#department-pie-chart", {
+//                 data: {
+//                     labels: labels,
+//                     datasets: [{ name: "Candidates", values }]
+//                 },
+//                 type: "pie"
+//             });
+//         }
+//     });
+// }
 function render_department_pie_chart() {
     const $section = $("#department-section");
     $section.empty();
@@ -560,9 +602,27 @@ function render_department_pie_chart() {
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidates_by_department",
         args: {
             from_date: tab_date_filters.candidates.from_date,
-    to_date: tab_date_filters.candidates.to_date
+            to_date: tab_date_filters.candidates.to_date
         },
         callback: function(r) {
+
+            // ===== DEBUG START =====
+            console.log("Department API response:", r.message);
+
+            (r.message || []).forEach((d, i) => {
+                const dept = (d && d.department != null) ? String(d.department) : "";
+                const cnt = d ? d.count : null;
+
+                if (!dept || dept.trim() === "") {
+                    console.warn("Blank department found at index:", i, d);
+                }
+                if (cnt == null || isNaN(cnt) || Number(cnt) <= 0) {
+                    console.warn("Invalid count found:", i, d);
+                }
+            });
+            // ===== DEBUG END =====
+
+
             if (!r.message || r.message.length === 0) {
                 $section.append(`
                     <div class="card p-3 text-muted text-center">
@@ -572,8 +632,33 @@ function render_department_pie_chart() {
                 return;
             }
 
-            const labels = r.message.map(d => d.department);
-            const values = r.message.map(d => d.count);
+            // ===== CLEAN DATA (removes white slice issue) =====
+            let rows = (r.message || []).filter(d => {
+                if (!d) return false;
+
+                const dept = (d.department != null) ? String(d.department).trim() : "";
+                const cnt = Number(d.count);
+
+                // filter out blank/invalid departments and counts
+                if (!dept) return false;
+                if (!cnt || isNaN(cnt) || cnt <= 0) return false;
+
+                return true;
+            });
+
+            // If everything filtered out, show message
+            if (!rows.length) {
+                $section.append(`
+                    <div class="card p-3 text-muted text-center">
+                        No valid department data
+                    </div>
+                `);
+                return;
+            }
+
+            const labels = rows.map(d => String(d.department).trim());
+            const values = rows.map(d => Number(d.count));
+            // ===============================================
 
             const chart_container = $(`
                 <div class="card" style="padding:16px; margin-top: 20px;">
@@ -594,6 +679,7 @@ function render_department_pie_chart() {
         }
     });
 }
+
 // adding candidate table state and filters
 
 const candidate_table_filters = {
