@@ -46,7 +46,7 @@ def get_interview_dashboard_kpis(from_date=None, to_date=None):
 
 
 @frappe.whitelist()
-def get_interview_dashboard_data(from_date=None, to_date=None, limit=20, offset=0):
+def get_interview_dashboard_data(from_date=None, to_date=None,search=None, limit=20, offset=0):
 	"""
 	Get interview dashboard data with pagination:
 	- Number of open positions
@@ -57,11 +57,16 @@ def get_interview_dashboard_data(from_date=None, to_date=None, limit=20, offset=
 	"""
 	limit = int(limit)
 	offset = int(offset)
-	
+
 	# Build date filters for job openings
 	job_filters = []
 	if from_date and to_date:
 		job_filters.append(["creation", "between", [from_date, add_days(to_date, 1)]])
+
+	if search:
+		search = search.strip()
+		if search:
+			job_filters.append(["name", "like", f"%{search}%"])	
 	
 	# Get total count for pagination
 	total = frappe.db.count("DKP_Job_Opening", filters=job_filters)
@@ -151,69 +156,255 @@ def get_interview_dashboard_data(from_date=None, to_date=None, limit=20, offset=
 		"data": result,
 		"total": total
 	}
+from datetime import datetime, time
+
+def format_time_12h(t):
+	"""
+	Convert time / datetime.time / string like '15:30:25.554642' to '03:30 PM'
+	"""
+	if not t:
+		return ""
+
+	# If time/datetime object
+	if hasattr(t, "strftime"):
+		return t.strftime("%I:%M %p")
+
+	s = str(t).strip()
+
+	# remove microseconds
+	if "." in s:
+		s = s.split(".")[0]
+
+	# handle HH:MM also
+	if len(s.split(":")) == 2:
+		s = s + ":00"
+
+	try:
+		dt = datetime.strptime(s, "%H:%M:%S")
+		return dt.strftime("%I:%M %p")
+	except Exception:
+		# fallback
+		return str(t)
 
 
+# @frappe.whitelist()
+# def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
+# 	"""
+# 	Get detailed interview information with pagination:
+# 	- Interview date, time
+# 	- Candidate name with link
+# 	- Job opening
+# 	- Interview stage
+# 	- Interviewer email
+# 	- Feedback
+# 	"""
+# 	limit = int(limit)
+# 	offset = int(offset)
+	
+# 	# Build date condition and values
+# 	date_condition = ""
+# 	values = []
+	
+# 	if from_date and to_date:
+# 		date_condition = " AND ic.interview_date BETWEEN %s AND %s"
+# 		values = [from_date, to_date]
+	
+# 	# Build base FROM and WHERE clause
+# 	base_from_where = """
+# 		FROM `tabDKP_Interview_Child` ic
+# 		INNER JOIN `tabDKP_Interview` i ON i.name = ic.parent
+# 		LEFT JOIN `tabDKP_Job_Opening` jo ON jo.name = i.job_opening
+# 		LEFT JOIN `tabDKP_Candidate` c ON c.name = i.candidate_name
+# 		WHERE 1=1
+# 	"""
+	
+# 	# Get total count
+# 	total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition
+# 	total_result = frappe.db.sql(total_query, values, as_dict=True)
+# 	total = total_result[0].count if total_result and len(total_result) > 0 else 0
+	
+# 	# Build SELECT query with all columns
+# 	select_query = """
+# 		SELECT 
+# 			ic.name as interview_child_name,
+# 			ic.interview_date,
+# 			ic.from as interview_from_time,
+# 			ic.to as interview_to_time,
+# 			ic.interview_stage,
+# 			ic.interviewer_email,
+# 			ic.feedback,
+# 			i.name as interview_name,
+# 			i.candidate_name,
+# 			i.job_opening,
+# 			i.stage as interview_stage_main,
+# 			i.substage,
+# 			jo.designation,
+# 			jo.company_name,
+# 			c.candidate_name as candidate_display_name
+# 	""" + base_from_where + date_condition + " ORDER BY ic.interview_date DESC, ic.from DESC LIMIT %s OFFSET %s"
+	
+# 	# Get paginated data
+# 	values_with_pagination = values + [limit, offset]
+# 	data = frappe.db.sql(select_query, values_with_pagination, as_dict=True)
+
+# 	# ✅ Format time here (12-hour)
+# 	for row in data:
+# 			from_fmt = format_time_12h(row.get("interview_from_time"))
+# 			to_fmt = format_time_12h(row.get("interview_to_time"))
+
+# 			# overwrite fields so frontend stays same
+# 			row["interview_from_time"] = from_fmt or ""
+# 			row["interview_to_time"] = to_fmt or ""
+
+# 			# optional: provide range directly
+# 			if from_fmt and to_fmt:
+# 				row["interview_time_range"] = f"{from_fmt} - {to_fmt}"
+# 			else:
+# 				row["interview_time_range"] = from_fmt or to_fmt or "-"
+	
+# 	return {
+# 		"data": data,
+# 		"total": total
+# 	}
 @frappe.whitelist()
 def get_interview_details(from_date=None, to_date=None, limit=20, offset=0):
-	"""
-	Get detailed interview information with pagination:
-	- Interview date, time
-	- Candidate name with link
-	- Job opening
-	- Interview stage
-	- Interviewer email
-	- Feedback
-	"""
-	limit = int(limit)
-	offset = int(offset)
-	
-	# Build date condition and values
-	date_condition = ""
-	values = []
-	
-	if from_date and to_date:
-		date_condition = " AND ic.interview_date BETWEEN %s AND %s"
-		values = [from_date, to_date]
-	
-	# Build base FROM and WHERE clause
-	base_from_where = """
-		FROM `tabDKP_Interview_Child` ic
-		INNER JOIN `tabDKP_Interview` i ON i.name = ic.parent
-		LEFT JOIN `tabDKP_Job_Opening` jo ON jo.name = i.job_opening
-		LEFT JOIN `tabDKP_Candidate` c ON c.name = i.candidate_name
-		WHERE 1=1
-	"""
-	
-	# Get total count
-	total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition
-	total_result = frappe.db.sql(total_query, values, as_dict=True)
-	total = total_result[0].count if total_result and len(total_result) > 0 else 0
-	
-	# Build SELECT query with all columns
-	select_query = """
-		SELECT 
-			ic.name as interview_child_name,
-			ic.interview_date,
-			ic.from as interview_from_time,
-			ic.to as interview_to_time,
-			ic.interview_stage,
-			ic.interviewer_email,
-			ic.feedback,
-			i.name as interview_name,
-			i.candidate_name,
-			i.job_opening,
-			i.stage as interview_stage_main,
-			i.substage,
-			jo.designation,
-			jo.company_name,
-			c.candidate_name as candidate_display_name
-	""" + base_from_where + date_condition + " ORDER BY ic.interview_date DESC, ic.from DESC LIMIT %s OFFSET %s"
-	
-	# Get paginated data
-	values_with_pagination = values + [limit, offset]
-	data = frappe.db.sql(select_query, values_with_pagination, as_dict=True)
-	
-	return {
-		"data": data,
-		"total": total
-	}
+    """
+    Get detailed interview information with pagination:
+    - Interview date, time
+    - Candidate name with link
+    - Job opening
+    - Job Application stage + substage
+    - Interview stage
+    - Interviewer email
+    - Feedback
+    """
+    limit = int(limit)
+    offset = int(offset)
+    
+    # Build date condition
+    date_condition = ""
+    values = []
+    if from_date and to_date:
+        date_condition = " AND ic.interview_date BETWEEN %s AND %s"
+        values = [from_date, to_date]
+
+    # Base FROM and JOINs
+    base_from_where = """
+        FROM `tabDKP_Interview_Child` ic
+        INNER JOIN `tabDKP_Interview` i ON i.name = ic.parent
+        LEFT JOIN `tabDKP_Job_Opening` jo ON jo.name = i.job_opening
+        LEFT JOIN `tabDKP_Candidate` c ON c.name = i.candidate_name
+        LEFT JOIN `tabDKP_JobApplication_Child` jc 
+            ON jc.parent = i.job_opening AND jc.candidate_name = i.candidate_name
+        WHERE 1=1
+    """
+
+    # Total count
+    total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition
+    total_result = frappe.db.sql(total_query, values, as_dict=True)
+    total = total_result[0].count if total_result else 0
+
+    # Select query with job application stage included
+    select_query = f"""
+        SELECT 
+            ic.name as interview_child_name,
+            ic.interview_date,
+            ic.from as interview_from_time,
+            ic.to as interview_to_time,
+            ic.interview_stage,
+            ic.interviewer_email,
+            ic.feedback,
+            i.name as interview_name,
+            i.candidate_name,
+            i.job_opening,
+            i.stage as interview_stage_main,
+            i.substage,
+            jc.stage as job_application_stage,
+            jc.sub_stages_interview as job_application_substage,
+            jo.designation,
+            jo.company_name,
+            c.candidate_name as candidate_display_name
+        {base_from_where} {date_condition}
+        ORDER BY ic.interview_date DESC, ic.from DESC
+        LIMIT %s OFFSET %s
+    """
+
+    # Fetch data
+    values_with_pagination = values + [limit, offset]
+    data = frappe.db.sql(select_query, values_with_pagination, as_dict=True)
+
+    # Format time (12-hour) and add time range
+    for row in data:
+        from_fmt = format_time_12h(row.get("interview_from_time"))
+        to_fmt = format_time_12h(row.get("interview_to_time"))
+
+        row["interview_from_time"] = from_fmt or ""
+        row["interview_to_time"] = to_fmt or ""
+        row["interview_time_range"] = f"{from_fmt} - {to_fmt}" if from_fmt and to_fmt else from_fmt or to_fmt or "-"
+
+    return {
+        "data": data,
+        "total": total
+    }
+
+# import frappe
+# import io
+# from frappe.utils.xlsxutils import make_xlsx
+
+# import frappe
+# from frappe.utils.xlsxutils import make_xlsx
+
+# @frappe.whitelist()
+# def download_interview_dashboard(tab="summary", from_date=None, to_date=None, search=None):
+#     """
+#     Download filtered data for Summary / Details tab as Excel
+#     """
+#     # Fetch data based on tab
+#     if tab == "summary":
+#         res = get_interview_dashboard_data(from_date=from_date, to_date=to_date, search=search, limit=10000, offset=0)
+#         data = res["data"]
+#         rows = []
+#         for r in data:
+#             rows.append({
+#                 "Job Opening": r["job_opening"],
+#                 "Company": r["company_name"],
+#                 "Designation": r["designation"],
+#                 "Department": r["department"],
+#                 "Status": r["status"],
+#                 "Open Positions": r["open_positions"],
+#                 "CVs Mapped": r["cvs_mapped"],
+#                 "Total Interviews": r["total_interviews"],
+#                 "Joined": r["joined"]
+#             })
+
+#     elif tab == "details":
+#         res = get_interview_details(from_date=from_date, to_date=to_date, limit=10000, offset=0)
+#         data = res["data"]
+#         rows = []
+#         for r in data:
+#             rows.append({
+#                 "Interview Date": frappe.utils.data.formatdate(r["interview_date"]),
+#                 "Time": r.get("interview_time_range") or f'{r.get("interview_from_time")} - {r.get("interview_to_time")}',
+#                 "Candidate": r.get("candidate_display_name") or r.get("candidate_name"),
+#                 "Job Opening": r.get("job_opening"),
+#                 "Company": r.get("company_name"),
+#                 "Designation": r.get("designation"),
+#                 "Interview Stage": r.get("interview_stage"),
+#                 "Interviewer Email": r.get("interviewer_email"),
+#                 "Feedback": r.get("feedback"),
+#                 "Status": r.get("substage") or r.get("interview_stage_main")
+#             })
+
+#     else:
+#         return
+
+#     # ✅ Create XLSX in memory (Frappe 15 compatible)
+#     xlsx_file = make_xlsx(
+#         data=rows,
+#         sheet_name=tab.capitalize()
+#     )
+
+#     # Prepare for download
+#     frappe.local.response.filename = f"{tab}_interview_dashboard.xlsx"
+#     frappe.local.response.filecontent = xlsx_file.getvalue()
+#     frappe.local.response.type = "download"

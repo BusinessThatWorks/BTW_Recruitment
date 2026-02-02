@@ -1,10 +1,7 @@
 <div class="interview-dashboard-container">
-	<!-- Date Filters -->
-	
 
-	<!-- KPI Cards -->
-	<!-- <div class="row mb-4" id="interview-kpi-cards"></div> -->
-    <div class="card p-3 mb-3">
+	<!-- Date Filters -->
+	<div class="card p-3 mb-3">
 		<div class="row g-3 align-items-end">
 			<div class="col-md-3">
 				<label class="form-label">From Date</label>
@@ -19,28 +16,77 @@
 					Clear Dates
 				</button>
 			</div>
-		</div>
-	</div>
-	<!-- Job Openings Dashboard Table -->
-	<div class="card mb-4">
-		<div class="card-header mt-2">
-			<h4>Interview Summary</h4>
-		</div>
-		<div class="card-body">
-			<div id="interview-dashboard-table"></div>
+			<!-- <button class="btn btn-primary mb-3" id="download-excel-btn">Download Excel</button> -->
+
 		</div>
 	</div>
 
-	<!-- Detailed Interviews Table -->
-	<!-- <div class="card">
+	<!-- Tabs -->
+	<div class="card">
 		<div class="card-header">
-			<h4>Interview Details</h4>
+			<ul class="nav nav-tabs card-header-tabs" id="interviewTabs" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button class="nav-link active"
+						id="summary-tab"
+						data-bs-toggle="tab"
+						data-bs-target="#summary-pane"
+						type="button"
+						role="tab"
+						aria-controls="summary-pane"
+						aria-selected="true">
+						Interview Summary
+					</button>
+				</li>
+
+				<li class="nav-item" role="presentation">
+					<button class="nav-link"
+						id="details-tab"
+						data-bs-toggle="tab"
+						data-bs-target="#details-pane"
+						type="button"
+						role="tab"
+						aria-controls="details-pane"
+						aria-selected="false">
+						Interview Details
+					</button>
+				</li>
+			</ul>
 		</div>
+
 		<div class="card-body">
-			<div id="interview-details-table"></div>
+			<div class="tab-content" id="interviewTabsContent">
+
+				<!-- Tab 1: Summary -->
+				<div class="tab-pane fade show active"
+					id="summary-pane"
+					role="tabpanel"
+					aria-labelledby="summary-tab">
+					<div class="d-flex gap-2 align-items-center mb-2">
+						<input type="text"
+							class="form-control"
+							id="summary-search"
+							placeholder="Search Job Opening..."
+							autocomplete="off"
+						/>
+						<button class="btn btn-outline-secondary" id="summary-search-clear">Clear</button>
+					</div>
+					<div id="interview-dashboard-table"></div>
+				</div>
+
+				<!-- Tab 2: Details -->
+				<div class="tab-pane fade"
+					id="details-pane"
+					role="tabpanel"
+					aria-labelledby="details-tab">
+					<div id="interview-details-table"></div>
+				</div>
+
+			</div>
 		</div>
-	</div> -->
+	</div>
+
 </div>
+
 
 <style>
 	.interview-dashboard-container {

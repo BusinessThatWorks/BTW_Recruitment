@@ -27,7 +27,7 @@
   {
    "fieldname": "stage",
    "fieldtype": "Select",
-   "label": "Stage",
+   "label": "Mapping Stages",
    "options": "\nNo Response\nCall Back Later\nNot Looking For Job Change\nSubmitted To Client\nClient Screening Rejected\nSchedule Interview\nInterview Appeared\nInterview No Show"
   },
   {
@@ -77,7 +77,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-02 14:57:50.227453",
+ "modified": "2026-02-02 16:56:43.715774",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
