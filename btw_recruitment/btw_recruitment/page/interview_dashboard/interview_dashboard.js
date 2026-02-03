@@ -530,7 +530,7 @@ $(document).on("click.interview", "#download-excel-btn", function () {
 			to_date: interview_dashboard_filters.to_date || $("#interview-to-date").val() || null,
 			search: tab === "summary" ? summary_table_filters.search : details_table_filters.search
 		},
-		true
+		false
 	);
 });
 
