@@ -476,9 +476,11 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
         values.append(current_job_opening)
 
     # Filter for openings created in the last 7 days
-    conditions.append("jo.creation >= %s")
-    values.append(from_date)
 
+    # conditions.append("jo.creation >= %s")
+    # values.append(from_date)
+    conditions.append("child.modified >= %s")
+    values.append(from_date)
 
     where_clause = "WHERE " + " AND ".join(conditions)
 
@@ -499,7 +501,7 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
         INNER JOIN `tabDKP_Job_Opening` jo
             ON jo.name = child.parent
         {where_clause}
-        ORDER BY jo.creation DESC
+        ORDER BY child.modified DESC
     """, values, as_dict=True)
 
     return {
@@ -526,7 +528,9 @@ def get_candidate_previous_openings_count(candidate_name, current_job_opening=No
         conditions.append("jo.name != %s")
         values.append(current_job_opening)
 
-    conditions.append("jo.creation >= %s")
+    # conditions.append("jo.creation >= %s")
+    # values.append(from_date)
+    conditions.append("child.modified >= %s")
     values.append(from_date)
 
     where_clause = "WHERE " + " AND ".join(conditions)
