@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letterhead": null,
- "modified": "2026-01-14 14:19:47.167775",
+ "modified": "2026-02-03 14:54:29.973917",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "HR Recruitment KPIs",
@@ -24,13 +24,13 @@
    "role": "System Manager"
   },
   {
-   "role": "Recruiter Role"
-  },
-  {
    "role": "BTW Recruiter"
   },
   {
    "role": "DKP Recruiter"
+  },
+  {
+   "role": "DKP Recruiter - Exclusive"
   }
  ],
  "timeout": 0
