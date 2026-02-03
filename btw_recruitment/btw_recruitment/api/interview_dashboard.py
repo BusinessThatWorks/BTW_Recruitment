@@ -446,64 +446,56 @@ def get_interview_details(from_date=None, to_date=None, search=None, limit=20, o
     }
 
 
-# import frappe
-# import io
-# from frappe.utils.xlsxutils import make_xlsx
+from frappe.utils.xlsxutils import make_xlsx
 
-# import frappe
-# from frappe.utils.xlsxutils import make_xlsx
 
-# @frappe.whitelist()
-# def download_interview_dashboard(tab="summary", from_date=None, to_date=None, search=None):
-#     """
-#     Download filtered data for Summary / Details tab as Excel
-#     """
-#     # Fetch data based on tab
-#     if tab == "summary":
-#         res = get_interview_dashboard_data(from_date=from_date, to_date=to_date, search=search, limit=10000, offset=0)
-#         data = res["data"]
-#         rows = []
-#         for r in data:
-#             rows.append({
-#                 "Job Opening": r["job_opening"],
-#                 "Company": r["company_name"],
-#                 "Designation": r["designation"],
-#                 "Department": r["department"],
-#                 "Status": r["status"],
-#                 "Open Positions": r["open_positions"],
-#                 "CVs Mapped": r["cvs_mapped"],
-#                 "Total Interviews": r["total_interviews"],
-#                 "Joined": r["joined"]
-#             })
-
-#     elif tab == "details":
-#         res = get_interview_details(from_date=from_date, to_date=to_date, limit=10000, offset=0)
-#         data = res["data"]
-#         rows = []
-#         for r in data:
-#             rows.append({
-#                 "Interview Date": frappe.utils.data.formatdate(r["interview_date"]),
-#                 "Time": r.get("interview_time_range") or f'{r.get("interview_from_time")} - {r.get("interview_to_time")}',
-#                 "Candidate": r.get("candidate_display_name") or r.get("candidate_name"),
-#                 "Job Opening": r.get("job_opening"),
-#                 "Company": r.get("company_name"),
-#                 "Designation": r.get("designation"),
-#                 "Interview Stage": r.get("interview_stage"),
-#                 "Interviewer Email": r.get("interviewer_email"),
-#                 "Feedback": r.get("feedback"),
-#                 "Status": r.get("substage") or r.get("interview_stage_main")
-#             })
-
-#     else:
-#         return
-
-#     # ✅ Create XLSX in memory (Frappe 15 compatible)
-#     xlsx_file = make_xlsx(
-#         data=rows,
-#         sheet_name=tab.capitalize()
-#     )
-
-#     # Prepare for download
-#     frappe.local.response.filename = f"{tab}_interview_dashboard.xlsx"
-#     frappe.local.response.filecontent = xlsx_file.getvalue()
-#     frappe.local.response.type = "download"
+@frappe.whitelist()
+def download_interview_dashboard(tab="summary", from_date=None, to_date=None, search=None):
+	"""Download current tab data as Excel with same filters (date + search)."""
+	# Form POST sends "null" / "" as strings; normalize to None so date filters don't break
+	if from_date in (None, "", "null"):
+		from_date = None
+	if to_date in (None, "", "null"):
+		to_date = None
+	if search in (None, "", "null"):
+		search = None
+	if tab == "summary":
+		res = get_interview_dashboard_data(from_date=from_date, to_date=to_date, search=search, limit=10000, offset=0)
+		data = res["data"]
+		headers = ["Job Opening", "Status", "Open Positions", "CVs Mapped", "Candidates' Stages", "Interviews Today", "Joined"]
+		rows = [headers]
+		for r in data:
+			stages = r.get("stages") or []
+			stages_str = ", ".join(f"{s['stage']} ({s['count']})" for s in stages) if stages else "-"
+			rows.append([
+				r.get("job_opening") or "",
+				r.get("status") or "",
+				r.get("open_positions") or 0,
+				r.get("cvs_mapped") or 0,
+				stages_str,
+				r.get("interviews_scheduled_today") or 0,
+				r.get("joined") or 0,
+			])
+	elif tab == "details":
+		res = get_interview_details(from_date=from_date, to_date=to_date, search=search, limit=10000, offset=0)
+		data = res["data"]
+		headers = ["Job Opening", "Candidate", "Mapping Stage", "Interview Stage Main", "Interview Stage", "Interview Date", "Time"]
+		rows = [headers]
+		for r in data:
+			date_str = frappe.utils.data.formatdate(r["interview_date"]) if r.get("interview_date") else "-"
+			time_str = r.get("interview_time_range") or (f"{r.get('interview_from_time') or ''} - {r.get('interview_to_time') or ''}".strip(" -") or "-")
+			rows.append([
+				r.get("job_opening") or "",
+				r.get("candidate_display_name") or r.get("candidate_name") or "",
+				r.get("job_application_stage") or "",
+				r.get("interview_stage_main") or "",
+				r.get("interview_stage") or "",
+				date_str,
+				time_str,
+			])
+	else:
+		return
+	xlsx_file = make_xlsx(data=rows, sheet_name=tab.capitalize())
+	frappe.local.response.filename = f"{tab}_interview_dashboard.xlsx"
+	frappe.local.response.filecontent = xlsx_file.getvalue()
+	frappe.local.response.type = "download"

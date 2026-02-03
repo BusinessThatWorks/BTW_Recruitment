@@ -519,36 +519,18 @@ function render_pagination($container, state, callback) {
 		if (current_page < total_pages) callback('next');
 	});
 }
-// $(document).on("click", "#download-excel-btn", function() {
-//     // determine active tab
-//     const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
-//     let tab = "summary";
-//     if (activeTab === "#details-pane") tab = "details";
-
-//     // get filters
-//     let from_date = $("#interview-from-date").val() || null;
-//     let to_date = $("#interview-to-date").val() || null;
-//     let search = null;
-
-//     if (tab === "summary") search = $("#summary-search").val() || null;
-//     if (tab === "details") search = $("#details-search").val() || null;
-
-//     // call backend
-//     const args = {
-//         tab: tab,
-//         from_date: from_date,
-//         to_date: to_date,
-//         search: search
-//     };
-
-//     frappe.call({
-//         method: "btw_recruitment.btw_recruitment.api.interview_dashboard.download_interview_dashboard",
-//         args: args,
-//         freeze: true,
-//         freeze_message: "Preparing Excel...",
-//         callback: function() {
-//             // frappe local response will handle download
-//         }
-//     });
-// });
+$(document).on("click.interview", "#download-excel-btn", function () {
+	const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
+	const tab = activeTab === "#details-pane" ? "details" : "summary";
+	open_url_post(
+		"/api/method/btw_recruitment.btw_recruitment.api.interview_dashboard.download_interview_dashboard",
+		{
+			tab: tab,
+			from_date: interview_dashboard_filters.from_date || $("#interview-from-date").val() || null,
+			to_date: interview_dashboard_filters.to_date || $("#interview-to-date").val() || null,
+			search: tab === "summary" ? summary_table_filters.search : details_table_filters.search
+		},
+		true
+	);
+});
 
