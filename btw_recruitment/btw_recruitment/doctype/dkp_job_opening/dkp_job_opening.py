@@ -97,7 +97,16 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         "min_ctc": job_opening.min_ctc or "",
         "max_ctc": job_opening.max_ctc or "",
     }
-
+    # STRICT: If both must_have_skills and designation missing in Job Opening → show nothing
+    if not (criteria["must_have_skills"].strip() or (criteria["designation"] or "").strip()):
+        return {
+            "success": True,
+            "candidates": [],
+            "total_matched": 0,
+            "job_opening": job_opening_name,
+            "criteria": criteria,
+            "message": "No candidates: Opening must have either Must Have Skills or Designation"
+        }
     # Get all candidates (excluding blacklisted and already added)
     candidate_filters = {}
     or_filters = [
@@ -155,12 +164,32 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         #     else:
         #         category_scores.append(0.0)
         #         category_weights.append(1.0)
+        # if criteria["designation"]:
+        #     if candidate.current_designation:
+        #         if (
+        #             criteria["designation"].lower() in candidate.current_designation.lower()
+        #             or candidate.current_designation.lower() in criteria["designation"].lower()
+        #         ):
+        #             category_scores.append(1.0)
+        #             category_weights.append(1.0)
+        #             match_reasons.append("Designation match")
+        #         else:
+        #             category_scores.append(0.0)
+        #             category_weights.append(1.0)
+        #     else:
+        #         # candidate missing designation => penalty
+        #         category_scores.append(0.0)
+        #         category_weights.append(1.0)
+        #         match_reasons.append("Designation missing")
+        designation_matched = False
+
         if criteria["designation"]:
             if candidate.current_designation:
                 if (
                     criteria["designation"].lower() in candidate.current_designation.lower()
                     or candidate.current_designation.lower() in criteria["designation"].lower()
                 ):
+                    designation_matched = True
                     category_scores.append(1.0)
                     category_weights.append(1.0)
                     match_reasons.append("Designation match")
@@ -168,29 +197,13 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
                     category_scores.append(0.0)
                     category_weights.append(1.0)
             else:
-                # candidate missing designation => penalty
                 category_scores.append(0.0)
                 category_weights.append(1.0)
                 match_reasons.append("Designation missing")
 
 
-        # 2. Experience match (only when job has a meaningful range, else it dilutes the score)
-        min_exp = criteria["min_experience"]
-        max_exp = criteria["max_experience"]
-        experience_is_relevant = min_exp > 0 or max_exp < 99
-        if experience_is_relevant:
-            candidate_exp = candidate.total_experience_years or 0
-            if min_exp <= candidate_exp <= max_exp:
-                category_scores.append(1.0)
-                category_weights.append(1.0)
-                match_reasons.append("Experience within range")
-            elif candidate_exp >= min_exp:
-                category_scores.append(0.5)
-                category_weights.append(1.0)
-                match_reasons.append("Experience above minimum")
-            else:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
+
+        
 
         # 3. Skills match (PRIORITY)
         #    Matching is now based ONLY on:
@@ -218,6 +231,8 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
         matched_skill_names = [
             skill for skill in must_have_skills if skill and skill in candidate_skills
         ]
+        skills_matched = False
+
         must_have_matches = len(matched_skill_names)
 
         # If there are must-have skills defined on the opening, we will
@@ -228,6 +243,7 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             if must_have_matches == 0:
                 # No overlap with must-have skills → exclude this candidate
                 continue
+            skills_matched = True
 
             skill_score = min(1.0, must_have_matches / len(must_have_skills))
 
@@ -236,7 +252,27 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             category_weights.append(1.0)
 
             match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
+        # STRICT: Candidate must match either skills OR designation
+        if not (skills_matched or designation_matched):
+            continue
 
+        # 2. Experience match (only when job has a meaningful range, else it dilutes the score)
+        min_exp = criteria["min_experience"]
+        max_exp = criteria["max_experience"]
+        experience_is_relevant = min_exp > 0 or max_exp < 99
+        if experience_is_relevant:
+            candidate_exp = candidate.total_experience_years or 0
+            if min_exp <= candidate_exp <= max_exp:
+                category_scores.append(1.0)
+                category_weights.append(1.0)
+                match_reasons.append("Experience within range")
+            elif candidate_exp >= min_exp:
+                category_scores.append(0.5)
+                category_weights.append(1.0)
+                match_reasons.append("Experience above minimum")
+            else:
+                category_scores.append(0.0)
+                category_weights.append(1.0)
         # 4. Certifications match
         # 4. Certifications match
         if criteria["required_certifications"]:
