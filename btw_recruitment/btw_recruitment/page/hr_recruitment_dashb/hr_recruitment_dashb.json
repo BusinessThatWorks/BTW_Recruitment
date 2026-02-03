@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 3,
- "modified": "2026-01-14 10:54:18.008009",
+ "modified": "2026-02-03 14:16:28.879674",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "hr-recruitment-dashb",
@@ -22,6 +22,9 @@
   },
   {
    "role": "DKP Recruiter"
+  },
+  {
+   "role": "DKP Recruiter - Exclusive"
   }
  ],
  "script": null,
