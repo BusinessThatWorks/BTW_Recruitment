@@ -18,7 +18,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-20 14:21:53.900575",
+ "modified": "2026-02-03 14:20:09.481824",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Previous_Openings_Days",
@@ -31,6 +31,29 @@
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "DKP Recruiter",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "DKP Recruiter - Exclusive",
+   "select": 1,
    "share": 1,
    "write": 1
   }
