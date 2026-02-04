@@ -3,7 +3,7 @@ frappe.ui.form.on("DKP_Job_Opening", {
         frm.set_query("assign_recruiter", function () {
             return {
                 filters: {
-                    role_profile_name: "DKP Recruiter"
+                    role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]]
                 }
             };
         });
