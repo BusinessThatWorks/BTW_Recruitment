@@ -11,6 +11,7 @@
   "column_break_pjqm",
   "joining_date",
   "stage",
+  "candidate_left_date",
   "section_break_biqn",
   "interview_child_table"
  ],
@@ -58,12 +59,18 @@
    "fieldname": "added_by",
    "fieldtype": "Data",
    "label": "Recruiter"
+  },
+  {
+   "depends_on": "eval:doc.stage == \"Joined And Left\";",
+   "fieldname": "candidate_left_date",
+   "fieldtype": "Date",
+   "label": "Candidate Left Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-04 17:02:05.656731",
+ "modified": "2026-02-04 18:04:15.748310",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
