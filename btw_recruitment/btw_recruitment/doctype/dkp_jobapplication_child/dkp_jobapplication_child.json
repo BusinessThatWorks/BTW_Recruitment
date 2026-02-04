@@ -36,7 +36,6 @@
    "label": "Recruiter Remarks"
   },
   {
-   "depends_on": "eval:doc.stage == \"Shortlisted For Interview\";",
    "fieldname": "create_interview",
    "fieldtype": "Button",
    "label": "Create Interview"
@@ -78,7 +77,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-04 17:00:14.256982",
+ "modified": "2026-02-04 17:51:08.506473",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
