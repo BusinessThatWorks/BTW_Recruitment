@@ -48,7 +48,7 @@
    "fieldname": "stage",
    "fieldtype": "Select",
    "label": "Interview Stages",
-   "options": "\nSelected For Offer\nRejected By Client\nOffered\nOffer Accepted\nOffer Declined\nJoined\nOffer Drop\nJoined And Left"
+   "options": "\nInterview No Show\nSelected For Offer\nRejected By Client\nOffered\nOffer Accepted\nOffer Declined\nJoined\nJoined And Left"
   },
   {
    "fieldname": "section_break_biqn",
@@ -63,7 +63,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-02 15:10:06.841398",
+ "modified": "2026-02-04 17:02:05.656731",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
