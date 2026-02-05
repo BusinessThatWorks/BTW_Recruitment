@@ -163,9 +163,7 @@ class DKP_Interview(Document):
 
         job = frappe.get_doc("DKP_Job_Opening", self.job_opening)
 
-        # -------------------------
-        # ✅ FORCE REOPEN CASE
-        # -------------------------
+        # FORCE REOPEN CASE
         if self.stage == "Joined And Left":
             if job.status != "Open":
                 frappe.db.set_value(
@@ -176,9 +174,7 @@ class DKP_Interview(Document):
                 )
             return   # stop here — no counting needed
 
-        # -------------------------
-        # ✅ EXISTING JOINED LOGIC
-        # -------------------------
+        # JOINED LOGIC
         if not job.number_of_positions:
             return
 
