@@ -283,3 +283,7 @@ app_include_head = """
 app_include_js = [
     "/assets/btw_recruitment/pwa.js"
 ]
+
+# fixtures = ["Custom Field"]
+
+fixtures = [{"doctype": "Custom Field", "filters": {"module": "BTW Recruitment"}}]
