@@ -1,0 +1,10 @@
+PyPDF2
+python-docx
+pillow
+pytesseract
+anthropic
+mammoth
+easyocr
+torch
+torchvision
+torchaudio
