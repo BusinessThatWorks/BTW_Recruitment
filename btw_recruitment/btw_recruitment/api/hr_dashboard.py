@@ -321,13 +321,13 @@ def get_client_type_distribution(from_date=None, to_date=None):
     filters = []
     if from_date and to_date:
         filters.append(["creation", "between", [get_datetime(from_date), get_datetime(add_days(to_date, 1))]])
-    # Fetch counts grouped by client_type
+    # Fetch counts grouped by client_type from core Customer (custom_client_type)
     data = frappe.db.sql("""
-        SELECT client_type, COUNT(name) as count
-        FROM `tabDKP_Company`
-        WHERE client_type IS NOT NULL
+        SELECT custom_client_type AS client_type, COUNT(name) as count
+        FROM `tabCustomer`
+        WHERE custom_client_type IS NOT NULL
         {date_filter}
-        GROUP BY client_type
+        GROUP BY custom_client_type
     """.format(
         date_filter="AND creation BETWEEN %s AND %s" if from_date and to_date else ""
     ),
@@ -348,10 +348,10 @@ def get_client_type_distribution(from_date=None, to_date=None):
 def get_distinct_industries():
     rows = frappe.db.sql("""
         SELECT DISTINCT
-            TRIM(LOWER(industry)) AS industry
-        FROM `tabDKP_Company`
-        WHERE industry IS NOT NULL
-          AND industry != ''
+            TRIM(LOWER(custom_industry)) AS industry
+        FROM `tabCustomer`
+        WHERE custom_industry IS NOT NULL
+          AND custom_industry != ''
         ORDER BY industry
     """, as_dict=True)
     return [r["industry"].title() for r in rows]
@@ -363,31 +363,35 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
     client_status=None,):
     """
     Returns paginated company table data with summary columns.
-    Filters respect DKP_Company.creation.
+    Now based on core Customer; filters respect Customer.creation.
     """
     limit = int(limit)
     offset = int(offset)
     filters = []
     if from_date and to_date:
-        filters.append(["creation", "between", [get_datetime(from_date), get_datetime(add_days(to_date, 1))]])
-    # Apply additional filters
+        filters.append([
+            "creation",
+            "between",
+            [get_datetime(from_date), get_datetime(add_days(to_date, 1))]
+        ])
+    # Apply additional filters (map to Customer custom fields)
     if client_type:
-        filters.append(["client_type", "=", client_type])
+        filters.append(["custom_client_type", "=", client_type])
     if industry:
-        filters.append(["industry", "=", industry])
+        filters.append(["custom_industry", "=", industry])
     if client_status:
-        filters.append(["client_status", "=", client_status])
-    # Fetch companies
+        filters.append(["custom_client_status", "=", client_status])
+    # Fetch companies (now from Customer)
     companies = frappe.get_all(
-        "DKP_Company",
+        "Customer",
         fields=[
             "name",
-            "company_name",
-            "client_type",
-            "industry",
-            "client_status",
-            "no_poach_flag",
-            "replacement_policy_days"
+            "customer_name",
+            "custom_client_type",
+            "custom_industry",
+            "custom_client_status",
+            "custom_no_poach_flag",
+            "custom_replacement_policy_",
         ],
         filters=filters,
         limit_start=offset,
@@ -395,31 +399,40 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
         order_by="creation desc"
     )
     company_names = [c.name for c in companies]
-    # Fetch Open Jobs count per company
+    # Fetch Open Jobs count per company (company field on DKP_Job_Opening
+    # should now point to Customer)
     job_counts = {}
     if company_names:
-        job_data = frappe.db.sql("""
+        job_data = frappe.db.sql(
+            """
             SELECT company, COUNT(name) as count
             FROM `tabDKP_Job_Opening`
             WHERE status='Open' AND company IN %(companies)s
             GROUP BY company
-        """, {"companies": tuple(company_names)}, as_dict=1)
+            """,
+            {"companies": tuple(company_names)},
+            as_dict=1,
+        )
         job_counts = {d["company"]: d["count"] for d in job_data}
     # Build final table data
     result = []
     for c in companies:
-        result.append({
-            "company_name": c.name,
-            "client_type": c.client_type,
-            "industry": c.industry,
-            "client_status": c.client_status,
-            "open_jobs": job_counts.get(c.name, 0),
-            # "active_applications": application_counts.get(c.name, 0),
-            "no_poach": c.no_poach_flag or None,
-            "replacement_days": c.replacement_policy_days
-        })
+        result.append(
+            {
+                # Expose both name (docname) and a human label for UI
+                "name": c.name,
+                "company_name": c.customer_name or c.name,
+                "client_type": c.custom_client_type,
+                "industry": c.custom_industry,
+                "client_status": c.custom_client_status,
+                "open_jobs": job_counts.get(c.name, 0),
+                "no_poach": getattr(c, "custom_no_poach_flag", None) or None,
+                "replacement_days": getattr(c, "custom_replacement_policy_", None),
+            }
+        )
+
     # Total count for pagination
-    total = frappe.db.count("DKP_Company", filters)
+    total = frappe.db.count("Customer", filters)
     return {"total": total, "data": result}
 # # candidate table tab structured queries and functions
 # import frappe
@@ -852,51 +865,137 @@ def get_jobs_table(
 #             )
 #     return int(score)
 import frappe
+
+# Sortable fields for the company list used in dashboards.
+# NOTE:
+# - The UI still sends "company_name" as the sort key.
+# - Internally we map this to "customer_name" on the core Customer doctype.
 COMPANY_SORT_FIELDS = {
-    "company_name", "client_type", "industry", "city", "state",
-    "billing_mail", "billing_number", "client_status", "standard_fee_type",
-    "replacement_policy_days", "creation"
+    # External / API field names coming from JS
+    "company_name",
+    "customer_name",
+    "client_type",
+    "industry",
+    "city",
+    "state",
+    "billing_mail",
+    "billing_number",
+    "client_status",
+    "standard_fee_type",
+    "replacement_policy_days",
+    "creation",
 }
+
+# Mapping from external API field names to underlying Customer fieldnames
+COMPANY_FIELD_MAP = {
+    "company_name": "customer_name",
+    "customer_name": "customer_name",
+    "client_type": "custom_client_type",
+    "industry": "custom_industry",
+    "city": "custom_city",
+    "state": "custom_state",
+    "billing_mail": "custom_billing_email",
+    "billing_number": "custom_billing_phone",
+    "client_status": "custom_client_status",
+    "standard_fee_type": "custom_standard_fee_type",
+    "replacement_policy_days": "custom_replacement_policy_",
+}
+
+
 @frappe.whitelist()
-def get_companies(from_date=None, to_date=None, company_name=None, client_type=None,
-                  industry=None, state=None, city=None, client_status=None,
-                  limit_start=0, limit_page_length=50, sort_by=None, sort_order=None):
+def get_companies(
+    from_date=None,
+    to_date=None,
+    company_name=None,
+    client_type=None,
+    industry=None,
+    state=None,
+    city=None,
+    client_status=None,
+    limit_start=0,
+    limit_page_length=50,
+    sort_by=None,
+    sort_order=None,
+):
+    """
+    Company listing API used by HR dashboards.
+    Now reads from the core Customer doctype instead of DKP_Company.
+
+    Assumptions:
+    - Customer has custom fields: client_type, industry, state, city,
+      client_status, billing_address, billing_mail, billing_number,
+      replacement_policy_days, standard_fee_type.
+    - The former "company_name" is now stored in Customer.customer_name.
+    """
     filters = {}
     order_by = "creation desc"
+
     if sort_by and sort_by in COMPANY_SORT_FIELDS and sort_order in ("asc", "desc"):
-        order_by = f"{sort_by} {sort_order}"
-    # ---- Text Filters ----
+        db_sort_by = COMPANY_FIELD_MAP.get(sort_by, sort_by)
+        order_by = f"{db_sort_by} {sort_order}"
+
+    # ---- Text / dropdown filters ----
     if company_name:
-        filters["company_name"] = ["like", f"%{company_name}%"]
+        # Search against core Customer.customer_name
+        filters["customer_name"] = ["like", f"%{company_name}%"]
     if client_type:
-        filters["client_type"] = client_type
+        filters[COMPANY_FIELD_MAP["client_type"]] = client_type
     if industry:
-        filters["industry"] = ["like", f"%{industry}%"]
+        filters[COMPANY_FIELD_MAP["industry"]] = ["like", f"%{industry}%"]
     if state:
-        filters["state"] = ["like", f"%{state}%"]
+        filters[COMPANY_FIELD_MAP["state"]] = ["like", f"%{state}%"]
     if city:
-        filters["city"] = ["like", f"%{city}%"]
+        filters[COMPANY_FIELD_MAP["city"]] = ["like", f"%{city}%"]
     if client_status:
-        filters["client_status"] = client_status
-    # ---- Date Filter: (global filter) ----
+        filters[COMPANY_FIELD_MAP["client_status"]] = client_status
+
+    # ---- Date filter (global) ----
     if from_date and to_date:
-        filters["creation"] = ["between", [from_date, to_date]]  # can switch to "modified"
-    # ---- Fetch Total Rows for Pagination ----
-    total = frappe.db.count("DKP_Company", filters=filters)
-    # ---- Fetch Company Records ----
+        filters["creation"] = ["between", [from_date, to_date]]
+
+    # ---- Fetch total rows for pagination ----
+    total = frappe.db.count("Customer", filters=filters)
+
+    # ---- Fetch Customer records ----
     data = frappe.db.get_list(
-        "DKP_Company",
+        "Customer",
         filters=filters,
         fields=[
-            "name", "company_name", "client_type", "industry",
-            "state", "city", "billing_address", "billing_mail",
-            "billing_number", "client_status", "replacement_policy_days",
-            "standard_fee_type", "creation"
+            "name",
+            "customer_name",
+            "custom_client_type",
+            "custom_industry",
+            "custom_state",
+            "custom_city",
+            "custom_billing_address",
+            "custom_billing_email",
+            "custom_billing_phone",
+            "custom_client_status",
+            "custom_replacement_policy_",
+            "custom_standard_fee_type",
+            "creation",
         ],
         limit_start=limit_start,
         limit_page_length=limit_page_length,
-        order_by=order_by
+        order_by=order_by,
     )
+
+    # Backwards-compatibility for existing JS:
+    # - expose "company_name" as an alias of customer_name.
+    # - expose non-custom keys (client_type, industry, etc.) expected by JS.
+    for row in data:
+        row["company_name"] = row.get("customer_name") or row.get("name")
+        row["client_type"] = row.get("custom_client_type")
+        row["industry"] = row.get("custom_industry")
+        row["state"] = row.get("custom_state")
+        row["city"] = row.get("custom_city")
+        row["billing_address"] = row.get("custom_billing_address")
+        row["billing_mail"] = row.get("custom_billing_email")
+        row["billing_number"] = row.get("custom_billing_phone")
+        row["client_status"] = row.get("custom_client_status")
+        row["replacement_policy_days"] = row.get("custom_replacement_policy_")
+        row["standard_fee_type"] = row.get("custom_standard_fee_type")
+
     return {"data": data, "total": total}
 # @frappe.whitelist()
 # def get_companies(

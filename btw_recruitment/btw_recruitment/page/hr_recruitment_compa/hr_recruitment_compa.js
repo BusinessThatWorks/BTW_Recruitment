@@ -161,9 +161,9 @@ function load_company_kpis() {
 
 function render_company_kpi_cards(data) {
     const kpiLinks = {
-        "Total Companies": "/app/dkp_company",
-        "Active Clients": "/app/dkp_company?client_status=Active",
-        "Inactive Clients": "/app/dkp_company?client_status=Inactive",
+        "Total Companies": "/app/Customer",
+        "Active Clients": "/app/Customer?client_status=Active",
+        "Inactive Clients": "/app/Customer?client_status=Inactive",
         "Clients with Open Jobs": "/app/dkp_job_opening?status=Open",
     };
 
@@ -354,8 +354,8 @@ function render_company_table(data, total) {
         $(`
             <tr>
                 <td>
-                    <a href="/app/dkp_company/${d.company_name}">
-                        ${d.company_name || "-"}
+                    <a href="/app/Customer/${d.name}">
+                        ${d.company_name || d.name || "-"}
                     </a>
                 </td>
                 <td>${d.client_type || "-"}</td>

@@ -28,24 +28,24 @@ def execute(filters=None):
         {"label": "Value", "fieldname": "value", "fieldtype": "Int", "width": 100},
     ]
 
-    # ---------------- Companies base filter ----------------
+    # ---------------- Companies base filter (Customer with custom fields) ----------------
     company_filters = []
     if date_filter:
         company_filters.append(["creation", *date_filter])
 
-    # ---------------- KPI 1: Total Companies ----------------
-    total_companies = frappe.db.count("DKP_Company", company_filters)
+    # ---------------- KPI 1: Total Clients (Customer) ----------------
+    total_companies = frappe.db.count("Customer", company_filters)
 
-    # ---------------- KPI 2: Active Clients ----------------
+    # ---------------- KPI 2: Active Clients (uses custom_client_status) ----------------
     active_clients = frappe.db.count(
-        "DKP_Company",
-        company_filters + [["client_status", "=", "Active"]]
+        "Customer",
+        company_filters + [["custom_client_status", "=", "Active"]]
     )
 
     # ---------------- KPI 3: Inactive Clients ----------------
     inactive_clients = frappe.db.count(
-        "DKP_Company",
-        company_filters + [["client_status", "=", "Inactive"]]
+        "Customer",
+        company_filters + [["custom_client_status", "=", "Inactive"]]
     )
 
     companies_with_open_jobs = 0
@@ -98,7 +98,8 @@ def execute(filters=None):
     ]
 
     # ---------------- CHART: Industry-wise Client Count ----------------
-    industry_conditions = ["industry IS NOT NULL"]
+    # Industry is stored in custom_industry on Customer
+    industry_conditions = ["custom_industry IS NOT NULL"]
     values = {}
 
     if date_filter:
@@ -106,18 +107,15 @@ def execute(filters=None):
         values["from"] = date_filter[1][0]
         values["to"] = date_filter[1][1]
 
-    industry_data = frappe.db.sql(f"""
-        SELECT industry, COUNT(name)
-        FROM `tabDKP_Company`
+    industry_data = frappe.db.sql(
+        f"""
+        SELECT custom_industry, COUNT(name)
+        FROM `tabCustomer`
         WHERE {" AND ".join(industry_conditions)}
-        GROUP BY industry
-    """, values)
-    # industry_data = frappe.db.sql("""
-    #     SELECT industry, COUNT(name)
-    #     FROM `tabDKP_Company`
-    #     WHERE industry IS NOT NULL
-    #     GROUP BY industry
-    # """)
+        GROUP BY custom_industry
+        """,
+        values,
+    )
 
     industry_labels = [row[0] for row in industry_data]
     industry_values = [row[1] for row in industry_data]

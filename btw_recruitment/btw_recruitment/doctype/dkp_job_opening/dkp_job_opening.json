@@ -279,7 +279,7 @@
    "fieldname": "company_name",
    "fieldtype": "Link",
    "label": "Company Name",
-   "options": "DKP_Company",
+   "options": "Customer",
    "reqd": 1
   },
   {
@@ -308,7 +308,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-01-30 21:56:00.480618",
+ "modified": "2026-02-08 12:10:31.264018",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

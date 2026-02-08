@@ -1500,9 +1500,9 @@ function load_company_kpis() {
 }
 function render_company_kpi_cards(data) {
     const kpiLinks = {
-        "Total Clients": "/app/dkp_company",
-        "Active Clients": "/app/dkp_company?client_status=Active",
-        "Inactive Clients": "/app/dkp_company?client_status=Inactive",
+        "Total Clients": "/app/customer",
+        "Active Clients": "/app/customer?custom_client_status=Active",
+        "Inactive Clients": "/app/customer?custom_client_status=Inactive",
         "Clients with Open Jobs": "/app/dkp_job_opening?status=Open",
     };
 
@@ -1689,7 +1689,7 @@ function render_company_table(data, total) {
         data.forEach(d => {
             table.find("tbody").append(`
                 <tr>
-                    <td><a href="/app/dkp_company/${d.name}">${d.company_name}</a></td>
+                    <td><a href="/app/customer/${d.name}">${d.company_name || d.name}</a></td>
                     <td>${d.client_type || "-"}</td>
                     <td>${d.industry || "-"}</td>
                     <td>${d.city || "-"}, ${d.state || "-"}</td>
