@@ -405,16 +405,21 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
             candidate["match_reasons"] = match_reasons
             candidate["matched_skills"] = [s.strip().title() for s in matched_skill_names]
 
-            # Check no-poach status
-            no_poach_flag = frappe.db.get_value(
-                "DKP_Company",
-                candidate.current_company_master,
-                "no_poach_flag"
-            )
+            # Check no-poach status (Customer custom field)
+            company_row = None
+            if candidate.current_company_master:
+                company_row = frappe.db.get_value(
+                    "Customer",
+                    candidate.current_company_master,
+                    ["custom_no_poach_flag", "customer_name"],
+                    as_dict=True,
+                )
+            no_poach_flag = (company_row or {}).get("custom_no_poach_flag")
+            customer_label = (company_row or {}).get("customer_name") or candidate.current_company_master or ""
 
             if no_poach_flag == "Yes":
                 candidate["is_no_poach"] = True
-                candidate["no_poach_company"] = candidate.current_company_master
+                candidate["no_poach_company"] = customer_label
             else:
                 candidate["is_no_poach"] = False
                 candidate["no_poach_company"] = ""

@@ -1054,17 +1054,18 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
                 return;
             }
 
-            // Check if candidate's current company master has no-poach flag - allow but warn
+            // Check if candidate's current company (Customer) has no-poach - allow but warn
             if (candidate.current_company_master) {
-                frappe.db.get_value("DKP_Company", candidate.current_company_master, [
-                    "no_poach_flag",
-                    "company_name"
+                frappe.db.get_value("Customer", candidate.current_company_master, [
+                    "custom_no_poach_flag",
+                    "customer_name"
                 ]).then((company_r) => {
-                    if (company_r.message && company_r.message.no_poach_flag === "Yes") {
+                    if (company_r.message && company_r.message.custom_no_poach_flag === "Yes") {
+                        const company_label = company_r.message.customer_name || candidate.current_company_master;
                         frappe.msgprint({
                             title: __("No-Poach Warning"),
                             message: __(
-                                `Candidate <b>${row.candidate_name}</b> is currently employed at <b>${company_r.message.company_name || candidate.current_company_master}</b> which has a No-Poach policy.`
+                                `Candidate <b>${row.candidate_name}</b> is currently employed at <b>${company_label}</b> which has a No-Poach policy.`
                             ),
                             indicator: "orange"
                         });
