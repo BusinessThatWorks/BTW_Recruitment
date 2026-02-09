@@ -8,8 +8,6 @@ requires-python = ">=3.10"
 
 readme = "README.md"
 dynamic = ["version"]
-[tool.bench.frappe-dependencies]
-frappe = ">=15.0.0,<16.0.0"
 
 dependencies = [
     "PyPDF2",
@@ -23,6 +21,10 @@ dependencies = [
     "torchvision",
     "torchaudio"
 ]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<16.0.0"
+
 [tool.bench.pip]
 extra-index-url = "https://download.pytorch.org/whl/cpu"
 [build-system]
