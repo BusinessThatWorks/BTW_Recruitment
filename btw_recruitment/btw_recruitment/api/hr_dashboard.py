@@ -434,7 +434,6 @@ def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_ty
     # Total count for pagination
     total = frappe.db.count("Customer", filters)
     return {"total": total, "data": result}
-# # candidate table tab structured queries and functions
 # import frappe
 # from frappe.utils import get_datetime, add_days
 # @frappe.whitelist()
