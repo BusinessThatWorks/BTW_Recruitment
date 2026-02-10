@@ -9,8 +9,8 @@
   "job_opening",
   "added_by",
   "column_break_pjqm",
-  "joining_date",
   "stage",
+  "joining_date",
   "candidate_left_date",
   "section_break_biqn",
   "interview_child_table"
@@ -37,6 +37,7 @@
    "options": "DKP_Job_Opening"
   },
   {
+   "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
    "fieldname": "joining_date",
    "fieldtype": "Date",
    "label": "Joining Date"
@@ -70,7 +71,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-04 18:04:15.748310",
+ "modified": "2026-02-10 15:31:23.578686",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
