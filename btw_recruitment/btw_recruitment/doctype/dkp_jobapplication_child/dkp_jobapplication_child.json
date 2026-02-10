@@ -14,7 +14,8 @@
   "interview",
   "eq_test",
   "disc_test",
-  "enneagram_test"
+  "enneagram_test",
+  "added_by"
  ],
  "fields": [
   {
@@ -71,14 +72,21 @@
    "fieldtype": "Data",
    "label": "Interview Stages",
    "read_only": 1
+  },
+  {
+   "fieldname": "added_by",
+   "fieldtype": "Link",
+   "label": "Added By",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-04 17:51:08.506473",
- "modified_by": "Administrator",
+ "modified": "2026-02-10 17:42:03.506132",
+ "modified_by": "sarimk360@gmail.com",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
  "owner": "Administrator",

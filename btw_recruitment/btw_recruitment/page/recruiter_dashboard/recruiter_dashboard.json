@@ -1,0 +1,38 @@
+{
+ "content": null,
+ "creation": "2026-02-10 15:49:05.927302",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-02-10 15:49:05.927302",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "recruiter-dashboard",
+ "owner": "Administrator",
+ "page_name": "recruiter-dashboard",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "DKP Recruiter"
+  },
+  {
+   "role": "DKP Recruiter - Exclusive"
+  },
+  {
+   "role": "Admin"
+  },
+  {
+   "role": "Director"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 1,
+ "title": "Recruiter Dashboard"
+}

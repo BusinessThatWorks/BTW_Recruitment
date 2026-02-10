@@ -12,6 +12,7 @@
   "stage",
   "joining_date",
   "candidate_left_date",
+  "offered_amount",
   "section_break_biqn",
   "interview_child_table"
  ],
@@ -66,12 +67,18 @@
    "fieldname": "candidate_left_date",
    "fieldtype": "Date",
    "label": "Candidate Left Date"
+  },
+  {
+   "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
+   "fieldname": "offered_amount",
+   "fieldtype": "Int",
+   "label": "Offered Amount"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-10 15:31:23.578686",
+ "modified": "2026-02-10 15:37:42.627771",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

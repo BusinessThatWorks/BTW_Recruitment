@@ -48,6 +48,11 @@ class DKP_Job_Opening(Document):
             # cc=cc_emails,
         )
 
+    def before_save(self):
+        for row in self.candidates_table:
+            if row.is_new() and not row.added_by:
+                row.added_by = frappe.session.user
+
 
 
 @frappe.whitelist()
