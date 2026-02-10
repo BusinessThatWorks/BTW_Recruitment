@@ -212,6 +212,10 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
     const $kpi_positions = $(page.body).find(".kpi-positions");
     const $kpi_candidates = $(page.body).find(".kpi-candidates");
     const $kpi_joined = $(page.body).find(".kpi-joined");
+    const $kpi_conversion = $(page.body).find(".kpi-conversion");
+    const $kpi_join_rate = $(page.body).find(".kpi-join-rate");
+
+
 
 
 
@@ -257,9 +261,17 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
                 $kpi_positions.text(k.total_positions || 0);
                 $kpi_candidates.text(k.total_candidates || 0);
                 $kpi_joined.text(k.total_joined || 0);
+                $kpi_conversion.text((k.avg_conversion || 0) + "%");
+                $kpi_join_rate.text((k.candidate_join_rate || 0) + "%");
+
+
             }
         });
     }
+    setTimeout(() => {
+        $('[data-toggle="tooltip"]').tooltip();
+    }, 300);
+
 
 
     // =============================

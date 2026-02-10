@@ -1,3 +1,4 @@
+from scipy import stats
 import frappe
 from frappe.utils import cint
 
@@ -66,13 +67,30 @@ def get_recruiter_kpis(recruiter: str):
         },
         as_dict=True,
     )[0]
+    
+    total_openings = len(openings)
+    total_joined = stats.get("total_joined") or 0
+
+    avg_conversion = 0
+    if total_openings:
+        avg_conversion = round((total_joined / total_openings) * 100, 2)
+
+    total_candidates = stats.get("total_candidates") or 0
+    total_joined = stats.get("total_joined") or 0
+
+    candidate_join_rate = 0
+    if total_candidates:
+        candidate_join_rate = round((total_joined / total_candidates) * 100, 2)
 
     return {
-        "total_openings": len(openings),
+        "total_openings": total_openings,
         "total_positions": total_positions,
         "total_candidates": stats.get("total_candidates") or 0,
-        "total_joined": stats.get("total_joined") or 0,
+        "total_joined": total_joined,
+        "avg_conversion": avg_conversion,
+        "candidate_join_rate": candidate_join_rate,
     }
+
 
 
 @frappe.whitelist()

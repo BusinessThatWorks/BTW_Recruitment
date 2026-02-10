@@ -1,31 +1,52 @@
 <div class="recruiter-dashboard">
     <div class="recruiter-dashboard-body">
         <div class="row mb-3 recruiter-kpis">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="kpi-card">
                     <div class="kpi-label">Openings</div>
                     <div class="kpi-value kpi-openings">0</div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="kpi-card">
                     <div class="kpi-label">Positions</div>
                     <div class="kpi-value kpi-positions">0</div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="kpi-card">
                     <div class="kpi-label">Candidates</div>
                     <div class="kpi-value kpi-candidates">0</div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="kpi-card">
                     <div class="kpi-label">Joined</div>
                     <div class="kpi-value kpi-joined">0</div>
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="kpi-card">
+                    <div class="kpi-label"
+                        data-toggle="tooltip"
+                        title="Joined / Openings * 100">
+                        Avg Conversion
+                    </div>
+                    <div class="kpi-value kpi-conversion">0%</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="kpi-card">
+                    <div class="kpi-label"
+                        data-toggle="tooltip"
+                        title="Joined / Mapped Candidates * 100">
+                        Join Rate
+                    </div>
+                    <div class="kpi-value kpi-join-rate">0%</div>
                 </div>
             </div>
         </div>
@@ -61,21 +82,30 @@
 
 <style>
 .kpi-card {
-    background: #fff;
-    border: 1px solid #e3e6ea;
-    border-radius: 8px;
-    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px;
     text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
 }
 
 .kpi-label {
-    font-size: 12px;
+    font-size: 13px;
     color: #6c757d;
     margin-bottom: 6px;
+    letter-spacing: .5px;
 }
 
 .kpi-value {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 700;
+    color: #2c3e50;
 }
+
 </style>
