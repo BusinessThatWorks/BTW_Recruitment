@@ -1,10 +1,37 @@
 <div class="recruiter-dashboard">
     <div class="recruiter-dashboard-body">
+        <!-- ✅ UPDATED FILTER ROW - Removed Apply Button -->
         <div class="filter-row mb-3">
             <div class="filter-group">
-                <div class="filter-input-wrap">
+                
+                <!-- Recruiter Filter -->
+                <div class="filter-item">
+                    <label class="filter-label">Filters</label>
                     <div class="recruiter-control-slot"></div>
-                    <button class="btn btn-sm btn-secondary recruiter-clear mt-1">Clear</button>
+                </div>
+                
+                <!-- From Date -->
+                <div class="filter-item">
+                    <!-- <label class="filter-label">From Date</label> -->
+                    <div class="from-date-slot"></div>
+                </div>
+                
+                <!-- To Date -->
+                <div class="filter-item">
+                    <!-- <label class="filter-label">To Date</label> -->
+                    <div class="to-date-slot"></div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="filter-item">
+                    <!-- <label class="filter-label">Status</label> -->
+                    <div class="status-slot"></div>
+                </div>
+                
+                <!-- Only Clear Button -->
+                <div class="filter-item filter-btn-wrap">
+                    <label class="filter-label">&nbsp;</label>
+                    <button class="btn btn-sm btn-secondary recruiter-clear mb-2">Clear</button>
                 </div>
             </div>
         </div>
@@ -60,6 +87,35 @@
             </div>
         </div>
 
+        <!-- ✅ Recruitment Funnel Chart -->
+        <!-- ✅ TWO FUNNELS: Mapping & Interview -->
+<div class="row mb-4">
+    <!-- Left: Mapping Stages Funnel -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5 class="chart-title">Mapping Stages</h5>
+                <p class="chart-subtitle">Client submission & screening stages</p>
+            </div>
+            <div class="funnel-container" id="mapping-funnel">
+                <!-- Mapping funnel will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Interview Stages Funnel -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5 class="chart-title">Interview Stages</h5>
+                <p class="chart-subtitle">Interview to joining stages</p>
+            </div>
+            <div class="funnel-container" id="interview-funnel">
+                <!-- Interview funnel will be rendered here -->
+            </div>
+        </div>
+    </div>
+</div>
 
         <div class="recruiter-table-container">
             <table class="table table-bordered table-sm recruiter-table">
@@ -90,25 +146,77 @@
 </div>
 
 <style>
-    /* Make the recruiter input longer */
-.recruiter-control-slot .input-with-feedback {
-    min-width: 300px; /* adjust as needed */
-}
-
-/* Make clear button a bit wider */
-.recruiter-clear {
-    min-width: 80px; /* adjust as needed */
-}
-    .filter-group {
-    max-width: 420px;
-}
-
-.filter-input-wrap {
+/* ✅ Filter Group - Fixed Gap */
+.filter-group {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     display: flex;
-    gap: 8px;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px; /* Controls gap between all items */
 }
 
+.filter-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-size: 11px;
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Control widths */
+.recruiter-control-slot {
+    min-width: 200px;
+}
+
+.recruiter-control-slot .input-with-feedback,
+.recruiter-control-slot .link-field {
+    width: 100%;
+}
+
+.from-date-slot,
+.to-date-slot {
+    min-width: 130px;
+}
+
+.status-slot {
+    min-width: 120px;
+}
+
+/* Remove extra margins from Frappe controls */
+.filter-item .frappe-control {
+    margin-bottom: 0 !important;
+}
+
+.filter-item .form-group {
+    margin-bottom: 0 !important;
+}
+
+.filter-item input,
+.filter-item select {
+    height: 32px;
+    font-size: 13px;
+}
+
+/* Clear button alignment */
+.filter-btn-wrap {
+    padding-bottom: 1px;
+}
+
+.recruiter-clear {
+    height: 32px;
+    min-width: 70px;
+}
+
+/* ✅ KPI Cards */
 .kpi-card {
     background: #ffffff;
     border-radius: 12px;
@@ -136,4 +244,213 @@
     color: #2c3e50;
 }
 
+/* Table Container */
+.recruiter-table-container {
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* Status Badges */
+.badge-success { background: #d4edda; color: #155724; }
+.badge-info { background: #d1ecf1; color: #0c5460; }
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-danger { background: #f8d7da; color: #721c24; }
+
+/* ✅ Chart Card Styles */
+.chart-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+}
+
+.chart-header {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 15px;
+}
+
+.chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.chart-subtitle {
+    font-size: 13px;
+    color: #6c757d;
+    margin: 5px 0 0 0;
+}
+
+/* ✅ Funnel Container */
+.funnel-container {
+    min-height: 300px;
+    padding: 20px 0;
+}
+
+/* ✅ Funnel Stage Styles */
+.funnel-stage {
+    margin-bottom: 12px;
+    transition: transform 0.2s ease;
+}
+
+.funnel-stage:hover {
+    transform: translateX(5px);
+}
+
+.funnel-bar-wrapper {
+    position: relative;
+    height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.funnel-bar {
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    min-width: 200px;
+}
+
+.funnel-bar:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.funnel-stage-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.funnel-stage-value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.funnel-stage-percent {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-left: 8px;
+}
+/* Empty State */
+.funnel-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.funnel-empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+.funnel-empty-text {
+    font-size: 16px;
+    color: #6c757d;
+}
+/* ===== MAPPING STAGES COLORS (Lightened) ===== */
+
+/* Purple - Lightened */
+.funnel-bar.stage-mapped {
+    background: linear-gradient(135deg, #8b9ff5 0%, #9a7cc4 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
+/* Gray - Lightened */
+.funnel-bar.stage-no-response {
+    background: linear-gradient(135deg, #a8b0b8 0%, #7d868e 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(134, 143, 150, 0.25);
+}
+
+/* Pink - Lightened */
+.funnel-bar.stage-submitted {
+    background: linear-gradient(135deg, #f5b3fc 0%, #f88a9d 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(240, 147, 251, 0.25);
+}
+
+/* Red - Lightened */
+.funnel-bar.stage-rejected {
+    background: linear-gradient(135deg, #ff7a94 0%, #ff7e6b 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 65, 108, 0.25);
+}
+
+/* Blue - Lightened */
+.funnel-bar.stage-schedule {
+    background: linear-gradient(135deg, #7fc4fe 0%, #5cf0fe 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(79, 172, 254, 0.25);
+}
+
+/* ===== INTERVIEW STAGES COLORS (Lightened) ===== */
+
+/* Orange-Pink - Lightened */
+.funnel-bar.stage-no-show {
+    background: linear-gradient(135deg, #e36e91 0%, #e5c47a 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(213, 51, 105, 0.25);
+}
+
+/* Green-Cyan - Lightened */
+.funnel-bar.stage-selected {
+    background: linear-gradient(135deg, #74f0a4 0%, #6cede3 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(67, 233, 123, 0.25);
+}
+
+/* Pink-Yellow - Lightened */
+.funnel-bar.stage-offered {
+    background: linear-gradient(135deg, #fb9ab8 0%, #feea78 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(250, 112, 154, 0.25);
+}
+
+/* Light Purple - Already light, slight adjustment */
+.funnel-bar.stage-accepted {
+    background: linear-gradient(135deg, #baa8e0 0%, #fcd4f0 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(161, 140, 209, 0.25);
+}
+
+/* Hot Pink-Orange - Lightened */
+.funnel-bar.stage-declined {
+    background: linear-gradient(135deg, #f54d9e 0%, #ff8c42 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(238, 9, 121, 0.25);
+}
+
+/* Teal-Green - Lightened */
+.funnel-bar.stage-joined {
+    background: linear-gradient(135deg, #4dbfb5 0%, #6cf5a5 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(17, 153, 142, 0.25);
+}
+
+/* Orange - Lightened */
+.funnel-bar.stage-left {
+    background: linear-gradient(135deg, #fd7e4f 0%, #f9c95e 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(252, 74, 26, 0.25);
+}
+
+/* Red-Orange - Lightened */
+.funnel-bar.stage-dropped {
+    background: linear-gradient(135deg, #f06b7d 0%, #f7846f 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(235, 51, 73, 0.25);
+}
 </style>
