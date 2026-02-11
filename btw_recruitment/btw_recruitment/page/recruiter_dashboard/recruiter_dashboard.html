@@ -1,6 +1,15 @@
 <div class="recruiter-dashboard">
     <div class="recruiter-dashboard-body">
-        <div class="row mb-3 recruiter-kpis">
+        <div class="filter-row mb-3 mt-3">
+            <div class="filter-group">
+                <div class="filter-input-wrap">
+                    <div class="recruiter-control-slot"></div>
+                    <button class="btn btn-sm btn-secondary recruiter-clear">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3 recruiter-kpis mt-4">
             <div class="col-md-2">
                 <div class="kpi-card">
                     <div class="kpi-label">Openings</div>
@@ -81,6 +90,25 @@
 </div>
 
 <style>
+    /* Make the recruiter input longer */
+.recruiter-control-slot .input-with-feedback {
+    min-width: 300px; /* adjust as needed */
+}
+
+/* Make clear button a bit wider */
+.recruiter-clear {
+    min-width: 80px; /* adjust as needed */
+}
+    .filter-group {
+    max-width: 420px;
+}
+
+.filter-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .kpi-card {
     background: #ffffff;
     border-radius: 12px;
