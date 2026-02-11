@@ -33,26 +33,6 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
     const $kpi_conversion = $(page.body).find(".kpi-conversion");
     const $kpi_join_rate = $(page.body).find(".kpi-join-rate");
 
-
-
-
-
-    // =============================
-    // RECRUITER FILTER FIELD
-    // =============================
-    // const recruiter_field = page.add_field({
-    //     label: __("Recruiter"),
-    //     fieldname: "recruiter",
-    //     fieldtype: "Link",
-    //     options: "User",
-    //     reqd: 1,
-    //     change() {
-    //         current_recruiter = recruiter_field.get_value();
-    //         current_page = 1;
-    //         load_data();
-    //         load_kpis();
-    //     },
-    // });
     // =============================
     // RECRUITER LINK CONTROL (HTML BASED)
     // =============================
@@ -108,18 +88,6 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
         $kpi_join_rate.text("0%");
     });
 
-
-
-    // filter only recruiter role profiles
-    // recruiter_field.df.get_query = function () {
-    //     return {
-    //         filters: {
-    //             role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]],
-    //             enabled: 1,
-    //         },
-    //     };
-    // };
-
     function load_kpis() {
         if (!current_recruiter) return;
 
@@ -145,24 +113,6 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
     setTimeout(() => {
         $('[data-toggle="tooltip"]').tooltip();
     }, 300);
-
-
-
-    // =============================
-    // AUTO SELECT FIRST RECRUITER
-    // =============================
-    // frappe.call({
-    //     method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiters",
-    //     callback(r) {
-    //         const list = r.message || [];
-    //         if (list.length) {
-    //             recruiter_field.set_value(list[0].name);
-    //             load_kpis();
-    //         }
-            
-    //     },
-    // });
-
 
     // =============================
     // PAGINATION BUTTONS
