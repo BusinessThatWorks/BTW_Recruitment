@@ -54,59 +54,59 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
     //     },
     // });
     // =============================
-// RECRUITER LINK CONTROL (HTML BASED)
-// =============================
-const recruiter_control = frappe.ui.form.make_control({
-    parent: $(page.body).find(".recruiter-control-slot"),
-    df: {
-        fieldtype: "Link",
-        options: "User",
-        placeholder: "Select Recruiter",
-        get_query: () => ({
-            filters: {
-                role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]],
-                enabled: 1,
-            },
-        }),
-        change: function () {
-            current_recruiter = recruiter_control.get_value();
-            current_page = 1;
+    // RECRUITER LINK CONTROL (HTML BASED)
+    // =============================
+    const recruiter_control = frappe.ui.form.make_control({
+        parent: $(page.body).find(".recruiter-control-slot"),
+        df: {
+            fieldtype: "Link",
+            options: "User",
+            placeholder: "Select Recruiter",
+            get_query: () => ({
+                filters: {
+                    role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]],
+                    enabled: 1,
+                },
+            }),
+            change: function () {
+                current_recruiter = recruiter_control.get_value();
+                current_page = 1;
 
-            if (!current_recruiter) {
-                render_rows([]);
-                update_pagination(0);
-                return;
+                if (!current_recruiter) {
+                    render_rows([]);
+                    update_pagination(0);
+                    return;
+                }
+
+                load_data();
+                load_kpis();
             }
+        },
+        render_input: true
+    });
+    $(page.body).find(".recruiter-clear").on("click", () => {
+        // clear Frappe Link control
+        recruiter_control.set_value("");           // internal value
+        recruiter_control.input.value = "";       // visible input box
+        recruiter_control.df.change && recruiter_control.df.change(); // manually trigger change
 
-            load_data();
-            load_kpis();
-        }
-    },
-    render_input: true
-});
-$(page.body).find(".recruiter-clear").on("click", () => {
-    // clear Frappe Link control
-    recruiter_control.set_value("");           // internal value
-    recruiter_control.input.value = "";       // visible input box
-    recruiter_control.df.change && recruiter_control.df.change(); // manually trigger change
+        // reset state variables
+        current_recruiter = null;
+        current_page = 1;
+        total = 0;
 
-    // reset state variables
-    current_recruiter = null;
-    current_page = 1;
-    total = 0;
+        // reset table
+        render_rows([]);
+        update_pagination(0);
 
-    // reset table
-    render_rows([]);
-    update_pagination(0);
-
-    // reset KPIs
-    $kpi_openings.text(0);
-    $kpi_positions.text(0);
-    $kpi_candidates.text(0);
-    $kpi_joined.text(0);
-    $kpi_conversion.text("0%");
-    $kpi_join_rate.text("0%");
-});
+        // reset KPIs
+        $kpi_openings.text(0);
+        $kpi_positions.text(0);
+        $kpi_candidates.text(0);
+        $kpi_joined.text(0);
+        $kpi_conversion.text("0%");
+        $kpi_join_rate.text("0%");
+    });
 
 
 
