@@ -971,7 +971,7 @@ def get_companies(
             "custom_billing_phone",
             "custom_client_status",
             "custom_replacement_policy_",
-            "custom_standard_fee_type",
+            "custom_standard_fee_value",
             "creation",
         ],
         limit_start=limit_start,
@@ -993,7 +993,7 @@ def get_companies(
         row["billing_number"] = row.get("custom_billing_phone")
         row["client_status"] = row.get("custom_client_status")
         row["replacement_policy_days"] = row.get("custom_replacement_policy_")
-        row["standard_fee_type"] = row.get("custom_standard_fee_type")
+        row["standard_fee_value"] = row.get("custom_standard_fee_value")
 
     return {"data": data, "total": total}
 # @frappe.whitelist()

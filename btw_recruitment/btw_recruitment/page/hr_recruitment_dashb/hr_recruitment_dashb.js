@@ -1669,7 +1669,7 @@ function render_company_table(data, total) {
                 <th>Billing Email</th>
                 <th>Billing Phone</th>
                 <th>Status</th>
-                <th>Fee Type</th>
+                <th>Fee Value</th>
                 <th>Replacement</th>
             </tr>
         </thead>
@@ -1696,7 +1696,7 @@ function render_company_table(data, total) {
                     <td>${d.billing_mail || "-"}</td>
                     <td>${d.billing_number || "-"}</td>
                     <td>${d.client_status || "-"}</td>
-                    <td>${d.standard_fee_type || "-"}</td>
+                    <td>${d.custom_standard_fee_value || "%"}%</td>
                     <td>${d.replacement_policy_days || "-"}</td>
                 </tr>
             `);
