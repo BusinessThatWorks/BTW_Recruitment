@@ -420,7 +420,7 @@ function init_recruiter_filter() {
                     fields: ["name", "full_name", "email"],
                     filters: {
                         enabled: 1,
-                        role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]],
+                        role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive", "Admin"]],
                         name: ["like", `%${txt}%`]
                     },
                     limit: 20
