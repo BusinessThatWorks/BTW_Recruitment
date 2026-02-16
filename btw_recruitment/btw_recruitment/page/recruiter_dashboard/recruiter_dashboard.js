@@ -136,7 +136,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
         parent: $body.find(".status-slot"),
         df: {
             fieldtype: "Select",
-            options: "\nOpen\nOn Hold\nClosed – Hired\nClosed – Cancelled",
+            options: "\nOpen\nClosed – Hired",
             placeholder: "All Status",
             change: function() {
                 state.status = status_control.get_value() || null;

@@ -1,9 +1,15 @@
 frappe.ui.form.on("DKP_Job_Opening", {
     refresh(frm) {
-        frm.set_query("assign_recruiter", function () {
+        frm.set_query("assign_recruiter", "candidates_table", function (doc, cdt, cdn) {
+            // Get already assigned recruiters
+            let assigned = (frm.doc.candidates_table || [])
+                .map(row => row.assign_recruiter)
+                .filter(r => r);
+
             return {
                 filters: {
-                    role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]]
+                    role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]],
+                    name: ["not in", assigned]
                 }
             };
         });

@@ -10,8 +10,9 @@ def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = Non
         return {}
 
     # Build conditions for job openings
-    jo_conditions = ""
+    jo_conditions = " AND jo.status IN ('Open', 'Closed – Hired')"
     jo_params = {"recruiter": recruiter}
+
 
     if status:
         jo_conditions += " AND jo.status = %(status)s"
@@ -131,7 +132,7 @@ def get_recruiter_openings(
     offset = cint(offset)
 
     # Build WHERE conditions
-    conditions = "WHERE r.recruiter_name = %(recruiter)s"
+    conditions = "WHERE r.recruiter_name = %(recruiter)s AND jo.status IN ('Open', 'Closed – Hired')" 
     params = {"recruiter": recruiter}
 
     if status:
@@ -274,7 +275,7 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         }
 
     # Build conditions for job openings
-    jo_conditions = ""
+    jo_conditions = " AND jo.status IN ('Open', 'Closed – Hired')"
     jo_params = {"recruiter": recruiter}
 
     if status:
