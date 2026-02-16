@@ -94,7 +94,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
             placeholder: "Select Recruiter",
             get_query: () => ({
                 filters: {
-                    role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive"]],
+                    role_profile_name: ["in", ["DKP Recruiter", "DKP Recruiter - Exclusive", "Admin"]],
                     enabled: 1,
                 },
             }),

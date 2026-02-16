@@ -257,7 +257,7 @@ def get_recruiters():
         SELECT name, full_name
         FROM `tabUser`
         WHERE enabled = 1
-          AND role_profile_name IN ('DKP Recruiter', 'DKP Recruiter - Exclusive')
+          AND role_profile_name IN ('DKP Recruiter', 'DKP Recruiter - Exclusive', 'Admin')
         ORDER BY full_name
         """,
         as_dict=True,
@@ -392,18 +392,6 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         "client_rejected": mapping_map.get("Client Screening Rejected", 0),
         "schedule_interview": mapping_map.get("Schedule Interview", 0)
     }
-
-    # ===== INTERVIEW STAGES =====
-    # interview_stages = {
-    #     "interview_no_show": interview_map.get("Interview No Show", 0),
-    #     "selected_for_offer": interview_map.get("Selected For Offer", 0),
-    #     "rejected_by_client": interview_map.get("Rejected By Client", 0),
-    #     "offered": interview_map.get("Offered", 0),
-    #     "offer_accepted": interview_map.get("Offer Accepted", 0),
-    #     "offer_declined": interview_map.get("Offer Declined", 0),
-    #     "joined": interview_map.get("Joined", 0),
-    #     "joined_and_left": interview_map.get("Joined And Left", 0)
-    # }
     # ===== INTERVIEW STAGES =====
     interview_stages = {
         "interview_no_show": interview_map.get("Interview No Show", 0),
