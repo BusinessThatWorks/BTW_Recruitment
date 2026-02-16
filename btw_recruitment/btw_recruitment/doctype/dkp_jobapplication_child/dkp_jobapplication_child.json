@@ -77,15 +77,14 @@
    "fieldname": "added_by",
    "fieldtype": "Link",
    "label": "Added By",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-10 17:42:03.506132",
+ "modified": "2026-02-16 12:51:08.882803",
  "modified_by": "sarimk360@gmail.com",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
