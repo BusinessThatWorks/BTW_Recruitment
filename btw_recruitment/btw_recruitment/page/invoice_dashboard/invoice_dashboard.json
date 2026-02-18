@@ -1,0 +1,35 @@
+{
+ "content": null,
+ "creation": "2026-02-18 11:02:27.707756",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-02-18 11:02:27.707756",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "invoice-dashboard",
+ "owner": "Administrator",
+ "page_name": "invoice-dashboard",
+ "roles": [
+  {
+   "role": "Admin"
+  },
+  {
+   "role": "DKP Recruiter"
+  },
+  {
+   "role": "DKP Recruiter - Exclusive"
+  },
+  {
+   "role": "Director"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 1,
+ "title": "Invoice Dashboard"
+}
