@@ -13,6 +13,8 @@
   "joining_date",
   "candidate_left_date",
   "offered_amount",
+  "remarks_for_invoice",
+  "invoice_ref",
   "section_break_biqn",
   "interview_child_table"
  ],
@@ -73,12 +75,25 @@
    "fieldname": "offered_amount",
    "fieldtype": "Int",
    "label": "Offered Amount"
+  },
+  {
+   "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
+   "fieldname": "remarks_for_invoice",
+   "fieldtype": "Data",
+   "label": "Remarks for Invoice"
+  },
+  {
+   "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
+   "fieldname": "invoice_ref",
+   "fieldtype": "Link",
+   "label": "Invoice Ref",
+   "options": "DKP_Invoice"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-10 15:37:42.627771",
+ "modified": "2026-02-19 16:59:58.399351",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

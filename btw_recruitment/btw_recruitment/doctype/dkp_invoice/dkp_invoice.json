@@ -6,33 +6,129 @@
  "engine": "InnoDB",
  "field_order": [
   "company_name",
+  "job_opening",
+  "recipients_mail_id",
+  "recipients_number",
+  "designation",
   "candidate_name",
-  "opening_name"
+  "candidate_contact",
+  "hiring_location",
+  "joining_date",
+  "column_break_bjbu",
+  "interview_ref",
+  "status",
+  "billable_ctc",
+  "billing_value",
+  "billing_month",
+  "billing_status",
+  "recruiter",
+  "remarks_by_recruiter",
+  "accountant_remarks"
  ],
  "fields": [
   {
    "fieldname": "company_name",
-   "fieldtype": "Link",
-   "label": "Company Name",
-   "options": "DKP_Company"
+   "fieldtype": "Data",
+   "label": "Company Name"
+  },
+  {
+   "fieldname": "recipients_mail_id",
+   "fieldtype": "Data",
+   "label": "Recipient's Mail Id"
+  },
+  {
+   "fieldname": "recipients_number",
+   "fieldtype": "Data",
+   "label": "Recipient's Number"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation"
   },
   {
    "fieldname": "candidate_name",
-   "fieldtype": "Link",
-   "label": "Candidate Name",
-   "options": "DKP_Candidate"
+   "fieldtype": "Data",
+   "label": "Candidate Name"
   },
   {
-   "fieldname": "opening_name",
+   "fieldname": "candidate_contact",
+   "fieldtype": "Data",
+   "label": "Candidate Contact"
+  },
+  {
+   "fieldname": "hiring_location",
+   "fieldtype": "Data",
+   "label": "Hiring Location"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Status"
+  },
+  {
+   "fieldname": "joining_date",
+   "fieldtype": "Date",
+   "label": "Joining Date"
+  },
+  {
+   "fieldname": "billable_ctc",
+   "fieldtype": "Int",
+   "label": "Billable CTC"
+  },
+  {
+   "fieldname": "billing_value",
+   "fieldtype": "Currency",
+   "label": "Billing Value"
+  },
+  {
+   "fieldname": "billing_month",
+   "fieldtype": "Data",
+   "label": "Billing Month"
+  },
+  {
+   "fieldname": "billing_status",
+   "fieldtype": "Select",
+   "label": "Billing Status",
+   "options": "Yet to Bill\nBill Sent\nPayment Received"
+  },
+  {
+   "fieldname": "recruiter",
+   "fieldtype": "Data",
+   "label": "Recruiter"
+  },
+  {
+   "fieldname": "remarks_by_recruiter",
+   "fieldtype": "Data",
+   "label": "Remarks by Recruiter"
+  },
+  {
+   "fieldname": "accountant_remarks",
+   "fieldtype": "Data",
+   "label": "Accountant Remarks"
+  },
+  {
+   "fieldname": "job_opening",
    "fieldtype": "Link",
-   "label": "Opening Name",
+   "label": "Job Opening",
    "options": "DKP_Job_Opening"
+  },
+  {
+   "fieldname": "interview_ref",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Interview Ref",
+   "options": "DKP_Interview"
+  },
+  {
+   "fieldname": "column_break_bjbu",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-04 18:33:25.242177",
+ "modified": "2026-02-19 17:23:42.730062",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Invoice",

@@ -108,6 +108,8 @@ class DKP_Interview(Document):
 
     def on_update(self):
         self.sync_stage_to_opening()
+        self.create_invoice_on_joined() 
+        # self.update_existing_invoice()
 
     def sync_stage_to_opening(self):
         if not self.job_opening or not self.candidate_name:
@@ -196,5 +198,116 @@ class DKP_Interview(Document):
                     "status",
                     "Closed – Hired"
                 )
+    def create_invoice_on_joined(self):
+        # ✅ Only when stage = "Joined"
+        if self.stage != "Joined":
+            return
 
+        # ✅ Check if invoice already exists
+        existing_invoice = frappe.db.exists("DKP_Invoice", {"interview_ref": self.name})
+        
+        if existing_invoice:
+            # ✅ Invoice exists - UPDATE karo
+            self.update_existing_invoice(existing_invoice)
+            
+            # Link set karo agar missing hai
+            if not self.invoice_ref:
+                self.db_set("invoice_ref", existing_invoice)
+            return
+
+        # ✅ Validation for new invoice
+        if not self.joining_date or not self.offered_amount:
+            frappe.msgprint("⚠️ Joining Date aur Offered Amount fill karo Invoice ke liye!")
+            return
+
+        # Fetch Job Opening
+        job_opening = frappe.get_doc("DKP_Job_Opening", self.job_opening)
+
+        # Fetch Customer for fee
+        customer = frappe.get_doc("Customer", job_opening.company_name)
+        fee_percentage = customer.custom_standard_fee_value or 0
+
+        # Fetch Candidate
+        candidate = frappe.get_doc("DKP_Candidate", self.candidate_name)
+
+        # Calculate
+        billable_ctc = self.offered_amount or 0
+        billing_value = (billable_ctc * fee_percentage) / 100
+
+        # Billing month
+        billing_month = ""
+        if self.joining_date:
+            joining = self.joining_date
+            if isinstance(joining, str):
+                from datetime import datetime
+                joining = datetime.strptime(joining, "%Y-%m-%d")
+            billing_month = joining.strftime("%B %Y")
+
+        # ✅ Create Invoice
+        invoice = frappe.new_doc("DKP_Invoice")
+        invoice.interview_ref = self.name
+        invoice.job_opening = self.job_opening
+        invoice.candidate_name = self.candidate_name
+        invoice.status = self.stage
+        invoice.joining_date = self.joining_date
+        invoice.billable_ctc = str(billable_ctc)
+        invoice.recruiter = self.added_by
+        invoice.remarks_by_recruiter = self.remarks_for_invoice
+
+        # From Job Opening
+        invoice.company_name = job_opening.company_name
+        invoice.designation = job_opening.designation
+        invoice.hiring_location = job_opening.location
+
+        # From Candidate
+        invoice.candidate_contact = candidate.mobile_number
+
+        # Calculated
+        invoice.billing_value = str(billing_value)
+        invoice.billing_month = billing_month
+        invoice.billing_status = "Yet to Bill"
+
+        invoice.insert(ignore_permissions=True)
+
+        # ✅ Link back to Interview
+        self.db_set("invoice_ref", invoice.name)
+
+        frappe.msgprint(f"✅ Invoice Created: {invoice.name}")
+
+
+    def update_existing_invoice(self, invoice_name):
+        """Update existing invoice when interview is updated"""
+        
+        # Fetch Job Opening for recalculation
+        job_opening = frappe.get_doc("DKP_Job_Opening", self.job_opening)
+        
+        # Fetch Customer for fee
+        customer = frappe.get_doc("Customer", job_opening.company_name)
+        fee_percentage = customer.custom_standard_fee_value or 0
+        
+        # Recalculate billing
+        billable_ctc = self.offered_amount or 0
+        billing_value = (billable_ctc * fee_percentage) / 100
+        
+        # Billing month
+        billing_month = ""
+        if self.joining_date:
+            joining = self.joining_date
+            if isinstance(joining, str):
+                from datetime import datetime
+                joining = datetime.strptime(joining, "%Y-%m-%d")
+            billing_month = joining.strftime("%B %Y")
+        
+        # ✅ Update using get_doc + save (more reliable)
+        invoice = frappe.get_doc("DKP_Invoice", invoice_name)
+        invoice.status = self.stage
+        invoice.joining_date = self.joining_date
+        invoice.billable_ctc = str(billable_ctc)
+        invoice.billing_value = str(billing_value)
+        invoice.billing_month = billing_month
+        invoice.remarks_by_recruiter = self.remarks_for_invoice
+        invoice.recruiter = self.added_by
+        invoice.save(ignore_permissions=True)
+        
+        frappe.msgprint(f"✅ Invoice Updated: {invoice_name}")
 
