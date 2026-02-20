@@ -27,7 +27,7 @@
   "recruiter",
   "remarks_by_recruiter",
   "accountant_remarks",
-  "create_sales_order_btn"
+  "create_sales_invoice_btn"
  ],
  "fields": [
   {
@@ -135,11 +135,6 @@
    "label": "Recipient's Name"
   },
   {
-   "fieldname": "create_sales_order_btn",
-   "fieldtype": "Button",
-   "label": "Create Sales Order"
-  },
-  {
    "fieldname": "billing_fee",
    "fieldtype": "Percent",
    "label": "Billing Fee"
@@ -148,12 +143,17 @@
    "fieldname": "gstinuin",
    "fieldtype": "Data",
    "label": "GSTIN/UIN"
+  },
+  {
+   "fieldname": "create_sales_invoice_btn",
+   "fieldtype": "Button",
+   "label": "Create Sales Invoice"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-20 15:00:27.878449",
+ "modified": "2026-02-20 16:17:19.161814",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Joining_Tracker",
