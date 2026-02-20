@@ -27,17 +27,17 @@ frappe.ui.form.on('DKP_Joining_Tracker', {
             return;
         }
         
-        // ✅ Navigate to new Sales Order with Customer pre-filled
-        frappe.new_doc('Sales Order', {
+        // ✅ Navigate to new Sales Invoice with Customer pre-filled
+        frappe.new_doc('Sales Invoice', {
             customer: frm.doc.company_name
         });
         
         frappe.show_alert({
-            message: `✅ Sales Order created for: ${frm.doc.company_name}`,
+            message: `✅ Sales Invoice created for: ${frm.doc.company_name}`,
             indicator: 'green'
         }, 3);
-         // ✅ Open Sales Order with Customer + Joining Tracker Link filled
-        frappe.new_doc('Sales Order', {
+         // ✅ Open Sales Invoice with Customer + Joining Tracker Link filled
+        frappe.new_doc('Sales Invoice', {
             customer: frm.doc.company_name,
             custom_joining_tracker_link: frm.doc.name
         });
