@@ -204,7 +204,7 @@ class DKP_Interview(Document):
             return
 
         # ✅ Check if invoice already exists
-        existing_invoice = frappe.db.exists("DKP_Invoice", {"interview_ref": self.name})
+        existing_invoice = frappe.db.exists("DKP_Joining_Tracker", {"interview_ref": self.name})
         
         if existing_invoice:
             # ✅ Invoice exists - UPDATE karo
@@ -244,7 +244,7 @@ class DKP_Interview(Document):
             billing_month = joining.strftime("%B %Y")
 
         # ✅ Create Invoice
-        invoice = frappe.new_doc("DKP_Invoice")
+        invoice = frappe.new_doc("DKP_Joining_Tracker")
         invoice.interview_ref = self.name
         invoice.job_opening = self.job_opening
         invoice.candidate_name = self.candidate_name
@@ -299,7 +299,7 @@ class DKP_Interview(Document):
             billing_month = joining.strftime("%B %Y")
         
         # ✅ Update using get_doc + save (more reliable)
-        invoice = frappe.get_doc("DKP_Invoice", invoice_name)
+        invoice = frappe.get_doc("DKP_Joining_Tracker", invoice_name)
         invoice.status = self.stage
         invoice.joining_date = self.joining_date
         invoice.billable_ctc = str(billable_ctc)
