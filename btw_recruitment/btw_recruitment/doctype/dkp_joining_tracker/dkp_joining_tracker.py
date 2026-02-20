@@ -1,11 +1,8 @@
-# Copyright (c) 2026, Sarim and contributors
-# For license information, please see license.txt
-
 import frappe
 from frappe.model.document import Document
 
 
-class DKP_Invoice(Document):
+class DKP_Joining_Tracker(Document):
       
 	def on_trash(self):
         # ✅ Interview se invoice link hatao before delete

@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestDKP_Invoice(FrappeTestCase):
+class TestDKP_Joining_Tracker(FrappeTestCase):
 	pass

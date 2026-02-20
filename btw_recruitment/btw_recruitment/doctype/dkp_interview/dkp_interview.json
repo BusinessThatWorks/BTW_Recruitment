@@ -87,13 +87,13 @@
    "fieldname": "invoice_ref",
    "fieldtype": "Link",
    "label": "Invoice Ref",
-   "options": "DKP_Invoice"
+   "options": "DKP_Joining_Tracker"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-19 16:59:58.399351",
+ "modified": "2026-02-20 13:42:51.961274",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

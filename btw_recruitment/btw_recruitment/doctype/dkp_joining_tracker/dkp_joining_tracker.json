@@ -131,7 +131,7 @@
  "modified": "2026-02-19 17:23:42.730062",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
- "name": "DKP_Invoice",
+ "name": "DKP_Joining_Tracker",
  "owner": "Administrator",
  "permissions": [
   {
