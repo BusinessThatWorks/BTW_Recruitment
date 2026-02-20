@@ -36,5 +36,10 @@ frappe.ui.form.on('DKP_Joining_Tracker', {
             message: `✅ Sales Order created for: ${frm.doc.company_name}`,
             indicator: 'green'
         }, 3);
+         // ✅ Open Sales Order with Customer + Joining Tracker Link filled
+        frappe.new_doc('Sales Order', {
+            customer: frm.doc.company_name,
+            custom_joining_tracker_link: frm.doc.name
+        });
     }
 });
