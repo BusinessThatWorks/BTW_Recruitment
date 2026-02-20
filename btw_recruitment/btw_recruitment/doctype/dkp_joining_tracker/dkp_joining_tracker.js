@@ -1,12 +1,3 @@
-// Copyright (c) 2026, Sarim and contributors
-// For license information, please see license.txt
-
-// frappe.ui.form.on("DKP_Joining_Tracker", {
-// 	refresh(frm) {
-
-// 	},
-// });
-
 frappe.ui.form.on('DKP_Joining_Tracker', {
     
     refresh: function(frm) {
@@ -27,19 +18,15 @@ frappe.ui.form.on('DKP_Joining_Tracker', {
             return;
         }
         
-        // ✅ Navigate to new Sales Invoice with Customer pre-filled
+        // ✅ Single call - Sales Invoice with Customer + Joining Tracker Link
         frappe.new_doc('Sales Invoice', {
-            customer: frm.doc.company_name
+            customer: frm.doc.company_name,
+            custom_joining_tracker_link: frm.doc.name
         });
         
         frappe.show_alert({
             message: `✅ Sales Invoice created for: ${frm.doc.company_name}`,
             indicator: 'green'
         }, 3);
-         // ✅ Open Sales Invoice with Customer + Joining Tracker Link filled
-        frappe.new_doc('Sales Invoice', {
-            customer: frm.doc.company_name,
-            custom_joining_tracker_link: frm.doc.name
-        });
     }
 });
