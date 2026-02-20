@@ -7,6 +7,7 @@
  "field_order": [
   "company_name",
   "job_opening",
+  "recipients_name",
   "recipients_mail_id",
   "recipients_number",
   "designation",
@@ -16,20 +17,24 @@
   "joining_date",
   "column_break_bjbu",
   "interview_ref",
+  "gstinuin",
   "status",
   "billable_ctc",
+  "billing_fee",
   "billing_value",
   "billing_month",
   "billing_status",
   "recruiter",
   "remarks_by_recruiter",
-  "accountant_remarks"
+  "accountant_remarks",
+  "create_sales_order_btn"
  ],
  "fields": [
   {
    "fieldname": "company_name",
-   "fieldtype": "Data",
-   "label": "Company Name"
+   "fieldtype": "Link",
+   "label": "Company Name",
+   "options": "Customer"
   },
   {
    "fieldname": "recipients_mail_id",
@@ -123,12 +128,32 @@
   {
    "fieldname": "column_break_bjbu",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recipients_name",
+   "fieldtype": "Data",
+   "label": "Recipient's Name"
+  },
+  {
+   "fieldname": "create_sales_order_btn",
+   "fieldtype": "Button",
+   "label": "Create Sales Order"
+  },
+  {
+   "fieldname": "billing_fee",
+   "fieldtype": "Percent",
+   "label": "Billing Fee"
+  },
+  {
+   "fieldname": "gstinuin",
+   "fieldtype": "Data",
+   "label": "GSTIN/UIN"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-19 17:23:42.730062",
+ "modified": "2026-02-20 15:00:27.878449",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Joining_Tracker",

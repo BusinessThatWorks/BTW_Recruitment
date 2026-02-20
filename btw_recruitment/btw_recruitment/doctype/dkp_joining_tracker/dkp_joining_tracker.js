@@ -6,3 +6,35 @@
 
 // 	},
 // });
+
+frappe.ui.form.on('DKP_Joining_Tracker', {
+    
+    refresh: function(frm) {
+        // Button visible only when document is saved
+        if (!frm.is_new()) {
+            frm.fields_dict.create_sales_order_btn.$input.addClass('btn-primary');
+        }
+    },
+    
+    create_sales_order_btn: function(frm) {
+        // ✅ Check if company_name exists
+        if (!frm.doc.company_name) {
+            frappe.msgprint({
+                title: '⚠️ Error',
+                message: 'Fill Company name First',
+                indicator: 'red'
+            });
+            return;
+        }
+        
+        // ✅ Navigate to new Sales Order with Customer pre-filled
+        frappe.new_doc('Sales Order', {
+            customer: frm.doc.company_name
+        });
+        
+        frappe.show_alert({
+            message: `✅ Sales Order created for: ${frm.doc.company_name}`,
+            indicator: 'green'
+        }, 3);
+    }
+});
