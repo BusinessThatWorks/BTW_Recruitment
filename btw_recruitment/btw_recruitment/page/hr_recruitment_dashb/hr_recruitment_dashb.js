@@ -204,8 +204,26 @@ function render_candidate_table(data) {
         { name: "Department" },
         { name: "Designation" },
         { name: "Experience (Yrs)"},
-        { name: "Skills" },
-        { name: "Certifications" },
+        {
+            name: "Skills",
+            format: (value) => {
+                return `<div style="
+                    max-width:250px;
+                    white-space:normal;
+                    word-break:break-word;
+                ">${value || "-"}</div>`;
+            }
+        },
+        {
+            name: "Certifications",
+            format: (value) => {
+                return `<div style="
+                    max-width:200px;
+                    white-space:normal;
+                    word-break:break-word;
+                ">${value || "-"}</div>`;
+            }
+        },
         { name: "Created On" }
     ];
 
@@ -220,6 +238,7 @@ function render_candidate_table(data) {
         data: tableData, 
         inlineFilters: true, 
         noDataMessage: "No candidates found",
+        layout: 'fluid'
     });
 }
 
