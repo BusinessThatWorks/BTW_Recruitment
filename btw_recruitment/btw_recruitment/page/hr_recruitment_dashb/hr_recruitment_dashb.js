@@ -15,7 +15,47 @@ const priorityColors = {
     "Critical": "#D75A5A",
     "High": "#E39A5F"
 };
+// ============================================
+// FILTER CAPTURE HELPER
+// ============================================
 
+function get_datatable_filters(dataTable) {
+    if (!dataTable) return {};
+    
+    const filters = {};
+    
+    try {
+        // Method 1: Get from column headers (inline filters)
+        const $wrapper = $(dataTable.wrapper);
+        
+        $wrapper.find('.dt-filter').each(function() {
+            const $input = $(this);
+            const value = $input.val();
+            
+            if (value && value.trim() !== '') {
+                // Get column index and name
+                const colIndex = $input.closest('.dt-cell').data('col-index');
+                const colName = dataTable.datamanager.columns[colIndex]?.name || colIndex;
+                filters[colName] = value.trim();
+            }
+        });
+        
+        // Method 2: Alternative - check datamanager
+        if (dataTable.datamanager && dataTable.datamanager.filterRows) {
+            // Some versions store filters differently
+            const dm = dataTable.datamanager;
+            dm.columns?.forEach((col, idx) => {
+                if (col.filter) {
+                    filters[col.name] = col.filter;
+                }
+            });
+        }
+    } catch (e) {
+        console.log("Error getting filters:", e);
+    }
+    
+    return filters;
+}
 // ============================================
 // EXCEL DOWNLOAD HELPER
 // ============================================
@@ -117,7 +157,10 @@ frappe.pages['hr-recruitment-dashb'].on_page_load = function(wrapper) {
 // ============================================
 // CANDIDATES TAB
 // ============================================
-
+// ============================================
+// CANDIDATES TAB
+// ============================================
+let candidateDataTable = null;
 let candidate_from_control, candidate_to_control;
 
 function load_candidates_tab() {
@@ -150,25 +193,47 @@ function init_candidate_tab() {
         load_candidate_table();
     });
 
+    // ✅ UPDATED: Backend filtered download
     $("#download-candidates-excel").off("click").on("click", function() {
         const from_date = candidate_from_control?.get_value() || null;
         const to_date = candidate_to_control?.get_value() || null;
+        const inline_filters = get_datatable_filters(candidateDataTable);
+        
+        console.log("Candidates Download - Filters:", inline_filters);
         
         frappe.call({
             method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidate_table",
-            args: { from_date, to_date },
+            args: { 
+                from_date: from_date, 
+                to_date: to_date,
+                filters: inline_filters
+            },
             callback(r) {
+                console.log("Candidates Response:", r.message?.data?.length, "records");
+                
                 if (!r.message?.data?.length) {
                     frappe.msgprint(__('No data to download.'));
                     return;
                 }
+                
                 const headers = ["Candidate", "Department", "Designation", "Experience (Yrs)", "Skills", "Certifications", "Created On"];
+                
                 const rows = r.message.data.map(d => [
-                    d.candidate_name || d.name, d.department || "-", d.current_designation || "-",
-                    d.total_experience_years ?? "-", d.skills_tags || "-", d.key_certifications || "-",
-                    frappe.datetime.str_to_user(d.creation)
+                    d.candidate_name || d.name || "-",
+                    d.department || "-",
+                    d.current_designation || "-",
+                    d.total_experience_years ?? "-",
+                    d.skills_tags || "-",
+                    d.key_certifications || "-",
+                    d.creation ? frappe.datetime.str_to_user(d.creation) : "-"
                 ]);
-                download_excel_from_rows("candidates.xls", headers, rows);
+                
+                download_excel_from_rows("candidates_filtered.xls", headers, rows);
+                
+                frappe.show_alert({
+                    message: `Downloaded ${rows.length} candidates`,
+                    indicator: 'green'
+                });
             }
         });
     });
@@ -233,7 +298,8 @@ function render_candidate_table(data) {
         d.creation ? frappe.datetime.str_to_user(d.creation) : "-"
     ]);
 
-    new frappe.DataTable($container[0], {
+    // ✅ ONLY CHANGE: Store DataTable reference
+    candidateDataTable = new frappe.DataTable($container[0], {
         columns, 
         data: tableData, 
         inlineFilters: true, 
@@ -299,36 +365,54 @@ function init_jobs_tab() {
         load_job_kpis();
     });
 
+    // ✅ UPDATED: Backend filtered download
     $("#download-jobs-excel").off("click").on("click", function() {
         const from_date = jobs_from_control?.get_value() || null;
         const to_date = jobs_to_control?.get_value() || null;
+        const inline_filters = get_datatable_filters(jobsDataTable);
+        
+        console.log("Jobs Download - Filters:", inline_filters);
         
         frappe.call({
             method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
-            args: { from_date, to_date },
+            args: { 
+                from_date: from_date, 
+                to_date: to_date,
+                filters: inline_filters  // 👈 Send inline filters
+            },
             callback(r) {
+                console.log("Jobs Response:", r.message?.data?.length, "records");
+                
                 if (!r.message?.data?.length) {
                     frappe.msgprint(__('No data to download.'));
                     return;
                 }
+                
                 const headers = [
-                "Job Opening", "Company", "Designation", "Department", 
-                "Recruiters", 
-                "Status", "Priority", "Positions", "Created On", "Ageing"
-            ];
+                    "Job Opening", "Company", "Designation", "Department", 
+                    "Recruiters", "Status", "Priority", "Positions", 
+                    "Created On", "Ageing"
+                ];
+                
                 const rows = r.message.data.map(d => [
-                d.name || "-", 
-                d.company_name || "-", 
-                d.designation || "-", 
-                d.department || "-",
-                d.recruiters || "-", 
-                d.status || "-", 
-                d.priority || "-", 
-                d.number_of_positions || "-",
-                moment(d.creation).format("DD-MM-YYYY hh:mm A"), 
-                get_ageing_days(d.creation)
-            ]);
-                download_excel_from_rows("jobs.xls", headers, rows);
+                    d.name || "-", 
+                    d.company_name || "-", 
+                    d.designation || "-", 
+                    d.department || "-",
+                    d.recruiters || "-", 
+                    d.status || "-", 
+                    d.priority || "-", 
+                    d.number_of_positions || "-",
+                    d.creation ? moment(d.creation).format("DD-MM-YYYY hh:mm A") : "-", 
+                    get_ageing_days(d.creation)
+                ]);
+                
+                download_excel_from_rows("jobs_filtered.xls", headers, rows);
+                
+                frappe.show_alert({
+                    message: `Downloaded ${rows.length} jobs`,
+                    indicator: 'green'
+                });
             }
         });
     });
@@ -371,7 +455,7 @@ function render_jobs_table(data) {
         { name: "Company" },
         { name: "Designation" },
         { name: "Department" },
-        { name: "Recruiters" },  // 👈 NEW COLUMN
+        { name: "Recruiters" },
         { name: "Status" },
         { 
             name: "Priority",
@@ -397,7 +481,7 @@ function render_jobs_table(data) {
         d.company_name || "-", 
         d.designation || "-", 
         d.department || "-",
-        d.recruiters || "-",  // 👈 NEW DATA
+        d.recruiters || "-",
         d.status || "-", 
         d.priority || "-", 
         d.number_of_positions || "-",
@@ -491,22 +575,36 @@ let companyDataTable = null;
 function init_company_tab() {
     load_company_table();
     
+    // ✅ UPDATED: Backend filtered download
     $("#download-company-excel").off("click").on("click", function() {
+        const inline_filters = get_datatable_filters(companyDataTable);
+        console.log("Captured Filters for Download:", inline_filters); // Debug log to verify filters
         frappe.call({
             method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
-            args: {},
+            args: { 
+                filters: inline_filters  // 👈 Send filters to backend
+            },
             callback(r) {
                 if (!r.message?.data?.length) {
                     frappe.msgprint(__('No data to download.'));
                     return;
                 }
+                
                 const headers = ["Company", "Client Type", "Industry", "Location", "Billing Email", "Billing Phone", "Status", "Fee Value", "Replacement"];
+                
                 const rows = r.message.data.map(d => [
-                    d.company_name || d.name, d.client_type || "-", d.industry || "-",
-                    `${d.city || "-"}, ${d.state || "-"}`, d.billing_mail || "-", d.billing_number || "-",
-                    d.client_status || "-", `${d.standard_fee_value || "0"}%`, d.replacement_policy_days || "-"
+                    d.company_name || d.name || "-",
+                    d.client_type || "-",
+                    d.industry || "-",
+                    `${d.city || "-"}, ${d.state || "-"}`,
+                    d.billing_mail || "-",
+                    d.billing_number || "-",
+                    d.client_status || "-",
+                    `${d.standard_fee_value || "0"}%`,
+                    d.replacement_policy_days || "-"
                 ]);
-                download_excel_from_rows("companies.xls", headers, rows);
+                
+                download_excel_from_rows("companies_filtered.xls", headers, rows);
             }
         });
     });

@@ -1,174 +1,3 @@
-
-import frappe
-
-@frappe.whitelist()
-def get_candidates_by_department(from_date=None, to_date=None):
-    filters = ""
-    values = {}
-
-    if from_date and to_date:
-        filters = " AND creation BETWEEN %(from_date)s AND %(to_date)s"
-        values.update({"from_date": from_date, "to_date": to_date})
-
-    data = frappe.db.sql(f"""
-    SELECT 
-        IFNULL(NULLIF(TRIM(department), ''), 'Not Set') as department,
-        COUNT(name) as count
-    FROM `tabDKP_Candidate`
-    WHERE 1=1
-    {filters}
-    GROUP BY IFNULL(NULLIF(TRIM(department), ''), 'Not Set')
-""", values=values, as_dict=1)
-
-    return data
-
-@frappe.whitelist()
-def get_urgent_openings(from_date=None, to_date=None):
-    filters = [
-        ["priority", "in", ["High", "Critical"]]
-    ]
-    # 🔹 DATE FILTER
-    if from_date and to_date:
-        filters.append([
-            "creation",
-            "between",
-            [from_date, add_days(to_date, 1)]
-        ])
-    return frappe.get_all(
-        "DKP_Job_Opening",
-        fields=[
-            "name",
-            "designation",
-            "company_name",
-            # "assign_recruiter",
-            "priority",
-            "number_of_positions",
-            "status"
-        ],
-        filters=filters,
-        order_by="modified desc"
-    )
-@frappe.whitelist()
-def get_recruiter_filter_options():
-    return frappe.db.sql("""
-        SELECT
-            name,
-            full_name
-        FROM `tabUser`
-        WHERE
-            enabled = 1
-            AND role_profile_name = 'DKP Recruiter'
-        ORDER BY full_name
-    """, as_dict=True)
-
-import frappe
-from frappe.utils import now_datetime, add_days
-@frappe.whitelist()
-def get_job_health(
-    from_date=None,
-    to_date=None,
-    limit=10,
-    offset=0,
-    department=None,
-    priority=None,
-    sla_status=None
-):
-    limit = int(limit)
-    offset = int(offset)
-    job_filters = []
-    # ---------------- DATE FILTER ----------------
-    if from_date and to_date:
-        job_filters.append([
-            "creation",
-            "between",
-            [from_date, add_days(to_date, 1)]
-        ])
-    # Department
-    if department:
-        job_filters.append(["department", "=", department])
-    # Priority
-    if priority:
-        job_filters.append(["priority", "=", priority])
-    # Status (SLA Status)
-    if sla_status:
-        job_filters.append(["status", "=", sla_status])
-    # ---------------- FETCH JOBS ----------------
-    jobs = frappe.get_all(
-        "DKP_Job_Opening",
-        fields=[
-            "name",
-            "designation",
-            "company",
-            "department",
-            "number_of_positions",
-            "status",
-            "priority",
-            "creation"   # required for ageing
-        ],
-        filters=job_filters,
-        limit_start=offset,
-        limit_page_length=limit
-    )
-    # Total count (pagination)
-    total = frappe.db.count("DKP_Job_Opening", filters=job_filters)
-    now = now_datetime()
-    result = []
-    for job in jobs:
-        # ---------------- AGEING ----------------
-        ageing_days = (now - job.creation).days if job.creation else 0
-        # ---------------- CANDIDATE COUNT ----------------
-        candidate_count = frappe.db.count(
-            "DKP_JobApplication_Child",
-            filters={
-                "parent": job.name,
-                "parenttype": "DKP_Job_Opening",
-                "stage": ["in", [
-                    "In Review",
-                    "Screening",
-                    "Interview",
-                    "Offered",
-                    "",
-                    "Rejected",
-                    "Offer Drop"
-                ]]
-            }
-        )
-        positions = int(job.number_of_positions or 0)
-        result.append({
-            "job_opening": job.name,
-            "designation": job.designation,
-            "department": job.department,
-            "positions": positions,
-            "candidates": candidate_count,
-            "status": job.status,
-            "priority": job.priority,
-            "ageing_days": ageing_days
-        })
-    return {
-        "total": total,
-        "data": result
-    }
-import frappe
-from frappe.utils import get_datetime, add_days
-@frappe.whitelist()
-def get_department_job_data(from_date=None, to_date=None):
-    filters = []
-    if from_date and to_date:
-        filters.append(["creation", "between", [get_datetime(from_date), get_datetime(add_days(to_date, 1))]])
-    # Only count non-null departments
-    data = frappe.db.sql("""
-        SELECT department, COUNT(name) as count
-        FROM `tabDKP_Job_Opening`
-        WHERE department IS NOT NULL
-        {date_filter}
-        GROUP BY department
-    """.format(
-        date_filter="AND creation BETWEEN %s AND %s" if from_date and to_date else ""
-    ),
-    (get_datetime(from_date), get_datetime(add_days(to_date,1))) if from_date and to_date else (),
-    as_dict=1)
-    return data
-
 import frappe
 from frappe.utils import get_datetime, add_days
 @frappe.whitelist()
@@ -203,97 +32,9 @@ def get_client_type_distribution(from_date=None, to_date=None):
         "type": "bar"
     }
     return chart
-@frappe.whitelist()
-def get_distinct_industries():
-    rows = frappe.db.sql("""
-        SELECT DISTINCT
-            TRIM(LOWER(custom_industry)) AS industry
-        FROM `tabCustomer`
-        WHERE custom_industry IS NOT NULL
-          AND custom_industry != ''
-        ORDER BY industry
-    """, as_dict=True)
-    return [r["industry"].title() for r in rows]
-import frappe
-from frappe.utils import get_datetime, add_days
-@frappe.whitelist()
-def get_company_table(from_date=None, to_date=None, limit=20, offset=0,client_type=None,
-    industry=None,
-    client_status=None,):
-    """
-    Returns paginated company table data with summary columns.
-    Now based on core Customer; filters respect Customer.creation.
-    """
-    limit = int(limit)
-    offset = int(offset)
-    filters = []
-    if from_date and to_date:
-        filters.append([
-            "creation",
-            "between",
-            [get_datetime(from_date), get_datetime(add_days(to_date, 1))]
-        ])
-    # Apply additional filters (map to Customer custom fields)
-    if client_type:
-        filters.append(["custom_client_type", "=", client_type])
-    if industry:
-        filters.append(["custom_industry", "=", industry])
-    if client_status:
-        filters.append(["custom_client_status", "=", client_status])
-    # Fetch companies (now from Customer)
-    companies = frappe.get_all(
-        "Customer",
-        fields=[
-            "name",
-            "customer_name",
-            "custom_client_type",
-            "custom_industry",
-            "custom_client_status",
-            "custom_no_poach_flag",
-            "custom_replacement_policy_",
-        ],
-        filters=filters,
-        limit_start=offset,
-        limit_page_length=limit,
-        order_by="creation desc"
-    )
-    company_names = [c.name for c in companies]
-    # Fetch Open Jobs count per company (company field on DKP_Job_Opening
-    # should now point to Customer)
-    job_counts = {}
-    if company_names:
-        job_data = frappe.db.sql(
-            """
-            SELECT company, COUNT(name) as count
-            FROM `tabDKP_Job_Opening`
-            WHERE status='Open' AND company IN %(companies)s
-            GROUP BY company
-            """,
-            {"companies": tuple(company_names)},
-            as_dict=1,
-        )
-        job_counts = {d["company"]: d["count"] for d in job_data}
-    # Build final table data
-    result = []
-    for c in companies:
-        result.append(
-            {
-                # Expose both name (docname) and a human label for UI
-                "name": c.name,
-                "company_name": c.customer_name or c.name,
-                "client_type": c.custom_client_type,
-                "industry": c.custom_industry,
-                "client_status": c.custom_client_status,
-                "open_jobs": job_counts.get(c.name, 0),
-                "no_poach": getattr(c, "custom_no_poach_flag", None) or None,
-                "replacement_days": getattr(c, "custom_replacement_policy_", None),
-            }
-        )
 
-    # Total count for pagination
-    total = frappe.db.count("Customer", filters)
-    return {"total": total, "data": result}
 import frappe
+import json
 from frappe.utils import get_datetime, add_days
 
 CANDIDATE_SORT_FIELDS = {
@@ -302,45 +43,107 @@ CANDIDATE_SORT_FIELDS = {
 }
 
 @frappe.whitelist()
-def get_candidate_table(from_date=None, to_date=None):
+def get_candidate_table(from_date=None, to_date=None, filters=None):
     """
-    Simple function - sirf date filter
-    Baaki sab DataTable handle karega (search, sort, filter)
+    Candidate listing with optional inline filters support.
+    Date filter + inline column filters supported.
     """
-    filters = {}
     
-    # Sirf date filter server pe
-    if from_date and to_date:
-        filters["creation"] = ["between", [from_date, to_date]]
+    # Debug logging
+    print("=" * 60)
+    print("get_candidate_table called")
+    print(f"from_date: {from_date}")
+    print(f"to_date: {to_date}")
+    print(f"filters (raw): {filters}")
+    print("=" * 60)
     
-    # Saara data ek baar fetch karo
-    candidates = frappe.get_all(
-        "DKP_Candidate",
-        filters=filters,
-        fields=[
-            "name",
-            "candidate_name",
-            "department",
-            "current_designation",
-            "total_experience_years",
-            "skills_tags",
-            "key_certifications",
-            "creation"
-        ],
-        order_by="creation desc"
-    )
+    # Parse inline filters from JSON string
+    parsed_filters = {}
+    if filters:
+        if isinstance(filters, str):
+            try:
+                parsed_filters = json.loads(filters)
+            except:
+                parsed_filters = {}
+        elif isinstance(filters, dict):
+            parsed_filters = filters
+    
+    print(f"Parsed filters: {parsed_filters}")
+    
+    # Build conditions
+    conditions = []
+    values = {}
+    
+    # Date filter
+    if from_date:
+        conditions.append("creation >= %(from_date)s")
+        values["from_date"] = from_date
+    
+    if to_date:
+        conditions.append("creation <= %(to_date)s")
+        values["to_date"] = to_date
+    
+    # ============================================
+    # INLINE FILTER MAPPING
+    # Frontend Column Name -> Database Field
+    # ============================================
+    
+    filter_mapping = {
+        "Candidate": "candidate_name",
+        "Department": "department",
+        "Designation": "current_designation",
+        "Experience (Yrs)": "total_experience_years",
+        "Skills": "skills_tags",
+        "Certifications": "key_certifications"
+    }
+    
+    for col_name, db_field in filter_mapping.items():
+        if parsed_filters.get(col_name):
+            filter_value = parsed_filters[col_name]
+            param_name = db_field  # Use db_field as param name
+            conditions.append(f"{db_field} LIKE %({param_name})s")
+            values[param_name] = f"%{filter_value}%"
+    
+    # Build WHERE clause
+    where_clause = " AND ".join(conditions) if conditions else "1=1"
+    
+    print(f"WHERE clause: {where_clause}")
+    print(f"Values: {values}")
+    
+    # Execute query
+    query = f"""
+        SELECT 
+            name,
+            candidate_name,
+            department,
+            current_designation,
+            total_experience_years,
+            skills_tags,
+            key_certifications,
+            creation
+        FROM `tabDKP_Candidate`
+        WHERE {where_clause}
+        ORDER BY creation DESC
+    """
+    
+    candidates = frappe.db.sql(query, values, as_dict=True)
+    
+    print(f"Query returned {len(candidates)} records")
+    print("=" * 60)
     
     return {
         "data": candidates,
         "total": len(candidates)
     }
 from frappe.utils import cint
-from frappe.utils import cint
 import frappe
+import json
+
 JOBS_SORT_FIELDS = {
     "name", "company_name", "designation", "department", "status",
     "priority", "number_of_positions", "creation"
 }
+
 @frappe.whitelist()
 def get_jobs_table(
     from_date=None,
@@ -355,8 +158,30 @@ def get_jobs_table(
     priority=None,
     ageing=None,
     sort_by=None,
-    sort_order=None
+    sort_order=None,
+    filters=None  # 👈 NEW: Inline filters parameter
 ):
+    
+    # Debug logging
+    print("=" * 60)
+    print("get_jobs_table called")
+    print(f"from_date: {from_date}, to_date: {to_date}")
+    print(f"filters (raw): {filters}")
+    print("=" * 60)
+    
+    # Parse inline filters from JSON string
+    parsed_filters = {}
+    if filters:
+        if isinstance(filters, str):
+            try:
+                parsed_filters = json.loads(filters)
+            except:
+                parsed_filters = {}
+        elif isinstance(filters, dict):
+            parsed_filters = filters
+    
+    print(f"Parsed filters: {parsed_filters}")
+    
     conditions = []
     values = []
     
@@ -368,7 +193,7 @@ def get_jobs_table(
         conditions.append("jo.creation <= %s")
         values.append(to_date + " 23:59:59")
     
-    # ---------------- Text Filters ----------------
+    # ---------------- Existing Text Filters ----------------
     if company_name:
         conditions.append("jo.company_name LIKE %s")
         values.append(f"%{company_name}%")
@@ -376,7 +201,7 @@ def get_jobs_table(
         conditions.append("jo.designation LIKE %s")
         values.append(f"%{designation}%")
     
-    # ---------------- Exact Filters ----------------
+    # ---------------- Existing Exact Filters ----------------
     if department:
         conditions.append("jo.department = %s")
         values.append(department)
@@ -407,6 +232,39 @@ def get_jobs_table(
             """)
             values.extend(recruiter_list)
     
+    # ============================================
+    # 👇 NEW: INLINE FILTER MAPPING
+    # Frontend Column Name -> Database Field
+    # ============================================
+    
+    filter_mapping = {
+        "Job Opening": "jo.name",
+        "Company": "jo.company_name",
+        "Designation": "jo.designation",
+        "Department": "jo.department",
+        "Status": "jo.status",
+        "Priority": "jo.priority",
+        "Positions": "jo.number_of_positions"
+    }
+    
+    for col_name, db_field in filter_mapping.items():
+        if parsed_filters.get(col_name):
+            filter_value = parsed_filters[col_name]
+            conditions.append(f"{db_field} LIKE %s")
+            values.append(f"%{filter_value}%")
+    
+    # Ageing inline filter (special handling - numeric)
+    if parsed_filters.get("Ageing"):
+        try:
+            ageing_val = int(parsed_filters["Ageing"])
+            conditions.append("DATEDIFF(CURDATE(), jo.creation) >= %s")
+            values.append(ageing_val)
+        except:
+            pass
+    
+    print(f"Conditions: {conditions}")
+    print(f"Values: {values}")
+    
     # ---------------- WHERE Clause ----------------
     where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
     
@@ -414,6 +272,7 @@ def get_jobs_table(
     if sort_by and sort_by in JOBS_SORT_FIELDS and sort_order in ("asc", "desc"):
         order_by = f"jo.{sort_by} {sort_order.upper()}"
     
+    # ---------------- Total Count ----------------
     total = frappe.db.sql(
         f"""
         SELECT COUNT(DISTINCT jo.name)
@@ -423,28 +282,50 @@ def get_jobs_table(
         values
     )[0][0]
     
-    # ---------------- Paginated Data ----------------
-    data = frappe.db.sql(
-        f"""
-        SELECT
-            jo.name,
-            jo.designation,
-            jo.company_name,
-            jo.department,
-            jo.status,
-            jo.priority,
-            jo.number_of_positions,
-            jo.creation
-        FROM `tabDKP_Job_Opening` jo
-        {where_clause}
-        ORDER BY {order_by}
-        LIMIT {cint(limit)} OFFSET {cint(offset)}
-        """,
-        values,
-        as_dict=1
-    )
+    # ---------------- Data Query (No pagination for download) ----------------
+    # If filters are provided, return all matching records (for download)
+    if parsed_filters:
+        data = frappe.db.sql(
+            f"""
+            SELECT
+                jo.name,
+                jo.designation,
+                jo.company_name,
+                jo.department,
+                jo.status,
+                jo.priority,
+                jo.number_of_positions,
+                jo.creation
+            FROM `tabDKP_Job_Opening` jo
+            {where_clause}
+            ORDER BY {order_by}
+            """,
+            values,
+            as_dict=1
+        )
+    else:
+        # Normal paginated query
+        data = frappe.db.sql(
+            f"""
+            SELECT
+                jo.name,
+                jo.designation,
+                jo.company_name,
+                jo.department,
+                jo.status,
+                jo.priority,
+                jo.number_of_positions,
+                jo.creation
+            FROM `tabDKP_Job_Opening` jo
+            {where_clause}
+            ORDER BY {order_by}
+            LIMIT {cint(limit)} OFFSET {cint(offset)}
+            """,
+            values,
+            as_dict=1
+        )
     
-    # 👇 ADD THIS - Fetch recruiters for each job
+    # Fetch recruiters for each job
     for job in data:
         recruiters = frappe.db.sql("""
             SELECT recruiter_name 
@@ -452,40 +333,139 @@ def get_jobs_table(
             WHERE parent = %s
         """, job.name, as_dict=1)
         
-        # Join all recruiter names with comma
         job['recruiters'] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
+    
+    # 👇 Post-filter for Recruiters (inline filter - after fetching)
+    if parsed_filters.get("Recruiters"):
+        recruiter_filter = parsed_filters["Recruiters"].lower()
+        data = [d for d in data if d.get("recruiters") and recruiter_filter in d["recruiters"].lower()]
+        total = len(data)
+    
+    print(f"Query returned {len(data)} records")
+    print("=" * 60)
     
     return {
         "data": data,
         "total": total
     }
-@frappe.whitelist()
-def get_companies(from_date=None, to_date=None):
-    """
-    Simple Company listing API.
-    DataTable handles filtering, sorting, pagination on client-side.
-    """
-    # Fetch ALL records - DataTable will handle the rest
-    data = frappe.db.get_list(
-        "Customer",
-        fields=[
-            "name",
-            "customer_name",
-            "custom_client_type",
-            "custom_industry",
-            "custom_state",
-            "custom_city",
-            "custom_billing_email",
-            "custom_billing_phone",
-            "custom_client_status",
-            "custom_replacement_policy_",
-            "custom_standard_fee_value",
-            "creation",
-        ],
-        order_by="creation desc",
-        limit_page_length=0  # No limit - get all
-    )
+import frappe
+import json
 
+@frappe.whitelist()
+def get_companies(from_date=None, to_date=None, filters=None):
+    """
+    Company listing API with optional inline filters support.
+    If no filters provided, returns all records.
+    """
+    
+    # Debug logging
+    print("=" * 60)
+    print("get_companies called")
+    print(f"from_date: {from_date}")
+    print(f"to_date: {to_date}")
+    print(f"filters (raw): {filters}")
+    print(f"filters type: {type(filters)}")
+    print("=" * 60)
+    
+    # Parse filters from JSON string
+    parsed_filters = {}
+    if filters:
+        if isinstance(filters, str):
+            try:
+                parsed_filters = json.loads(filters)
+            except:
+                parsed_filters = {}
+        elif isinstance(filters, dict):
+            parsed_filters = filters
+    
+    print(f"Parsed filters: {parsed_filters}")
+    
+    # Build WHERE conditions
+    conditions = []
+    values = {}
+    
+    # Date filters
+    if from_date:
+        conditions.append("creation >= %(from_date)s")
+        values["from_date"] = from_date
+    
+    if to_date:
+        conditions.append("creation <= %(to_date)s")
+        values["to_date"] = to_date
+    
+    # ============================================
+    # INLINE FILTER MAPPING
+    # Frontend Column Name -> Database Field
+    # ============================================
+    
+    filter_mapping = {
+        "Company": "customer_name",
+        "Client Type": "custom_client_type",
+        "Industry": "custom_industry",
+        "Location": ["custom_city", "custom_state"],  # Special: multiple fields
+        "Billing Email": "custom_billing_email",
+        "Billing Phone": "custom_billing_phone",
+        "Status": "custom_client_status",
+        "Fee Value": "custom_standard_fee_value",
+        "Replacement": "custom_replacement_policy_"
+    }
+    
+    for col_name, db_field in filter_mapping.items():
+        if parsed_filters.get(col_name):
+            filter_value = parsed_filters[col_name]
+            
+            # Special handling for Location (searches both city and state)
+            if col_name == "Location" and isinstance(db_field, list):
+                location_conditions = []
+                for field in db_field:
+                    location_conditions.append(f"{field} LIKE %({field})s")
+                    values[field] = f"%{filter_value}%"
+                conditions.append(f"({' OR '.join(location_conditions)})")
+            
+            # Special handling for Fee Value (remove % sign if present)
+            elif col_name == "Fee Value":
+                fee_val = str(filter_value).replace("%", "").strip()
+                if fee_val:
+                    conditions.append(f"{db_field} LIKE %(fee_value)s")
+                    values["fee_value"] = f"%{fee_val}%"
+            
+            # Standard LIKE search for other fields
+            else:
+                param_name = db_field.replace("custom_", "").replace("customer_", "")
+                conditions.append(f"{db_field} LIKE %({param_name})s")
+                values[param_name] = f"%{filter_value}%"
+    
+    # Build WHERE clause
+    where_clause = " AND ".join(conditions) if conditions else "1=1"
+    
+    print(f"WHERE clause: {where_clause}")
+    print(f"Values: {values}")
+    
+    # Execute query
+    query = f"""
+        SELECT 
+            name,
+            customer_name,
+            custom_client_type,
+            custom_industry,
+            custom_state,
+            custom_city,
+            custom_billing_email,
+            custom_billing_phone,
+            custom_client_status,
+            custom_replacement_policy_,
+            custom_standard_fee_value,
+            creation
+        FROM `tabCustomer`
+        WHERE {where_clause}
+        ORDER BY creation DESC
+    """
+    
+    data = frappe.db.sql(query, values, as_dict=True)
+    
+    print(f"Query returned {len(data)} records")
+    print("=" * 60)
+    
     # Map to expected JS field names
     for row in data:
         row["company_name"] = row.get("customer_name") or row.get("name")
