@@ -133,20 +133,6 @@ frappe.ui.form.on("DKP_Candidate", {
             frm.set_value("added_by", frappe.session.user);
         }
     },
-
-    // refresh(frm) {
-
-    //     ["added_by"].forEach(field => {
-    //         frm.set_query(field, function() {
-    //             return {
-    //                 filters: {
-    //                     role_profile_name: "DKP Recruiter"
-    //                 }
-    //             };
-    //         });
-    //     });
-
-    // }
     refresh(frm) {
     if (frm.is_new()) {
         frm.set_query("added_by", function() {

@@ -23,9 +23,13 @@
                 <div class="chart-box" id="client-type-chart"></div>
             </div>
 
-            <!-- Filter Bar -->
+            <!-- ✅ UPDATED: Filter Bar with Date Filters -->
             <div class="filter-bar">
-                <span></span>
+                <div class="filter-group">
+                    <div class="filter-item company-from-date"></div>
+                    <div class="filter-item company-to-date"></div>
+                    <button class="btn btn-secondary btn-sm mt-4" id="company-clear-dates">Clear</button>
+                </div>
                 <button class="btn btn-primary btn-sm" id="download-company-excel">Download Excel</button>
             </div>
 

@@ -153,10 +153,6 @@ frappe.pages['hr-recruitment-dashb'].on_page_load = function(wrapper) {
         }
     });
 };
-
-// ============================================
-// CANDIDATES TAB
-// ============================================
 // ============================================
 // CANDIDATES TAB
 // ============================================
@@ -571,20 +567,63 @@ function render_job_charts(chart) {
 // ============================================
 
 let companyDataTable = null;
+let company_from_control, company_to_control;  // 👈 NEW: Date controls
 
 function init_company_tab() {
-    load_company_table();
-    
-    // ✅ UPDATED: Backend filtered download
+    // ✅ NEW: Initialize date controls
+    company_from_control = frappe.ui.form.make_control({
+        parent: $(".company-from-date"),
+        df: { 
+            fieldtype: "Date", 
+            label: "From Date", 
+            change: () => { 
+                load_company_table(); 
+                load_company_kpis(); 
+            } 
+        },
+        render_input: true
+    });
+
+    company_to_control = frappe.ui.form.make_control({
+        parent: $(".company-to-date"),
+        df: { 
+            fieldtype: "Date", 
+            label: "To Date", 
+            change: () => { 
+                load_company_table(); 
+                load_company_kpis(); 
+            } 
+        },
+        render_input: true
+    });
+
+    // ✅ NEW: Clear dates button
+    $("#company-clear-dates").off("click").on("click", function() {
+        company_from_control.set_value(null);
+        company_to_control.set_value(null);
+        load_company_table();
+        load_company_kpis();
+    });
+
+    // ✅ UPDATED: Download button with date filters + inline filters
     $("#download-company-excel").off("click").on("click", function() {
+        const from_date = company_from_control?.get_value() || null;
+        const to_date = company_to_control?.get_value() || null;
         const inline_filters = get_datatable_filters(companyDataTable);
-        console.log("Captured Filters for Download:", inline_filters); // Debug log to verify filters
+        
+        console.log("Company Download - Date Filters:", from_date, to_date);
+        console.log("Company Download - Inline Filters:", inline_filters);
+        
         frappe.call({
             method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
             args: { 
-                filters: inline_filters  // 👈 Send filters to backend
+                from_date: from_date,
+                to_date: to_date,
+                filters: inline_filters
             },
             callback(r) {
+                console.log("Company Response:", r.message?.data?.length, "records");
+                
                 if (!r.message?.data?.length) {
                     frappe.msgprint(__('No data to download.'));
                     return;
@@ -605,15 +644,25 @@ function init_company_tab() {
                 ]);
                 
                 download_excel_from_rows("companies_filtered.xls", headers, rows);
+                
+                frappe.show_alert({
+                    message: `Downloaded ${rows.length} companies`,
+                    indicator: 'green'
+                });
             }
         });
     });
+
+    load_company_table();
 }
 
 function load_company_table() {
+    const from_date = company_from_control?.get_value() || null;
+    const to_date = company_to_control?.get_value() || null;
+    
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
-        args: {},
+        args: { from_date, to_date },
         callback: function(r) {
             render_company_table(r.message?.data || []);
         }
@@ -664,9 +713,15 @@ function render_company_table(data) {
 }
 
 function load_company_kpis() {
+    const from_date = company_from_control?.get_value() || null;
+    const to_date = company_to_control?.get_value() || null;
+    
     frappe.call({
         method: "frappe.desk.query_report.run",
-        args: { report_name: "Company Recruitment KPIs" },
+        args: { 
+            report_name: "Company Recruitment KPIs",
+            filters: { from_date, to_date }  // 👈 Date filters bhejo
+        },
         callback(r) {
             if (r.message) render_company_kpi_cards(r.message.result);
         }
