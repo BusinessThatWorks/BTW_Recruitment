@@ -2,17 +2,25 @@ import frappe
 from frappe.utils import cint, getdate
 
 @frappe.whitelist()
-def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = None, status: str = None):
+def get_recruiter_kpis(recruiter: str = None, from_date: str = None, to_date: str = None, status: str = None):
     """
-    Returns recruiter-level KPI totals with optional date and status filters
+    Returns KPI totals with optional filters
+    If no recruiter selected, returns data for all recruiters
     """
-    if not recruiter:
-        return {}
 
     # Build conditions for job openings
     jo_conditions = " AND jo.status IN ('Open', 'Closed – Hired')"
-    jo_params = {"recruiter": recruiter}
+    jo_params = {}
 
+    # ✅ Only add recruiter filter if provided
+    recruiter_join = ""
+    if recruiter:
+        recruiter_join = """
+            INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
+                ON r.parent = jo.name
+        """
+        jo_conditions += " AND r.recruiter_name = %(recruiter)s"
+        jo_params["recruiter"] = recruiter
 
     if status:
         jo_conditions += " AND jo.status = %(status)s"
@@ -26,14 +34,13 @@ def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = Non
         jo_conditions += " AND jo.creation <= %(to_date)s"
         jo_params["to_date"] = to_date
 
-    # Get all openings mapped to recruiter
+    # Get all openings
     openings = frappe.db.sql(
         f"""
         SELECT DISTINCT jo.name, jo.number_of_positions
         FROM `tabDKP_Job_Opening` jo
-        INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
-            ON r.parent = jo.name
-        WHERE r.recruiter_name = %(recruiter)s
+        {recruiter_join}
+        WHERE 1=1
         {jo_conditions}
         """,
         jo_params,
@@ -56,9 +63,13 @@ def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = Non
     # Build conditions for candidates
     cand_conditions = ""
     cand_params = {
-        "openings": tuple(opening_names),
-        "recruiter": recruiter
+        "openings": tuple(opening_names)
     }
+
+    # ✅ Only filter by recruiter if provided
+    if recruiter:
+        cand_conditions += " AND jac.added_by = %(recruiter)s"
+        cand_params["recruiter"] = recruiter
 
     if from_date:
         cand_conditions += " AND jac.creation >= %(from_date)s"
@@ -68,11 +79,11 @@ def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = Non
         cand_conditions += " AND jac.creation <= %(to_date)s"
         cand_params["to_date"] = to_date
 
-    # Get candidate stats
+    # ✅ FIXED: COUNT(*) for total mappings, not DISTINCT
     stats = frappe.db.sql(
         f"""
         SELECT
-            COUNT(DISTINCT jac.candidate_name) AS total_candidates,
+            COUNT(*) AS total_candidates,
             SUM(
                 CASE
                     WHEN jac.sub_stages_interview = 'Joined' THEN 1
@@ -83,7 +94,6 @@ def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = Non
         WHERE jac.parent IN %(openings)s
           AND jac.parenttype = 'DKP_Job_Opening'
           AND IFNULL(jac.candidate_name, '') != ''
-          AND jac.added_by = %(recruiter)s
           {cand_conditions}
         """,
         cand_params,
@@ -115,7 +125,7 @@ def get_recruiter_kpis(recruiter: str, from_date: str = None, to_date: str = Non
 
 @frappe.whitelist()
 def get_recruiter_openings(
-    recruiter: str, 
+    recruiter: str = None, 
     from_date: str = None, 
     to_date: str = None, 
     status: str = None,
@@ -124,16 +134,24 @@ def get_recruiter_openings(
 ):
     """
     Paginated job openings with optional filters
+    If no recruiter selected, returns data for all recruiters
     """
-    if not recruiter:
-        return {"data": [], "total": 0}
-
     limit = cint(limit)
     offset = cint(offset)
 
     # Build WHERE conditions
-    conditions = "WHERE r.recruiter_name = %(recruiter)s AND jo.status IN ('Open', 'Closed – Hired')" 
-    params = {"recruiter": recruiter}
+    conditions = "WHERE jo.status IN ('Open', 'Closed – Hired')"
+    params = {}
+
+    # ✅ Only add recruiter filter if provided
+    recruiter_join = ""
+    if recruiter:
+        recruiter_join = """
+            INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
+                ON r.parent = jo.name
+        """
+        conditions += " AND r.recruiter_name = %(recruiter)s"
+        params["recruiter"] = recruiter
 
     if status:
         conditions += " AND jo.status = %(status)s"
@@ -152,8 +170,7 @@ def get_recruiter_openings(
         f"""
         SELECT COUNT(DISTINCT jo.name)
         FROM `tabDKP_Job_Opening` jo
-        INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
-            ON r.parent = jo.name
+        {recruiter_join}
         {conditions}
         """,
         params,
@@ -175,8 +192,7 @@ def get_recruiter_openings(
             jo.status,
             jo.number_of_positions
         FROM `tabDKP_Job_Opening` jo
-        INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
-            ON r.parent = jo.name
+        {recruiter_join}
         {conditions}
         ORDER BY jo.creation DESC
         LIMIT %(limit)s OFFSET %(offset)s
@@ -192,9 +208,13 @@ def get_recruiter_openings(
     # Build candidate conditions
     cand_conditions = ""
     cand_params = {
-        "openings": tuple(opening_names),
-        "recruiter": recruiter
+        "openings": tuple(opening_names)
     }
+
+    # ✅ Only filter by recruiter if provided
+    if recruiter:
+        cand_conditions += " AND added_by = %(recruiter)s"
+        cand_params["recruiter"] = recruiter
 
     if from_date:
         cand_conditions += " AND creation >= %(from_date)s"
@@ -204,12 +224,12 @@ def get_recruiter_openings(
         cand_conditions += " AND creation <= %(to_date)s"
         cand_params["to_date"] = to_date
 
-    # Get candidate stats per opening
+    # ✅ FIXED: COUNT(*) for total mappings
     stats_rows = frappe.db.sql(
         f"""
         SELECT
             parent AS job_opening,
-            COUNT(DISTINCT candidate_name) AS total_candidates,
+            COUNT(*) AS total_candidates,
             SUM(
                 CASE
                     WHEN sub_stages_interview = 'Joined' THEN 1
@@ -220,7 +240,6 @@ def get_recruiter_openings(
         WHERE parent IN %(openings)s
           AND parenttype = 'DKP_Job_Opening'
           AND IFNULL(candidate_name, '') != ''
-          AND added_by = %(recruiter)s
           {cand_conditions}
         GROUP BY parent
         """,
@@ -263,20 +282,27 @@ def get_recruiters():
         as_dict=True,
     )
 
+
 @frappe.whitelist()
-def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, status: str = None):
+def get_funnel_data(recruiter: str = None, from_date: str = None, to_date: str = None, status: str = None):
     """
     Get recruitment funnel data - separated into mapping stages and interview stages
+    If no recruiter selected, returns data for all recruiters
     """
-    if not recruiter:
-        return {
-            "mapping_stages": {},
-            "interview_stages": {}
-        }
 
     # Build conditions for job openings
     jo_conditions = " AND jo.status IN ('Open', 'Closed – Hired')"
-    jo_params = {"recruiter": recruiter}
+    jo_params = {}
+
+    # ✅ Only add recruiter filter if provided
+    recruiter_join = ""
+    if recruiter:
+        recruiter_join = """
+            INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
+                ON r.parent = jo.name
+        """
+        jo_conditions += " AND r.recruiter_name = %(recruiter)s"
+        jo_params["recruiter"] = recruiter
 
     if status:
         jo_conditions += " AND jo.status = %(status)s"
@@ -290,14 +316,13 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         jo_conditions += " AND jo.creation <= %(to_date)s"
         jo_params["to_date"] = to_date
 
-    # Get all openings for this recruiter
+    # Get all openings
     openings = frappe.db.sql(
         f"""
         SELECT DISTINCT jo.name
         FROM `tabDKP_Job_Opening` jo
-        INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
-            ON r.parent = jo.name
-        WHERE r.recruiter_name = %(recruiter)s
+        {recruiter_join}
+        WHERE 1=1
         {jo_conditions}
         """,
         jo_params,
@@ -315,9 +340,13 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
     # Build conditions for candidates
     cand_conditions = ""
     cand_params = {
-        "openings": tuple(opening_names),
-        "recruiter": recruiter
+        "openings": tuple(opening_names)
     }
+
+    # ✅ Only filter by recruiter if provided
+    if recruiter:
+        cand_conditions += " AND jac.added_by = %(recruiter)s"
+        cand_params["recruiter"] = recruiter
 
     if from_date:
         cand_conditions += " AND jac.creation >= %(from_date)s"
@@ -327,15 +356,14 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         cand_conditions += " AND jac.creation <= %(to_date)s"
         cand_params["to_date"] = to_date
 
-    # Get ALL candidates count (total mapped)
+    # ✅ FIXED: COUNT(*) for total mappings
     total_mapped = frappe.db.sql(
         f"""
-        SELECT COUNT(DISTINCT jac.candidate_name) as count
+        SELECT COUNT(*) as count
         FROM `tabDKP_JobApplication_Child` jac
         WHERE jac.parent IN %(openings)s
           AND jac.parenttype = 'DKP_Job_Opening'
           AND IFNULL(jac.candidate_name, '') != ''
-          AND jac.added_by = %(recruiter)s
           {cand_conditions}
         """,
         cand_params,
@@ -352,7 +380,6 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         WHERE jac.parent IN %(openings)s
           AND jac.parenttype = 'DKP_Job_Opening'
           AND IFNULL(jac.candidate_name, '') != ''
-          AND jac.added_by = %(recruiter)s
           AND jac.stage IS NOT NULL
           {cand_conditions}
         GROUP BY jac.stage
@@ -371,7 +398,6 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         WHERE jac.parent IN %(openings)s
           AND jac.parenttype = 'DKP_Job_Opening'
           AND IFNULL(jac.candidate_name, '') != ''
-          AND jac.added_by = %(recruiter)s
           AND jac.sub_stages_interview IS NOT NULL
           {cand_conditions}
         GROUP BY jac.sub_stages_interview
@@ -392,6 +418,7 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         "client_rejected": mapping_map.get("Client Screening Rejected", 0),
         "schedule_interview": mapping_map.get("Schedule Interview", 0)
     }
+
     # ===== INTERVIEW STAGES =====
     interview_stages = {
         "interview_no_show": interview_map.get("Interview No Show", 0),
@@ -404,7 +431,7 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         "joined_and_left": interview_map.get("Joined And Left", 0)
     }
 
-    # ✅ ADD THIS: Calculate total in interview stages
+    # ✅ Calculate total in interview stages
     interview_total = sum(interview_stages.values())
     interview_stages["total_interview"] = interview_total
 
@@ -412,5 +439,3 @@ def get_funnel_data(recruiter: str, from_date: str = None, to_date: str = None, 
         "mapping_stages": mapping_stages,
         "interview_stages": interview_stages
     }
-
-

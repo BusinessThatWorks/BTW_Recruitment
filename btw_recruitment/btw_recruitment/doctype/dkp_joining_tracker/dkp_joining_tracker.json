@@ -7,15 +7,16 @@
  "field_order": [
   "company_name",
   "job_opening",
+  "hiring_location",
   "recipients_name",
   "recipients_mail_id",
   "recipients_number",
-  "designation",
   "candidate_name",
   "candidate_contact",
-  "hiring_location",
-  "joining_date",
+  "designation",
+  "recruiter",
   "column_break_bjbu",
+  "joining_date",
   "interview_ref",
   "gstinuin",
   "status",
@@ -24,10 +25,8 @@
   "billing_value",
   "billing_month",
   "billing_status",
-  "recruiter",
   "remarks_by_recruiter",
-  "accountant_remarks",
-  "create_sales_invoice_btn"
+  "accountant_remarks"
  ],
  "fields": [
   {
@@ -143,17 +142,12 @@
    "fieldname": "gstinuin",
    "fieldtype": "Data",
    "label": "GSTIN/UIN"
-  },
-  {
-   "fieldname": "create_sales_invoice_btn",
-   "fieldtype": "Button",
-   "label": "Create Sales Invoice"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-20 16:17:19.161814",
+ "modified": "2026-02-26 11:23:27.438375",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Joining_Tracker",

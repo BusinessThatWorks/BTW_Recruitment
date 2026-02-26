@@ -35,7 +35,7 @@ def get_client_type_distribution(from_date=None, to_date=None):
 
 import frappe
 import json
-from frappe.utils import get_datetime, add_days
+from frappe.utils import cint  # 👈 ADD THIS IMPORT
 
 CANDIDATE_SORT_FIELDS = {
     "candidate_name", "department", "current_designation", "total_experience_years",
@@ -43,19 +43,10 @@ CANDIDATE_SORT_FIELDS = {
 }
 
 @frappe.whitelist()
-def get_candidate_table(from_date=None, to_date=None, filters=None):
+def get_candidate_table(from_date=None, to_date=None, limit=20, offset=0, filters=None):
     """
-    Candidate listing with optional inline filters support.
-    Date filter + inline column filters supported.
+    Candidate listing with pagination and optional inline filters support.
     """
-    
-    # Debug logging
-    print("=" * 60)
-    print("get_candidate_table called")
-    print(f"from_date: {from_date}")
-    print(f"to_date: {to_date}")
-    print(f"filters (raw): {filters}")
-    print("=" * 60)
     
     # Parse inline filters from JSON string
     parsed_filters = {}
@@ -67,8 +58,6 @@ def get_candidate_table(from_date=None, to_date=None, filters=None):
                 parsed_filters = {}
         elif isinstance(filters, dict):
             parsed_filters = filters
-    
-    print(f"Parsed filters: {parsed_filters}")
     
     # Build conditions
     conditions = []
@@ -83,11 +72,7 @@ def get_candidate_table(from_date=None, to_date=None, filters=None):
         conditions.append("creation <= %(to_date)s")
         values["to_date"] = to_date
     
-    # ============================================
     # INLINE FILTER MAPPING
-    # Frontend Column Name -> Database Field
-    # ============================================
-    
     filter_mapping = {
         "Candidate": "candidate_name",
         "Department": "department",
@@ -100,40 +85,60 @@ def get_candidate_table(from_date=None, to_date=None, filters=None):
     for col_name, db_field in filter_mapping.items():
         if parsed_filters.get(col_name):
             filter_value = parsed_filters[col_name]
-            param_name = db_field  # Use db_field as param name
+            param_name = db_field
             conditions.append(f"{db_field} LIKE %({param_name})s")
             values[param_name] = f"%{filter_value}%"
     
     # Build WHERE clause
     where_clause = " AND ".join(conditions) if conditions else "1=1"
     
-    print(f"WHERE clause: {where_clause}")
-    print(f"Values: {values}")
-    
-    # Execute query
-    query = f"""
-        SELECT 
-            name,
-            candidate_name,
-            department,
-            current_designation,
-            total_experience_years,
-            skills_tags,
-            key_certifications,
-            creation
+    # Get total count
+    total = frappe.db.sql(f"""
+        SELECT COUNT(*) 
         FROM `tabDKP_Candidate`
         WHERE {where_clause}
-        ORDER BY creation DESC
-    """
+    """, values)[0][0]
+    
+    # 👇 CHANGE THIS PART ONLY
+    if cint(limit) == 0:
+        # No limit - for download
+        query = f"""
+            SELECT 
+                name,
+                candidate_name,
+                department,
+                current_designation,
+                total_experience_years,
+                skills_tags,
+                key_certifications,
+                creation
+            FROM `tabDKP_Candidate`
+            WHERE {where_clause}
+            ORDER BY creation DESC
+        """
+    else:
+        # Paginated
+        query = f"""
+            SELECT 
+                name,
+                candidate_name,
+                department,
+                current_designation,
+                total_experience_years,
+                skills_tags,
+                key_certifications,
+                creation
+            FROM `tabDKP_Candidate`
+            WHERE {where_clause}
+            ORDER BY creation DESC
+            LIMIT {cint(limit)} OFFSET {cint(offset)}
+        """
     
     candidates = frappe.db.sql(query, values, as_dict=True)
-    
-    print(f"Query returned {len(candidates)} records")
-    print("=" * 60)
-    
+
     return {
         "data": candidates,
-        "total": len(candidates)
+        "total": total
     }
 from frappe.utils import cint
 import frappe
@@ -161,14 +166,6 @@ def get_jobs_table(
     sort_order=None,
     filters=None  # 👈 NEW: Inline filters parameter
 ):
-    
-    # Debug logging
-    print("=" * 60)
-    print("get_jobs_table called")
-    print(f"from_date: {from_date}, to_date: {to_date}")
-    print(f"filters (raw): {filters}")
-    print("=" * 60)
-    
     # Parse inline filters from JSON string
     parsed_filters = {}
     if filters:
@@ -282,9 +279,9 @@ def get_jobs_table(
         values
     )[0][0]
     
-    # ---------------- Data Query (No pagination for download) ----------------
-    # If filters are provided, return all matching records (for download)
-    if parsed_filters:
+    # ✅ NAYA CODE (lagao):
+    if cint(limit) == 0:
+        # Download - No limit
         data = frappe.db.sql(
             f"""
             SELECT
@@ -304,7 +301,7 @@ def get_jobs_table(
             as_dict=1
         )
     else:
-        # Normal paginated query
+        # Paginated
         data = frappe.db.sql(
             f"""
             SELECT
@@ -348,25 +345,12 @@ def get_jobs_table(
         "data": data,
         "total": total
     }
-import frappe
-import json
-
 @frappe.whitelist()
-def get_companies(from_date=None, to_date=None, filters=None):
+def get_companies(from_date=None, to_date=None, limit=20, offset=0, filters=None):
     """
-    Company listing API with optional inline filters support.
-    If no filters provided, returns all records.
+    Company listing API with pagination and optional inline filters support.
     """
-    
-    # Debug logging
-    print("=" * 60)
-    print("get_companies called")
-    print(f"from_date: {from_date}")
-    print(f"to_date: {to_date}")
-    print(f"filters (raw): {filters}")
-    print(f"filters type: {type(filters)}")
-    print("=" * 60)
-    
+
     # Parse filters from JSON string
     parsed_filters = {}
     if filters:
@@ -377,8 +361,6 @@ def get_companies(from_date=None, to_date=None, filters=None):
                 parsed_filters = {}
         elif isinstance(filters, dict):
             parsed_filters = filters
-    
-    print(f"Parsed filters: {parsed_filters}")
     
     # Build WHERE conditions
     conditions = []
@@ -393,16 +375,12 @@ def get_companies(from_date=None, to_date=None, filters=None):
         conditions.append("creation <= %(to_date)s")
         values["to_date"] = to_date
     
-    # ============================================
     # INLINE FILTER MAPPING
-    # Frontend Column Name -> Database Field
-    # ============================================
-    
     filter_mapping = {
         "Company": "customer_name",
         "Client Type": "custom_client_type",
         "Industry": "custom_industry",
-        "Location": ["custom_city", "custom_state"],  # Special: multiple fields
+        "Location": ["custom_city", "custom_state"],
         "Billing Email": "custom_billing_email",
         "Billing Phone": "custom_billing_phone",
         "Status": "custom_client_status",
@@ -414,7 +392,6 @@ def get_companies(from_date=None, to_date=None, filters=None):
         if parsed_filters.get(col_name):
             filter_value = parsed_filters[col_name]
             
-            # Special handling for Location (searches both city and state)
             if col_name == "Location" and isinstance(db_field, list):
                 location_conditions = []
                 for field in db_field:
@@ -422,14 +399,12 @@ def get_companies(from_date=None, to_date=None, filters=None):
                     values[field] = f"%{filter_value}%"
                 conditions.append(f"({' OR '.join(location_conditions)})")
             
-            # Special handling for Fee Value (remove % sign if present)
             elif col_name == "Fee Value":
                 fee_val = str(filter_value).replace("%", "").strip()
                 if fee_val:
                     conditions.append(f"{db_field} LIKE %(fee_value)s")
                     values["fee_value"] = f"%{fee_val}%"
             
-            # Standard LIKE search for other fields
             else:
                 param_name = db_field.replace("custom_", "").replace("customer_", "")
                 conditions.append(f"{db_field} LIKE %({param_name})s")
@@ -438,34 +413,58 @@ def get_companies(from_date=None, to_date=None, filters=None):
     # Build WHERE clause
     where_clause = " AND ".join(conditions) if conditions else "1=1"
     
-    print(f"WHERE clause: {where_clause}")
-    print(f"Values: {values}")
-    
-    # Execute query
-    query = f"""
-        SELECT 
-            name,
-            customer_name,
-            custom_client_type,
-            custom_industry,
-            custom_state,
-            custom_city,
-            custom_billing_email,
-            custom_billing_phone,
-            custom_client_status,
-            custom_replacement_policy_,
-            custom_standard_fee_value,
-            creation
+    # Get total count
+    total = frappe.db.sql(f"""
+        SELECT COUNT(*) 
         FROM `tabCustomer`
         WHERE {where_clause}
-        ORDER BY creation DESC
-    """
+    """, values)[0][0]
+    
+    # 👇 UPDATED: Check limit for pagination vs download
+    if cint(limit) == 0:
+        # No limit - return all (for download)
+        query = f"""
+            SELECT 
+                name,
+                customer_name,
+                custom_client_type,
+                custom_industry,
+                custom_state,
+                custom_city,
+                custom_billing_email,
+                custom_billing_phone,
+                custom_client_status,
+                custom_replacement_policy_,
+                custom_standard_fee_value,
+                creation
+            FROM `tabCustomer`
+            WHERE {where_clause}
+            ORDER BY creation DESC
+        """
+    else:
+        # Paginated query
+        query = f"""
+            SELECT 
+                name,
+                customer_name,
+                custom_client_type,
+                custom_industry,
+                custom_state,
+                custom_city,
+                custom_billing_email,
+                custom_billing_phone,
+                custom_client_status,
+                custom_replacement_policy_,
+                custom_standard_fee_value,
+                creation
+            FROM `tabCustomer`
+            WHERE {where_clause}
+            ORDER BY creation DESC
+            LIMIT {cint(limit)} OFFSET {cint(offset)}
+        """
     
     data = frappe.db.sql(query, values, as_dict=True)
-    
-    print(f"Query returned {len(data)} records")
-    print("=" * 60)
-    
+   
     # Map to expected JS field names
     for row in data:
         row["company_name"] = row.get("customer_name") or row.get("name")
@@ -479,4 +478,4 @@ def get_companies(from_date=None, to_date=None, filters=None):
         row["replacement_policy_days"] = row.get("custom_replacement_policy_")
         row["standard_fee_value"] = row.get("custom_standard_fee_value")
 
-    return {"data": data, "total": len(data)}
+    return {"data": data, "total": total}

@@ -1,283 +1,374 @@
 <!-- HR Dashboard -->
 <div class="hr-dashboard">
-    <ul class="nav nav-tabs" id="hr-dashboard-tabs">
-        <li class="nav-item">
-            <a class="nav-link active" data-tab="company">Clients</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-tab="jobs">Jobs</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-tab="candidates">Candidates</a>
-        </li>
-    </ul>
+	<ul class="nav nav-tabs" id="hr-dashboard-tabs">
+		<li class="nav-item">
+			<a class="nav-link active" data-tab="company">Clients</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link" data-tab="jobs">Jobs</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link" data-tab="candidates">Candidates</a>
+		</li>
+	</ul>
 
-    <div class="tab-content">
+	<div class="tab-content">
+		<!-- ========== COMPANY TAB ========== -->
+		<div class="tab-pane active" id="tab-company">
+			<!-- KPI Grid (2x2) + Chart Side by Side (50-50) -->
+			<div class="company-top-section">
+				<div class="company-kpi-grid" id="company-kpi-cards"></div>
+				<div class="chart-box" id="client-type-chart"></div>
+			</div>
 
-        <!-- ========== COMPANY TAB ========== -->
-        <div class="tab-pane active" id="tab-company">
-            
-            <!-- KPI Grid (2x2) + Chart Side by Side (50-50) -->
-            <div class="company-top-section">
-                <div class="company-kpi-grid" id="company-kpi-cards"></div>
-                <div class="chart-box" id="client-type-chart"></div>
+			<!-- Filter Bar -->
+			<div class="filter-bar">
+				<div class="filter-group">
+					<div class="filter-item company-from-date"></div>
+					<div class="filter-item company-to-date"></div>
+					<button class="btn btn-secondary btn-sm mt-4" id="company-clear-dates">
+						Clear
+					</button>
+				</div>
+				<button class="btn btn-primary btn-sm" id="download-company-excel">
+					Download Excel
+				</button>
+			</div>
+
+			<!-- Table -->
+			<div id="company-table"></div>
+            <div id="company-loading" class="table-loading" style="display:none;">
+                <div class="spinner"></div>
+                <div class="loading-text">Loading...</div>
             </div>
+			<!-- 👇 PAGINATION -->
+			<div class="pagination-simple" id="company-pagination">
+				<span id="company-showing-text">Showing 0-0 of 0</span>
+				<div class="pagination-btns">
+					<button class="btn btn-sm btn-default" id="company-prev-btn">
+						<i class="fa fa-chevron-left"></i> Prev
+					</button>
+					<span class="page-num"
+						>Page <strong id="company-current-page">1</strong> of
+						<span id="company-total-pages">1</span></span
+					>
+					<button class="btn btn-sm btn-default" id="company-next-btn">
+						Next <i class="fa fa-chevron-right"></i>
+					</button>
+				</div>
+			</div>
+		</div>
 
-            <!-- ✅ UPDATED: Filter Bar with Date Filters -->
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <div class="filter-item company-from-date"></div>
-                    <div class="filter-item company-to-date"></div>
-                    <button class="btn btn-secondary btn-sm mt-4" id="company-clear-dates">Clear</button>
-                </div>
-                <button class="btn btn-primary btn-sm" id="download-company-excel">Download Excel</button>
-            </div>
+		<!-- ========== JOBS TAB ========== -->
+		<div class="tab-pane" id="tab-jobs">
+			<!-- Top KPI Cards (FULL WIDTH - 2 cards spread) -->
+			<div class="kpi-row" id="job-kpi-cards"></div>
 
-            <!-- Table -->
-            <div id="company-table"></div>
-        </div>
+			<!-- Status Cards (2x2 LEFT) + Chart (RIGHT) -->
+			<div class="jobs-middle-section">
+				<div class="jobs-status-grid" id="job-status-kpi-cards"></div>
+				<div class="chart-box" id="job-status-chart"></div>
+			</div>
 
-        <!-- ========== JOBS TAB ========== -->
-        <div class="tab-pane" id="tab-jobs">
-            
-            <!-- Top KPI Cards (FULL WIDTH - 2 cards spread) -->
-            <div class="kpi-row" id="job-kpi-cards"></div>
+			<!-- Filter Bar -->
+			<div class="filter-bar">
+				<div class="filter-group">
+					<div class="filter-item jobs-from-date"></div>
+					<div class="filter-item jobs-to-date"></div>
+					<button class="btn btn-secondary btn-sm mt-4" id="jobs-clear-dates">
+						Clear
+					</button>
+				</div>
+				<button class="btn btn-primary btn-sm" id="download-jobs-excel">
+					Download Excel
+				</button>
+			</div>
 
-            <!-- Status Cards (2x2 LEFT) + Chart (RIGHT) -->
-            <div class="jobs-middle-section">
-                <div class="jobs-status-grid" id="job-status-kpi-cards"></div>
-                <div class="chart-box" id="job-status-chart"></div>
-            </div>
+			<!-- Table -->
+			<div id="jobs-table"></div>
+			<!-- Simple Pagination - Just this! -->
+			<div class="pagination-simple" id="jobs-pagination">
+				<span id="jobs-showing-text">Showing 1-20 of 156</span>
+				<div class="pagination-btns">
+					<button class="btn btn-sm btn-default" id="jobs-prev-btn">
+						<i class="fa fa-chevron-left"></i> Prev
+					</button>
+					<span class="page-num"
+						>Page <strong id="jobs-current-page">1</strong> of
+						<span id="jobs-total-pages">8</span></span
+					>
+					<button class="btn btn-sm btn-default" id="jobs-next-btn">
+						Next <i class="fa fa-chevron-right"></i>
+					</button>
+				</div>
+			</div>
+		</div>
 
-            <!-- Filter Bar -->
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <div class="filter-item jobs-from-date"></div>
-                    <div class="filter-item jobs-to-date"></div>
-                    <button class="btn btn-secondary btn-sm mt-4" id="jobs-clear-dates">Clear</button>
-                </div>
-                <button class="btn btn-primary btn-sm" id="download-jobs-excel">Download Excel</button>
-            </div>
+		<!-- ========== CANDIDATES TAB ========== -->
+		<div class="tab-pane" id="tab-candidates">
+			<!-- KPI Cards -->
+			<div class="kpi-row" id="hr-kpi-cards"></div>
 
-            <!-- Table -->
-            <div id="jobs-table"></div>
-        </div>
+			<!-- Filter Bar -->
+			<div class="filter-bar">
+				<div class="filter-group">
+					<div class="filter-item candidate-from-date"></div>
+					<div class="filter-item candidate-to-date"></div>
+					<button class="btn btn-secondary btn-sm mt-4" id="candidate-clear-dates">
+						Clear
+					</button>
+				</div>
+				<button class="btn btn-primary btn-sm" id="download-candidates-excel">
+					Download Excel
+				</button>
+			</div>
 
-        <!-- ========== CANDIDATES TAB ========== -->
-        <div class="tab-pane" id="tab-candidates">
-            
-            <!-- KPI Cards -->
-            <div class="kpi-row" id="hr-kpi-cards"></div>
+			<!-- Table -->
+			<div id="candidates-table"></div>
 
-            <!-- Filter Bar -->
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <div class="filter-item candidate-from-date"></div>
-                    <div class="filter-item candidate-to-date"></div>
-                    <button class="btn btn-secondary btn-sm mt-4" id="candidate-clear-dates">Clear</button>
-                </div>
-                <button class="btn btn-primary btn-sm" id="download-candidates-excel">Download Excel</button>
-            </div>
-
-            <!-- Table -->
-            <div id="candidates-table"></div>
-        </div>
-
-    </div>
+			<!-- 👇 PAGINATION ADD KARO -->
+			<div class="pagination-simple" id="candidates-pagination">
+				<span id="candidates-showing-text">Showing 0-0 of 0</span>
+				<div class="pagination-btns">
+					<button class="btn btn-sm btn-default" id="candidates-prev-btn">
+						<i class="fa fa-chevron-left"></i> Prev
+					</button>
+					<span class="page-num"
+						>Page <strong id="candidates-current-page">1</strong> of
+						<span id="candidates-total-pages">1</span></span
+					>
+					<button class="btn btn-sm btn-default" id="candidates-next-btn">
+						Next <i class="fa fa-chevron-right"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <style>
-/* ===== BASE ===== */
-.hr-dashboard {
-    padding: 0;
-}
-.tab-content {
-    padding-top: 20px;
-}
-.tab-pane {
-    display: none;
-}
-.tab-pane.active {
-    display: block;
-}
+	/* ===== BASE ===== */
+	.hr-dashboard {
+		padding: 0;
+	}
+	.tab-content {
+		padding-top: 20px;
+	}
+	.tab-pane {
+		display: none;
+	}
+	.tab-pane.active {
+		display: block;
+	}
 
-/* ===== TABS ===== */
-#hr-dashboard-tabs .nav-link {
-    cursor: pointer;
-    color: #666;
-    border: none;
-    border-bottom: 3px solid transparent;
-    padding: 10px 20px;
-}
-#hr-dashboard-tabs .nav-link:hover {
-    color: #2490ef;
-}
-#hr-dashboard-tabs .nav-link.active {
-    color: #2490ef;
-    border-bottom-color: #2490ef;
-}
+	/* ===== TABS ===== */
+	#hr-dashboard-tabs .nav-link {
+		cursor: pointer;
+		color: #666;
+		border: none;
+		border-bottom: 3px solid transparent;
+		padding: 10px 20px;
+	}
+	#hr-dashboard-tabs .nav-link:hover {
+		color: #2490ef;
+	}
+	#hr-dashboard-tabs .nav-link.active {
+		color: #2490ef;
+		border-bottom-color: #2490ef;
+	}
 
-/* ===== KPI CARDS ===== */
-.kpi-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: #fff;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
-    transition: box-shadow 0.2s ease;
-}
+	/* ===== KPI CARDS ===== */
+	.kpi-card {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		background: #fff;
+		border: 1px solid #e5e5e5;
+		border-radius: 8px;
+		padding: 20px;
+		text-align: center;
+		text-decoration: none;
+		color: inherit;
+		cursor: pointer;
+		transition: box-shadow 0.2s ease;
+	}
 
-.kpi-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-decoration: none;
-    color: inherit;
-}
+	.kpi-card:hover {
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		text-decoration: none;
+		color: inherit;
+	}
 
-.kpi-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #333;
-    line-height: 1;
-}
+	.kpi-value {
+		font-size: 28px;
+		font-weight: 700;
+		color: #333;
+		line-height: 1;
+	}
 
-.kpi-label {
-    font-size: 12px;
-    color: #666;
-    margin-top: 8px;
-}
+	.kpi-label {
+		font-size: 12px;
+		color: #666;
+		margin-top: 8px;
+	}
 
-/* ===== KPI ROW (Full Width - for Jobs & Candidates top cards) ===== */
-.kpi-row {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 20px;
-}
+	/* ===== KPI ROW (Full Width - for Jobs & Candidates top cards) ===== */
+	.kpi-row {
+		display: flex;
+		gap: 24px;
+		margin-bottom: 20px;
+	}
 
-.kpi-row .kpi-card {
-    flex: 1;
-}
+	.kpi-row .kpi-card {
+		flex: 1;
+	}
 
-/* ===== COMPANY TAB: 50-50 Split ===== */
-.company-top-section {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 20px;
-}
+	/* ===== COMPANY TAB: 50-50 Split ===== */
+	.company-top-section {
+		display: flex;
+		gap: 24px;
+		margin-bottom: 20px;
+	}
 
-.company-kpi-grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
+	.company-kpi-grid {
+		flex: 1;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
 
-.company-top-section .chart-box {
-    flex: 1;
-}
+	.company-top-section .chart-box {
+		flex: 1;
+	}
 
-/* ===== JOBS TAB: Status Grid + Chart (50-50) ===== */
-.jobs-middle-section {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 20px;
-}
+	/* ===== JOBS TAB: Status Grid + Chart (50-50) ===== */
+	.jobs-middle-section {
+		display: flex;
+		gap: 24px;
+		margin-bottom: 20px;
+	}
 
-.jobs-status-grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-	min-width: calc(50% - 8px);
-}
-.jobs-middle-section .chart-box {
-    flex: 1;
-	min-width: calc(50% - 8px);
-}
+	.jobs-status-grid {
+		flex: 1;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		min-width: calc(50% - 8px);
+	}
+	.jobs-middle-section .chart-box {
+		flex: 1;
+		min-width: calc(50% - 8px);
+	}
+	/* Minimal CSS */
+	.pagination-simple {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 16px;
+		background: #f8f9fa;
+		border-radius: 8px;
+		margin-top: 12px;
+	}
 
-/* ===== STATUS CARDS ===== */
-.status-card {
-    background: #fff;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    padding: 16px;
-    text-align: center;
-    transition: box-shadow 0.2s ease;
-}
+	.pagination-simple span {
+		color: #666;
+		font-size: 13px;
+	}
 
-.status-card:hover {
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
+	.pagination-btns {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
 
-.status-card-header {
-    font-size: 12px;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-}
+	.page-num {
+		font-size: 13px;
+	}
 
-.status-card-body {
-    display: flex;
-    justify-content: space-around;
-}
+	.pagination-btns .btn {
+		padding: 6px 12px;
+		font-size: 13px;
+	}
 
-.status-metric {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+	/* ===== STATUS CARDS ===== */
+	.status-card {
+		background: #fff;
+		border: 1px solid #e5e5e5;
+		border-radius: 8px;
+		padding: 16px;
+		text-align: center;
+		transition: box-shadow 0.2s ease;
+	}
 
-.metric-label {
-    font-size: 10px;
-    color: #999;
-    margin-bottom: 4px;
-}
+	.status-card:hover {
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+	}
 
-.metric-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: #333;
-}
+	.status-card-header {
+		font-size: 12px;
+		font-weight: 600;
+		color: #666;
+		margin-bottom: 12px;
+		text-transform: uppercase;
+	}
 
-/* ===== CHARTS ===== */
-.chart-box {
-    background: #fff;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    padding: 16px;
-    min-height: 250px;
-}
+	.status-card-body {
+		display: flex;
+		justify-content: space-around;
+	}
 
-/* ===== FILTER BAR ===== */
-.filter-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    margin-bottom: 16px;
-}
+	.status-metric {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
 
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+	.metric-label {
+		font-size: 10px;
+		color: #999;
+		margin-bottom: 4px;
+	}
 
-.filter-item {
-    min-width: 140px;
-}
+	.metric-value {
+		font-size: 20px;
+		font-weight: 700;
+		color: #333;
+	}
 
-.filter-item .frappe-control,
-.filter-item .form-group {
-    margin-bottom: 0 !important;
-}
+	/* ===== CHARTS ===== */
+	.chart-box {
+		background: #fff;
+		border: 1px solid #e5e5e5;
+		border-radius: 8px;
+		padding: 16px;
+		min-height: 250px;
+	}
+
+	/* ===== FILTER BAR ===== */
+	.filter-bar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 16px;
+		background: #f8f9fa;
+		border-radius: 6px;
+		margin-bottom: 16px;
+	}
+
+	.filter-group {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.filter-item {
+		min-width: 140px;
+	}
+
+	.filter-item .frappe-control,
+	.filter-item .form-group {
+		margin-bottom: 0 !important;
+	}
+    
 </style>
