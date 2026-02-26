@@ -1,39 +1,6 @@
 <div class="recruiter-dashboard">
 	<div class="recruiter-dashboard-body">
-		<!-- ✅ UPDATED FILTER ROW - Removed Apply Button -->
-		<div class="filter-row mb-3">
-			<div class="filter-group">
-				<!-- Recruiter Filter -->
-				<div class="filter-item">
-					<label class="filter-label">Filters</label>
-					<div class="recruiter-control-slot"></div>
-				</div>
-
-				<!-- From Date -->
-				<div class="filter-item">
-					<!-- <label class="filter-label">From Date</label> -->
-					<div class="from-date-slot"></div>
-				</div>
-
-				<!-- To Date -->
-				<div class="filter-item">
-					<!-- <label class="filter-label">To Date</label> -->
-					<div class="to-date-slot"></div>
-				</div>
-
-				<!-- Status Filter -->
-				<div class="filter-item">
-					<!-- <label class="filter-label">Status</label> -->
-					<div class="status-slot"></div>
-				</div>
-
-				<!-- Only Clear Button -->
-				<div class="filter-item filter-btn-wrap">
-					<label class="filter-label">&nbsp;</label>
-					<button class="btn btn-sm btn-secondary recruiter-clear mb-2">Clear</button>
-				</div>
-			</div>
-		</div>
+		
 
 		<div class="row mb-3 recruiter-kpis mt-4">
 			<div class="col-md-2">
@@ -115,108 +82,275 @@
 				</div>
 			</div>
 		</div>
+		<!-- ✅ FILTER ROW -->
+<div class="filter-row mb-3">
+    <div class="filter-group">
+        <!-- Recruiter Filter -->
+        <div class="filter-item">
+            <label class="filter-label">Filters</label>
+            <div class="recruiter-control-slot"></div>
+        </div>
 
+        <!-- From Date -->
+        <div class="filter-item">
+            <div class="from-date-slot"></div>
+        </div>
+
+        <!-- To Date -->
+        <div class="filter-item">
+            <div class="to-date-slot"></div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-item">
+            <div class="status-slot"></div>
+        </div>
+
+        <!-- Clear Button -->
+        <div class="filter-item mb-2">
+            <button class="btn btn-sm btn-secondary recruiter-clear">Clear</button>
+        </div>
+
+        <!-- Spacer - pushes Excel to right -->
+        <div class="flex-grow-1"></div>
+
+        <!-- Excel Button - Right side -->
+        <div class="filter-item mb-2">
+            <button class="btn btn-sm btn-primary" id="download-recruiter-excel">
+                <i class="fa fa-download mr-2"></i>Download Excel
+            </button>
+        </div>
+    </div>
+</div>
 		<div class="recruiter-table-container">
-			<table class="table table-bordered table-sm recruiter-table">
-				<thead>
-					<tr>
-						<th>Job Opening</th>
-						<th>Company</th>
-						<th>Designation</th>
-						<th>Status</th>
-						<th>Positions</th>
-						<th>Candidates Mapped</th>
-						<th>Joined</th>
-					</tr>
-				</thead>
-				<tbody></tbody>
-			</table>
+			<div id="recruiter-openings-table"></div>
+		</div>
 
-			<div class="recruiter-pagination d-flex justify-content-between align-items-center">
-				<div class="recruiter-page-info text-muted"></div>
-				<div class="recruiter-page-buttons">
-					<button class="btn btn-sm btn-secondary recruiter-prev">Previous</button>
-					<button class="btn btn-sm btn-secondary recruiter-next">Next</button>
-				</div>
+		<div class="recruiter-pagination d-flex justify-content-between align-items-center">
+			<div class="recruiter-page-info text-muted"></div>
+			<div class="recruiter-page-buttons">
+				<button class="btn btn-sm btn-secondary recruiter-prev">Previous</button>
+				<button class="btn btn-sm btn-secondary recruiter-next">Next</button>
 			</div>
 		</div>
 	</div>
 </div>
 
 <style>
-/* ✅ Horizontal Bar Chart Styles */
-.h-bar-row {
+	/* ✅ IMPROVED Filter Row Styles */
+.filter-row {
+    margin-bottom: 16px;
+}
+
+.filter-group {
+    background: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    margin-bottom: 10px;
     gap: 12px;
 }
 
-.h-bar-label {
-    width: 130px;
+/* Filter Icon */
+.filter-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Control widths */
+.recruiter-control-slot {
+    min-width: 180px;
+}
+
+.from-date-slot,
+.to-date-slot {
+    min-width: 140px;
+}
+
+.status-slot {
+    min-width: 130px;
+}
+
+/* Remove extra margins from Frappe controls */
+.filter-item .frappe-control {
+    margin-bottom: 0 !important;
+}
+
+.filter-item .form-group {
+    margin-bottom: 0 !important;
+}
+
+.filter-item input,
+.filter-item select {
+    height: 36px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+/* Spacer */
+.filter-spacer {
+    flex: 1;
+    min-width: 20px;
+}
+
+/* Buttons */
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+	
+}
+
+.filter-buttons .btn {
+    height: 36px;
+    padding: 0 14px;
     font-size: 13px;
     font-weight: 500;
-    color: #374151;
-    text-align: right;
-    flex-shrink: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.h-bar-track {
-    flex: 1;
-    background: #f3f4f6;
-    border-radius: 6px;
-    height: 32px;
-    overflow: hidden;
-}
-
-.h-bar {
-    height: 100%;
     border-radius: 6px;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding-right: 12px;
-    min-width: 45px;
-    transition: all 0.3s ease;
+    gap: 6px;
+
 }
 
-.h-bar-value {
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+.filter-buttons .btn i {
+    font-size: 12px;
 }
 
-.h-bar-percent {
-    width: 50px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #6b7280;
-    text-align: right;
+.filter-buttons .btn-outline-secondary {
+    border-color: #dee2e6;
+    color: #6c757d;
 }
 
-/* Hover effect */
-.h-bar-row:hover .h-bar {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+.filter-buttons .btn-outline-secondary:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+    color: #495057;
 }
 
-.h-bar-row:hover .h-bar-label {
-    color: #111827;
+.filter-buttons .btn-primary {
+    background: #2490ef;
+    border-color: #2490ef;
 }
 
-/* First row (Total) highlight */
-.h-bar-row:first-child .h-bar-label {
-    font-weight: 600;
-    color: #111827;
+.filter-buttons .btn-primary:hover {
+    background: #1a7fd4;
+    border-color: #1a7fd4;
 }
 
-.h-bar-row:first-child .h-bar {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Responsive */
+@media (max-width: 992px) {
+    .filter-spacer {
+        display: none;
+    }
+    
+    .filter-group {
+        justify-content: flex-start;
+    }
+    
+    .filter-buttons {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid #f0f0f0;
+    }
 }
+	/* ✅ Horizontal Bar Chart Styles */
+	.h-bar-row {
+		display: flex;
+		align-items: center;
+		margin-bottom: 10px;
+		gap: 12px;
+	}
+
+	.h-bar-label {
+		width: 130px;
+		font-size: 13px;
+		font-weight: 500;
+		color: #374151;
+		text-align: right;
+		flex-shrink: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.h-bar-track {
+		flex: 1;
+		background: #f3f4f6;
+		border-radius: 6px;
+		height: 32px;
+		overflow: hidden;
+	}
+
+	.h-bar {
+		height: 100%;
+		border-radius: 6px;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		padding-right: 12px;
+		min-width: 45px;
+		transition: all 0.3s ease;
+	}
+
+	.h-bar-value {
+		color: white;
+		font-size: 13px;
+		font-weight: 600;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	.h-bar-percent {
+		width: 50px;
+		font-size: 13px;
+		font-weight: 500;
+		color: #6b7280;
+		text-align: right;
+	}
+
+	/* Hover effect */
+	.h-bar-row:hover .h-bar {
+		filter: brightness(1.1);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.h-bar-row:hover .h-bar-label {
+		color: #111827;
+	}
+
+	/* First row (Total) highlight */
+	.h-bar-row:first-child .h-bar-label {
+		font-weight: 600;
+		color: #111827;
+	}
+
+	.h-bar-row:first-child .h-bar {
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
 	/* ✅ Filter Group - Fixed Gap */
 	.filter-group {
 		background: #fff;
@@ -277,14 +411,9 @@
 		font-size: 13px;
 	}
 
-	/* Clear button alignment */
+	/* Clear + Download button alignment */
 	.filter-btn-wrap {
 		padding-bottom: 1px;
-	}
-
-	.recruiter-clear {
-		height: 32px;
-		min-width: 70px;
 	}
 
 	/* ✅ KPI Cards */
@@ -321,6 +450,10 @@
 		padding: 15px;
 		border-radius: 10px;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+	}
+
+	.recruiter-pagination {
+		margin-top: 12px;
 	}
 
 	/* Status Badges */

@@ -1,3 +1,33 @@
+function download_excel_from_rows(filename, headers, rows) {
+	let html = "<table><thead><tr>";
+	headers.forEach((h) => {
+		const safeHeader = frappe.utils?.escape_html?.(h) || h;
+		html += `<th>${safeHeader}</th>`;
+	});
+	html += "</tr></thead><tbody>";
+
+	rows.forEach((row) => {
+		html += "<tr>";
+		row.forEach((cell) => {
+			const text = cell == null ? "" : String(cell);
+			const safeText = frappe.utils?.escape_html?.(text) || text;
+			html += `<td>${safeText}</td>`;
+		});
+		html += "</tr>";
+	});
+	html += "</tbody></table>";
+
+	const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename || "export.xls";
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
 frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
@@ -16,7 +46,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		to_date: null,
 		status: null,
 		page: 1,
-		page_length: 10,
+		page_length: 20,
 		total: 0,
 	};
 
@@ -24,11 +54,25 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// DOM REFERENCES
 	// =============================
 	const $body = $(page.body);
-	const $table = $body.find(".recruiter-table");
-	const $tbody = $table.find("tbody");
+	const $openings_container = $body.find("#recruiter-openings-table");
 	const $page_info = $body.find(".recruiter-page-info");
 	const $btn_prev = $body.find(".recruiter-prev");
 	const $btn_next = $body.find(".recruiter-next");
+
+	// DataTable state
+	let openingsDataTable = null;
+	let openingsInlineFilters = {};
+	let openingsFilterTimeout = null;
+	const openingsColumns = [
+		"#",
+		"Job Opening",
+		"Company",
+		"Designation",
+		"Status",
+		"Positions",
+		"Candidates Mapped",
+		"Joined",
+	];
 
 	// KPI elements
 	const $kpi_openings = $body.find(".kpi-openings");
@@ -419,6 +463,7 @@ function render_horizontal_bars($container, stages) {
 				status: state.status,
 				limit: state.page_length,
 				offset: offset,
+				filters: JSON.stringify(openingsInlineFilters || {}),
 			},
 			freeze: true,
 			freeze_message: __("Loading data..."),
@@ -427,44 +472,127 @@ function render_horizontal_bars($container, stages) {
 				const rows = resp.data || [];
 				state.total = resp.total || 0;
 
-				render_rows(rows);
+				render_openings_table(rows);
 				update_pagination(state.total);
 			},
 		});
 	}
 
 	// =============================
-	// TABLE RENDER
+	// DATATABLE RENDER
 	// =============================
-	function render_rows(rows) {
-		$tbody.empty();
+	function render_openings_table(rows) {
+		$openings_container.empty();
 
 		if (!rows.length) {
-			$tbody.append(`<tr><td colspan="7" class="text-center text-muted">No data</td></tr>`);
+			$openings_container.html(
+				'<p class="text-muted text-center mb-0">No openings found</p>'
+			);
+			openingsDataTable = null;
 			return;
 		}
 
-		rows.forEach((row) => {
-			const url = `/app/dkp_job_opening/${row.job_opening}`;
+		const startIndex = (state.page - 1) * state.page_length;
 
-			let status_class = "";
-			if (row.status === "Open") status_class = "badge badge-success";
-			else if (row.status === "Closed – Hired") status_class = "badge badge-info";
-			else if (row.status === "On Hold") status_class = "badge badge-warning";
-			else if (row.status === "Closed – Cancelled") status_class = "badge badge-danger";
+		const columns = [
+			{ name: "#", width: 1 },
+			{
+				name: "Job Opening",
+				format: (value, row, col, rowIndex) => {
+					const name = rows[rowIndex]?.job_opening || value || "";
+					const url = `/app/dkp_job_opening/${name}`;
+					const label = frappe.utils.escape_html(name || "-");
+					return `<a href="${url}" target="_blank" style="color:#2490ef;font-weight:600;">${label}</a>`;
+				},
+			},
+			{ name: "Company" },
+			{ name: "Designation" },
+			{
+				name: "Status",
+				format: (value) => {
+					const status = value || "";
+					let status_class = "";
+					if (status === "Open") status_class = "badge badge-success";
+					else if (status === "Closed – Hired") status_class = "badge badge-info";
+					else if (status === "On Hold") status_class = "badge badge-warning";
+					else if (status === "Closed – Cancelled")
+						status_class = "badge badge-danger";
 
-			$tbody.append(`
-                <tr>
-                    <td><a href="${url}" target="_blank">${frappe.utils.escape_html(row.job_opening)}</a></td>
-                    <td>${row.company_name || ""}</td>
-                    <td>${row.designation || ""}</td>
-                    <td><span class="${status_class}">${row.status || ""}</span></td>
-                    <td class="text-right">${row.number_of_positions || 0}</td>
-                    <td class="text-right">${row.total_candidates || 0}</td>
-                    <td class="text-right">${row.joined_candidates || 0}</td>
-                </tr>
-            `);
+					return `<span class="${status_class}">${frappe.utils.escape_html(
+						status
+					)}</span>`;
+				},
+			},
+			{ name: "Positions" },
+			{ name: "Candidates Mapped" },
+			{ name: "Joined" },
+		];
+
+		const tableData = rows.map((row, index) => [
+			startIndex + index + 1,
+			row.job_opening || "",
+			row.company_name || "",
+			row.designation || "",
+			row.status || "",
+			row.number_of_positions || 0,
+			row.total_candidates || 0,
+			row.joined_candidates || 0,
+		]);
+
+		openingsDataTable = new frappe.DataTable($openings_container[0], {
+			columns,
+			data: tableData,
+			inlineFilters: true,
+			noDataMessage: __("No openings found"),
+			layout: "fluid",
+			serialNoColumn: false,
 		});
+
+		setTimeout(() => {
+			restore_openings_filters();
+			attach_openings_filter_listeners();
+		}, 100);
+	}
+
+	// =============================
+	// INLINE FILTER HANDLING
+	// =============================
+	function restore_openings_filters() {
+		if (!openingsDataTable) return;
+		if (Object.keys(openingsInlineFilters || {}).length === 0) return;
+
+		$("#recruiter-openings-table .dt-filter").each(function (index) {
+			const colName = openingsColumns[index];
+			if (openingsInlineFilters[colName]) {
+				$(this).val(openingsInlineFilters[colName]);
+			}
+		});
+	}
+
+	function attach_openings_filter_listeners() {
+		$("#recruiter-openings-table .dt-filter")
+			.off("input.backend")
+			.on("input.backend", function () {
+				clearTimeout(openingsFilterTimeout);
+
+				openingsFilterTimeout = setTimeout(() => {
+					const filters = {};
+
+					$("#recruiter-openings-table .dt-filter").each(function (index) {
+						const value = $(this).val()?.trim();
+						const colName = openingsColumns[index];
+						if (value && colName !== "#") {
+							filters[colName] = value;
+						}
+					});
+
+					console.log("Recruiter openings inline filters:", filters);
+
+					state.page = 1;
+					openingsInlineFilters = filters;
+					load_data();
+				}, 500);
+			});
 	}
 
 	// =============================
@@ -493,9 +621,74 @@ function render_horizontal_bars($container, stages) {
 	}, 300);
 
 	// =============================
+	// EXCEL DOWNLOAD (single button)
+	// =============================
+	function download_openings_excel() {
+		const filters_payload = openingsInlineFilters || {};
+
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiter_openings",
+			args: {
+				recruiter: state.recruiter || "",
+				from_date: state.from_date,
+				to_date: state.to_date,
+				status: state.status,
+				limit: 0, // 0 => get all for export
+				offset: 0,
+				filters: JSON.stringify(filters_payload),
+			},
+			callback(r) {
+				const resp = r.message || {};
+				const rows = resp.data || [];
+
+				if (!rows.length) {
+					frappe.msgprint(__("No data to download."));
+					return;
+				}
+
+				const headers = [
+					"#",
+					"Job Opening",
+					"Company",
+					"Designation",
+					"Status",
+					"Positions",
+					"Candidates Mapped",
+					"Joined",
+				];
+
+				const data_rows = rows.map((row, index) => [
+					index + 1,
+					row.job_opening || "",
+					row.company_name || "",
+					row.designation || "",
+					row.status || "",
+					row.number_of_positions || 0,
+					row.total_candidates || 0,
+					row.joined_candidates || 0,
+				]);
+
+				download_excel_from_rows("recruiter_openings.xls", headers, data_rows);
+
+				frappe.show_alert({
+					message: __("Downloaded {0} openings", [data_rows.length]),
+					indicator: "green",
+				});
+			},
+		});
+	}
+
+	$body
+		.find("#download-recruiter-excel")
+		.off("click")
+		.on("click", function () {
+			download_openings_excel();
+		});
+
+	// =============================
 	// INITIAL STATE
 	// =============================
 	reset_funnels();
-    refresh_dashboard(); 
+	refresh_dashboard();
 
 };

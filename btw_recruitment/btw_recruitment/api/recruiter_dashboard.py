@@ -1,3 +1,5 @@
+import json
+
 import frappe
 from frappe.utils import cint, getdate
 
@@ -130,7 +132,8 @@ def get_recruiter_openings(
     to_date: str = None, 
     status: str = None,
     limit: int = 20, 
-    offset: int = 0
+    offset: int = 0,
+    filters: str | dict | None = None,
 ):
     """
     Paginated job openings with optional filters
@@ -138,6 +141,17 @@ def get_recruiter_openings(
     """
     limit = cint(limit)
     offset = cint(offset)
+
+    # Parse inline filters (from DataTable)
+    parsed_filters: dict[str, str] = {}
+    if filters:
+        if isinstance(filters, str):
+            try:
+                parsed_filters = json.loads(filters)
+            except Exception:
+                parsed_filters = {}
+        elif isinstance(filters, dict):
+            parsed_filters = filters
 
     # Build WHERE conditions
     conditions = "WHERE jo.status IN ('Open', 'Closed – Hired')"
@@ -165,6 +179,22 @@ def get_recruiter_openings(
         conditions += " AND jo.creation <= %(to_date)s"
         params["to_date"] = to_date
 
+    # Inline filter mapping: frontend column -> DB field
+    filter_mapping = {
+        "Job Opening": "jo.name",
+        "Company": "jo.company_name",
+        "Designation": "jo.designation",
+        "Status": "jo.status",
+        "Positions": "jo.number_of_positions",
+    }
+
+    for col_name, db_field in filter_mapping.items():
+        value = (parsed_filters or {}).get(col_name)
+        if value:
+            key = f"f_{db_field.replace('.', '_')}"
+            conditions += f" AND {db_field} LIKE %({key})s"
+            params[key] = f"%{value}%"
+
     # Get total count
     total = frappe.db.sql(
         f"""
@@ -179,27 +209,45 @@ def get_recruiter_openings(
     if not total:
         return {"data": [], "total": 0}
 
-    # Get paginated openings
-    params["limit"] = limit
-    params["offset"] = offset
+    # Get openings (paginated or full for export)
+    if limit == 0:
+        openings = frappe.db.sql(
+            f"""
+            SELECT DISTINCT
+                jo.name,
+                jo.company_name,
+                jo.designation,
+                jo.status,
+                jo.number_of_positions
+            FROM `tabDKP_Job_Opening` jo
+            {recruiter_join}
+            {conditions}
+            ORDER BY jo.creation DESC
+            """,
+            params,
+            as_dict=True,
+        )
+    else:
+        params["limit"] = limit
+        params["offset"] = offset
 
-    openings = frappe.db.sql(
-        f"""
-        SELECT DISTINCT
-            jo.name,
-            jo.company_name,
-            jo.designation,
-            jo.status,
-            jo.number_of_positions
-        FROM `tabDKP_Job_Opening` jo
-        {recruiter_join}
-        {conditions}
-        ORDER BY jo.creation DESC
-        LIMIT %(limit)s OFFSET %(offset)s
-        """,
-        params,
-        as_dict=True,
-    )
+        openings = frappe.db.sql(
+            f"""
+            SELECT DISTINCT
+                jo.name,
+                jo.company_name,
+                jo.designation,
+                jo.status,
+                jo.number_of_positions
+            FROM `tabDKP_Job_Opening` jo
+            {recruiter_join}
+            {conditions}
+            ORDER BY jo.creation DESC
+            LIMIT %(limit)s OFFSET %(offset)s
+            """,
+            params,
+            as_dict=True,
+        )
 
     opening_names = [o["name"] for o in openings]
     if not opening_names:
