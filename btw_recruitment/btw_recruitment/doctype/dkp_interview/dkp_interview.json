@@ -83,7 +83,7 @@
    "label": "Remarks for Invoice"
   },
   {
-   "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
+   "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\" || doc.stage==\"Joined And Left\";",
    "fieldname": "invoice_ref",
    "fieldtype": "Link",
    "label": "Invoice Ref",
@@ -93,7 +93,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-20 13:42:51.961274",
+ "modified": "2026-02-27 15:12:56.166651",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",
