@@ -669,4 +669,39 @@
 		color: white;
 		box-shadow: 0 2px 8px rgba(235, 51, 73, 0.25);
 	}
+	/* ===== ZERO/INACTIVE STAGE STYLES ===== */
+
+/* ===== ZERO/INACTIVE STAGE STYLES ===== */
+
+.h-bar-row.zero-stage {
+    opacity: 0.6;
+}
+
+.h-bar.zero-stage {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%) !important;
+    box-shadow: none !important;
+    min-width: 30px; /* Ensure "0" text fits */
+}
+
+/* ✅ For very small bars - show value outside the bar */
+.h-bar.zero-stage .h-bar-value {
+    color: #9ca3af !important;
+    position: relative;
+    left: 5px; /* Push text slightly outside if bar is too small */
+}
+
+.h-bar-row.zero-stage .h-bar-label {
+    color: #9ca3af;
+}
+
+.h-bar-row.zero-stage .h-bar-percent {
+    color: #9ca3af;
+}
+
+/* Separator before zero stages */
+.h-bar-row.zero-stage:first-of-type {
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px dashed #d1d5db;
+}
 </style>

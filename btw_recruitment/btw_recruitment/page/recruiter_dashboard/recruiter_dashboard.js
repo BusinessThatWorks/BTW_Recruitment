@@ -282,33 +282,17 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// ✅ FUNNEL FUNCTIONS (Two Separate Funnels)
 	// =============================
 	function reset_funnels() {
-		const empty_html = `
-            <div class="funnel-empty">
-                <div class="funnel-empty-icon">📊</div>
-                <div class="funnel-empty-text">Select a recruiter</div>
-            </div>
-        `;
-		$mapping_funnel.html(empty_html);
-		$interview_funnel.html(empty_html);
-	}
+    const empty_html = `
+        <div class="funnel-empty">
+            <div class="funnel-empty-icon">📊</div>
+            <div class="funnel-empty-text">Select a recruiter</div>
+        </div>
+    `;
+    $mapping_funnel.html(empty_html);
+    $interview_funnel.html(empty_html);
+}
 
 	function load_funnels() {
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_funnel_data",
-        args: {
-            recruiter: state.recruiter || "",
-            from_date: state.from_date,
-            to_date: state.to_date,
-            status: state.status,
-        },
-        callback(r) {
-            const data = r.message || {};
-            render_mapping_funnel(data.mapping_stages || {});
-            render_interview_funnel(data.interview_stages || {});
-        },
-    });
-}
-function load_funnels() {
     frappe.call({
         method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_funnel_data",
         args: {
@@ -327,25 +311,22 @@ function load_funnels() {
 
 function render_mapping_funnel(data) {
     const stages = [
-        { name: "Total Mapped", value: data.total_mapped || 0, color: "#8b5cf6" },
+        { name: "Total Mapped", value: data.total_mapped || 0, color: "#8b5cf6", isFirst: true },
         { name: "No Response", value: data.no_response || 0, color: "#6b7280" },
         { name: "Submitted To Client", value: data.submitted_to_client || 0, color: "#ec4899" },
         { name: "Client Rejected", value: data.client_rejected || 0, color: "#ef4444" },
         { name: "Schedule Interview", value: data.schedule_interview || 0, color: "#3b82f6" },
     ];
 
-    // ✅ Filter: First stage always + others only if value > 0
-    const filtered = stages.filter((s, i) => i === 0 || s.value > 0);
-
-    // ✅ Sort: First stays, rest descending
-    const sorted = sortFunnelStages(filtered);
+    // ✅ Sort and separate: active stages first, then zero stages
+    const sorted = sortFunnelStagesWithZeros(stages);
 
     render_horizontal_bars($mapping_funnel, sorted);
 }
 
 function render_interview_funnel(data) {
     const stages = [
-        { name: "Total Interview", value: data.total_interview || 0, color: "#8b5cf6" },
+        { name: "Total Interview", value: data.total_interview || 0, color: "#8b5cf6", isFirst: true },
         { name: "No Show", value: data.interview_no_show || 0, color: "#f97316" },
         { name: "Selected", value: data.selected_for_offer || 0, color: "#22c55e" },
         { name: "Rejected", value: data.rejected_by_client || 0, color: "#ef4444" },
@@ -356,26 +337,34 @@ function render_interview_funnel(data) {
         { name: "Left", value: data.joined_and_left || 0, color: "#f59e0b" },
     ];
 
-    // ✅ Filter: First stage always + others only if value > 0
-    const filtered = stages.filter((s, i) => i === 0 || s.value > 0);
-
-    // ✅ Sort: First stays, rest descending
-    const sorted = sortFunnelStages(filtered);
+    // ✅ Sort and separate: active stages first, then zero stages
+    const sorted = sortFunnelStagesWithZeros(stages);
 
     render_horizontal_bars($interview_funnel, sorted);
 }
 
-// ✅ Sort function - First stays first, rest descending
-function sortFunnelStages(stages) {
+// ✅ NEW Sort function - Active stages first (sorted desc), then zero stages at bottom
+function sortFunnelStagesWithZeros(stages) {
     if (stages.length <= 1) return stages;
 
-    const first = stages[0];
-    const rest = stages.slice(1).sort((a, b) => b.value - a.value);
+    const first = stages[0]; // Always keep first stage at top
+    const rest = stages.slice(1);
+    
+    // Separate active (value > 0) and zero stages
+    const activeStages = rest.filter(s => s.value > 0);
+    const zeroStages = rest.filter(s => s.value === 0);
+    
+    // Sort active stages by value descending
+    activeStages.sort((a, b) => b.value - a.value);
+    
+    // Mark zero stages as inactive for styling
+    zeroStages.forEach(s => s.isZero = true);
 
-    return [first, ...rest];
+    return [first, ...activeStages, ...zeroStages];
 }
 
-// ✅ Horizontal Bars Renderer
+// ✅ Updated Horizontal Bars Renderer with greyed out zero stages
+// ✅ Updated Horizontal Bars Renderer with greyed out zero stages
 function render_horizontal_bars($container, stages) {
     $container.empty();
 
@@ -391,42 +380,37 @@ function render_horizontal_bars($container, stages) {
         return;
     }
 
-    // ✅ Max value for width calculation
-    const maxValue = Math.max(...stages.map(s => s.value));
+    // ✅ Max value for width calculation (only from non-zero stages)
+    const nonZeroValues = stages.filter(s => s.value > 0).map(s => s.value);
+    const maxValue = Math.max(...nonZeroValues, 1);
 
     stages.forEach((stage) => {
         const percentage = ((stage.value / total) * 100).toFixed(1);
         
-        // ✅ Width based on max value - same value = same width!
-        const width = (stage.value / maxValue) * 100;
+        const isZero = stage.isZero || stage.value === 0;
+        
+        // ✅ CHANGED: Smaller width for zero stages (5% instead of 15%)
+        const width = isZero ? 5 : (stage.value / maxValue) * 100;
+        
+        const bgColor = isZero ? '#d1d5db' : stage.color;
+        const textColor = isZero ? '#9ca3af' : '#ffffff';
+        const zeroClass = isZero ? 'zero-stage' : '';
 
         const $bar = $(`
-            <div class="h-bar-row">
-                <div class="h-bar-label">${stage.name}</div>
+            <div class="h-bar-row ${zeroClass}">
+                <div class="h-bar-label" style="${isZero ? 'color: #9ca3af;' : ''}">${stage.name}</div>
                 <div class="h-bar-track">
-                    <div class="h-bar" style="width: ${width}%; background: ${stage.color};">
-                        <span class="h-bar-value">${stage.value}</span>
+                    <div class="h-bar ${zeroClass}" style="width: ${width}%; background: ${bgColor};">
+                        <span class="h-bar-value" style="color: ${textColor};">${stage.value}</span>
                     </div>
                 </div>
-                <div class="h-bar-percent">${percentage}%</div>
+                <div class="h-bar-percent" style="${isZero ? 'color: #9ca3af;' : ''}">${percentage}%</div>
             </div>
         `);
 
         $container.append($bar);
     });
 }
-
-// ✅ Reset funnels
-// function reset_funnels() {
-//     const empty_html = `
-//         <div class="funnel-empty">
-//             <div class="funnel-empty-icon">📊</div>
-//             <div class="funnel-empty-text">Select filters to view data</div>
-//         </div>
-//     `;
-//     $mapping_funnel.html(empty_html);
-//     $interview_funnel.html(empty_html);
-// }
 
 	// =============================
 	// PAGINATION BUTTONS
