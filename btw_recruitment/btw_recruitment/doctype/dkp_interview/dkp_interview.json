@@ -74,7 +74,7 @@
    "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
    "fieldname": "offered_amount",
    "fieldtype": "Int",
-   "label": "Offered Amount"
+   "label": "Offered Amount Yearly"
   },
   {
    "depends_on": "eval: doc.stage==\"Joined\" || doc.stage==\"Offered\" || doc.stage==\"Selected For Offer\" || doc.stage==\"Offer Accepted\";",
@@ -93,7 +93,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-27 15:12:56.166651",
+ "modified": "2026-03-02 16:49:35.926549",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

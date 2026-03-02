@@ -1,5 +1,10 @@
+import json
+
 import frappe
 from frappe.utils import today, getdate, add_days
+from frappe.utils.xlsxutils import make_xlsx
+from frappe.utils import formatdate
+from datetime import datetime, time
 
 
 @frappe.whitelist()
@@ -156,8 +161,6 @@ def get_interview_dashboard_data(from_date=None, to_date=None,search=None, limit
 		"data": result,
 		"total": total
 	}
-from datetime import datetime, time
-
 def format_time_12h(t):
 	"""
 	Convert time / datetime.time / string like '15:30:25.554642' to '03:30 PM'
@@ -348,43 +351,88 @@ def format_time_12h(t):
 #         "data": data,
 #         "total": total
 #     }
-import frappe
+def format_time_12h(time_str):
+    """Convert HH:MM:SS to 12-hour format"""
+    if not time_str:
+        return None
+    try:
+        from datetime import datetime
+        time_obj = datetime.strptime(str(time_str), "%H:%M:%S")
+        return time_obj.strftime("%I:%M %p")
+    except:
+        return str(time_str)
+
 
 @frappe.whitelist()
-def get_interview_details(from_date=None, to_date=None, search=None, limit=20, offset=0):
+def get_interview_details(from_date=None, to_date=None, search=None, limit=20, offset=0, filters=None):
     """
-    Get detailed interview information with pagination:
-    - Interview date, time
-    - Candidate name with link
-    - Job opening
-    - Job Application stage + substage
-    - Interview stage
-    - Interviewer email
-    - Feedback
-    Supports:
-    - Date filtering (from_date, to_date)
-    - Search filtering by Job Opening only
+    Get detailed interview information with pagination
     """
+    try:
+        limit = int(limit)
+        offset = int(offset)
+    except (ValueError, TypeError):
+        limit = 20
+        offset = 0
 
-    limit = int(limit)
-    offset = int(offset)
-    
     values = []
 
-    # Build date condition
+    # Inline filters (from DataTable / Excel export)
+    filters_dict = {}
+    if filters:
+        if isinstance(filters, str):
+            try:
+                filters_dict = json.loads(filters) or {}
+            except Exception:
+                filters_dict = {}
+        elif isinstance(filters, dict):
+            filters_dict = filters or {}
+
+    # Date condition
     date_condition = ""
     if from_date and to_date:
         date_condition = " AND ic.interview_date BETWEEN %s AND %s"
         values.extend([from_date, to_date])
+    elif from_date:
+        date_condition = " AND ic.interview_date >= %s"
+        values.append(from_date)
+    elif to_date:
+        date_condition = " AND ic.interview_date <= %s"
+        values.append(to_date)
 
-    # Build search condition (Job Opening only)
+    # Search condition (top bar search)
     search_condition = ""
     if search:
         search_like = f"%{search}%"
-        search_condition = " AND LOWER(i.job_opening) LIKE LOWER(%s)"
-        values.append(search_like)
+        search_condition = """
+            AND (
+                LOWER(i.job_opening) LIKE LOWER(%s) 
+                OR LOWER(c.candidate_name) LIKE LOWER(%s)
+            )
+        """
+        values.extend([search_like, search_like])
 
-    # Base FROM and JOINs
+    # Column-level filters mapping (DataTable headers -> DB fields)
+    filter_condition = ""
+    filter_mapping = {
+        "Job Opening": "i.job_opening",
+        "Candidate": "c.candidate_name",
+        "Mapping Stage": "jc.stage",
+        "Interview Stage Main": "i.stage",
+        "Interview Stage": "ic.interview_stage",
+        # We deliberately skip "Interview Date" and "Time" here because
+        # the DataTable shows user-formatted values that don't match DB format.
+    }
+
+    for col_label, db_field in filter_mapping.items():
+        raw_val = (filters_dict.get(col_label) or "").strip()
+        if not raw_val:
+            continue
+
+        # Use LIKE for flexible matching
+        filter_condition += f" AND {db_field} LIKE %s"
+        values.append(f"%{raw_val}%")
+
     base_from_where = """
         FROM `tabDKP_Interview_Child` ic
         INNER JOIN `tabDKP_Interview` i ON i.name = ic.parent
@@ -395,12 +443,12 @@ def get_interview_details(from_date=None, to_date=None, search=None, limit=20, o
         WHERE 1=1
     """
 
-    # Total count query
-    total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition + search_condition
+    # Total count
+    total_query = "SELECT COUNT(*) as count " + base_from_where + date_condition + search_condition + filter_condition
     total_result = frappe.db.sql(total_query, values, as_dict=True)
     total = total_result[0].count if total_result else 0
 
-    # Select query
+    # Data query
     select_query = f"""
         SELECT 
             ic.name as interview_child_name,
@@ -420,18 +468,15 @@ def get_interview_details(from_date=None, to_date=None, search=None, limit=20, o
             jo.designation,
             jo.company_name,
             c.candidate_name as candidate_display_name
-        {base_from_where} {date_condition} {search_condition}
+        {base_from_where} {date_condition} {search_condition} {filter_condition}
         ORDER BY ic.interview_date DESC, ic.from DESC
         LIMIT %s OFFSET %s
     """
 
-    # Append pagination values
     values_with_pagination = values + [limit, offset]
-
-    # Fetch data
     data = frappe.db.sql(select_query, values_with_pagination, as_dict=True)
 
-    # Format time (12-hour) and add time range
+    # Format times
     for row in data:
         from_fmt = format_time_12h(row.get("interview_from_time"))
         to_fmt = format_time_12h(row.get("interview_to_time"))
@@ -446,56 +491,109 @@ def get_interview_details(from_date=None, to_date=None, search=None, limit=20, o
     }
 
 
-from frappe.utils.xlsxutils import make_xlsx
-
-
 @frappe.whitelist()
-def download_interview_dashboard(tab="summary", from_date=None, to_date=None, search=None):
-	"""Download current tab data as Excel with same filters (date + search)."""
-	# Form POST sends "null" / "" as strings; normalize to None so date filters don't break
-	if from_date in (None, "", "null"):
-		from_date = None
-	if to_date in (None, "", "null"):
-		to_date = None
-	if search in (None, "", "null"):
-		search = None
-	if tab == "summary":
-		res = get_interview_dashboard_data(from_date=from_date, to_date=to_date, search=search, limit=10000, offset=0)
-		data = res["data"]
-		headers = ["Job Opening", "Status", "Open Positions", "CVs Mapped", "Candidates' Stages", "Interviews Today", "Joined"]
-		rows = [headers]
-		for r in data:
-			stages = r.get("stages") or []
-			stages_str = ", ".join(f"{s['stage']} ({s['count']})" for s in stages) if stages else "-"
-			rows.append([
-				r.get("job_opening") or "",
-				r.get("status") or "",
-				r.get("open_positions") or 0,
-				r.get("cvs_mapped") or 0,
-				stages_str,
-				r.get("interviews_scheduled_today") or 0,
-				r.get("joined") or 0,
-			])
-	elif tab == "details":
-		res = get_interview_details(from_date=from_date, to_date=to_date, search=search, limit=10000, offset=0)
-		data = res["data"]
-		headers = ["Job Opening", "Candidate", "Mapping Stage", "Interview Stage Main", "Interview Stage", "Interview Date", "Time"]
-		rows = [headers]
-		for r in data:
-			date_str = frappe.utils.data.formatdate(r["interview_date"]) if r.get("interview_date") else "-"
-			time_str = r.get("interview_time_range") or (f"{r.get('interview_from_time') or ''} - {r.get('interview_to_time') or ''}".strip(" -") or "-")
-			rows.append([
-				r.get("job_opening") or "",
-				r.get("candidate_display_name") or r.get("candidate_name") or "",
-				r.get("job_application_stage") or "",
-				r.get("interview_stage_main") or "",
-				r.get("interview_stage") or "",
-				date_str,
-				time_str,
-			])
-	else:
-		return
-	xlsx_file = make_xlsx(data=rows, sheet_name=tab.capitalize())
-	frappe.local.response.filename = f"{tab}_interview_dashboard.xlsx"
-	frappe.local.response.filecontent = xlsx_file.getvalue()
-	frappe.local.response.type = "download"
+def download_interview_dashboard(tab="summary", from_date=None, to_date=None, search=None, filters=None):
+    """Download current tab data as Excel"""
+    # Normalize inputs
+    from_date = from_date if from_date not in (None, "", "null", "undefined") else None
+    to_date = to_date if to_date not in (None, "", "null", "undefined") else None
+    search = search.strip() if search and search not in ("null", "undefined") else None
+
+    if tab == "summary":
+        res = get_interview_dashboard_data(
+            from_date=from_date, 
+            to_date=to_date, 
+            search=search, 
+            limit=100000, 
+            offset=0
+        )
+        data = res.get("data", [])
+        
+        headers = [
+            "Job Opening", "Status", "Open Positions", "CVs Mapped", 
+            "Candidates' Stages", "Interviews Today", "Joined"
+        ]
+        rows = [headers]
+        
+        for r in data:
+            stages = r.get("stages") or []
+            stages_str = ", ".join(f"{s['stage']} ({s['count']})" for s in stages) if stages else "-"
+            rows.append([
+                r.get("job_opening") or "",
+                r.get("status") or "",
+                r.get("open_positions") or 0,
+                r.get("cvs_mapped") or 0,
+                stages_str,
+                r.get("interviews_scheduled_today") or 0,
+                r.get("joined") or 0,
+            ])
+            
+    elif tab == "details":
+        res = get_interview_details(
+            from_date=from_date,
+            to_date=to_date,
+            search=search,
+            limit=100000,
+            offset=0,
+            filters=filters,
+        )
+        data = res.get("data", [])
+        
+        headers = [
+            "Job Opening", "Candidate", "Mapping Stage", 
+            "Interview Stage Main", "Interview Stage", "Interview Date", "Time"
+        ]
+        rows = [headers]
+        
+        for r in data:
+            date_str = formatdate(r.get("interview_date"), "dd-MM-yyyy") if r.get("interview_date") else "-"
+            time_str = r.get("interview_time_range") or "-"
+            
+            rows.append([
+                r.get("job_opening") or "",
+                r.get("candidate_display_name") or r.get("candidate_name") or "",
+                r.get("job_application_stage") or "-",
+                r.get("interview_stage_main") or "-",
+                r.get("interview_stage") or "-",
+                date_str,
+                time_str,
+            ])
+    else:
+        frappe.throw("Invalid tab specified")
+
+    xlsx_file = make_xlsx(data=rows, sheet_name=tab.capitalize())
+    frappe.local.response.filename = f"interview_{tab}_{frappe.utils.nowdate()}.xlsx"
+    frappe.local.response.filecontent = xlsx_file.getvalue()
+    frappe.local.response.type = "download"
+    
+@frappe.whitelist()
+def download_filtered_excel(data):
+    """Download filtered data as Excel"""
+    import json
+    from frappe.utils.xlsxutils import make_xlsx
+    
+    data = json.loads(data)
+    
+    headers = [
+        "Job Opening", "Candidate", "Mapping Stage", 
+        "Interview Stage Main", "Interview Stage", "Interview Date", "Time"
+    ]
+    
+    rows = [headers]
+    
+    for r in data:
+        rows.append([
+            r.get("job_opening") or "",
+            r.get("candidate") or "",
+            r.get("mapping_stage") or "",
+            r.get("interview_stage_main") or "",
+            r.get("interview_stage") or "",
+            r.get("interview_date") or "",
+            r.get("time") or ""
+        ])
+    
+    xlsx_file = make_xlsx(data=rows, sheet_name="Interview Details")
+    
+    frappe.local.response.filename = f"interview_details_{frappe.utils.nowdate()}.xlsx"
+    frappe.local.response.filecontent = xlsx_file.getvalue()
+    frappe.local.response.type = "download"	

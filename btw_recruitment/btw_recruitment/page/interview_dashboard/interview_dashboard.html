@@ -13,13 +13,14 @@
 			</div>
 			<div class="col-md-2">
 				<button class="btn btn-outline-secondary w-100" id="interview-clear-dates">
-					Clear Dates
+					<i class="fa fa-times"></i> Clear Dates
 				</button>
 			</div>
-			<div class="col-md-2">
-				<button class="btn btn-primary w-100" id="download-excel-btn">Download Excel</button>
+			<div class="col-md-2 ms-auto">
+				<button class="btn btn-success w-100" id="download-excel-btn">
+					<i class="fa fa-download"></i> Download Excel
+				</button>
 			</div>
-
 		</div>
 	</div>
 
@@ -33,22 +34,17 @@
 						data-bs-toggle="tab"
 						data-bs-target="#summary-pane"
 						type="button"
-						role="tab"
-						aria-controls="summary-pane"
-						aria-selected="true">
+						role="tab">
 						Interview Summary
 					</button>
 				</li>
-
 				<li class="nav-item" role="presentation">
 					<button class="nav-link"
 						id="details-tab"
 						data-bs-toggle="tab"
 						data-bs-target="#details-pane"
 						type="button"
-						role="tab"
-						aria-controls="details-pane"
-						aria-selected="false">
+						role="tab">
 						Interview Details
 					</button>
 				</li>
@@ -59,122 +55,90 @@
 			<div class="tab-content" id="interviewTabsContent">
 
 				<!-- Tab 1: Summary -->
-				<div class="tab-pane fade show active"
-					id="summary-pane"
-					role="tabpanel"
-					aria-labelledby="summary-tab">
+				<div class="tab-pane fade show active" id="summary-pane" role="tabpanel">
 					<div class="d-flex gap-2 align-items-center mb-2">
-						<input type="text"
-							class="form-control"
-							id="summary-search"
-							placeholder="Search Job Opening..."
-							autocomplete="off"
-						/>
+						<input type="text" class="form-control" id="summary-search" 
+							placeholder="Search Job Opening..." autocomplete="off" />
 						<button class="btn btn-outline-secondary" id="summary-search-clear">Clear</button>
 					</div>
 					<div id="interview-dashboard-table"></div>
 				</div>
 
-				<!-- Tab 2: Details -->
-				<div class="tab-pane fade"
-					id="details-pane"
-					role="tabpanel"
-					aria-labelledby="details-tab">
-					<div class="d-flex gap-2 align-items-center mb-2">
-						<input type="text"
-							class="form-control"
-							id="details-search"
-							placeholder="Search Job Opening..."
-							autocomplete="off"
-						/>
-						<button class="btn btn-outline-secondary" id="details-search-clear">Clear</button>
-					</div>
-					<div id="interview-details-table"></div>
-				</div>
+				<!-- Tab 2: Details (Frappe DataTable) -->
+				<div class="tab-pane fade" id="details-pane" role="tabpanel">
+	<div id="interview-details-table"></div>
+</div>
 
 			</div>
 		</div>
 	</div>
-
 </div>
-
 
 <style>
 	.interview-dashboard-container {
 		padding: 16px;
 	}
 	
-	/* KPI Cards */
-	#interview-kpi-cards {
-		display: flex;
-		gap: 16px;
-		margin-bottom: 24px;
+	/* DataTable Styles */
+	#interview-details-datatable {
+		border: 1px solid #dee2e6;
+		border-radius: 4px;
+		overflow: hidden;
 	}
 	
-	.kpi-card-interview {
-		flex: 1;
-		padding: 20px;
-		background: #ffffff;
-		border-radius: 8px;
-		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-		text-align: center;
-		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	#interview-details-datatable .dt-scrollable {
+		max-height: 500px;
 	}
 	
-	.kpi-card-interview:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+	#interview-details-datatable .dt-header {
+		background: #f8f9fa;
 	}
 	
-	.kpi-value-interview {
-		font-size: 32px;
-		font-weight: 700;
-		color: #1f2937;
-		margin-bottom: 8px;
-	}
-	
-	.kpi-label-interview {
-		font-size: 14px;
-		color: #6c7680;
-		font-weight: 500;
-	}
-	
-	/* Tables */
-	#interview-dashboard-table table,
-	#interview-details-table table {
-		width: 100%;
-		margin-top: 16px;
+	#interview-details-datatable .dt-cell {
+		padding: 10px 12px;
 		font-size: 13px;
 	}
 	
-	#interview-dashboard-table th,
-	#interview-details-table th {
-		background: #f8f9fa;
+	#interview-details-datatable .dt-cell--header {
 		font-weight: 600;
-		padding: 12px;
-		text-align: left;
-		border-bottom: 2px solid #dee2e6;
-		white-space: nowrap;
+		background: #f8f9fa;
 	}
 	
-	#interview-dashboard-table td,
-	#interview-details-table td {
-		padding: 12px;
-		border-bottom: 1px solid #dee2e6;
-		vertical-align: middle;
+	#interview-details-datatable .dt-row:hover {
+		background-color: #f1f3f5 !important;
 	}
 	
-	#interview-dashboard-table tr:hover,
-	#interview-details-table tr:hover {
-		background-color: #f8f9fa;
+	/* Inline Filter Inputs */
+	#interview-details-datatable .dt-filter {
+		width: 100%;
+		padding: 4px 8px;
+		font-size: 12px;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		margin-top: 6px;
+	}
+	
+	#interview-details-datatable .dt-filter:focus {
+		border-color: #80bdff;
+		outline: none;
+		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+	}
+	
+	/* Link Styles in DataTable */
+	#interview-details-datatable a {
+		color: #2490ef;
+		text-decoration: none;
+	}
+	
+	#interview-details-datatable a:hover {
+		text-decoration: underline;
 	}
 	
 	/* Pagination */
-	.pagination-container {
+	#details-pagination {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: 16px;
 		padding: 12px;
 		background: #f8f9fa;
 		border-radius: 4px;
@@ -188,6 +152,7 @@
 	.pagination-buttons {
 		display: flex;
 		gap: 8px;
+		align-items: center;
 	}
 	
 	.pagination-buttons button {
@@ -196,12 +161,10 @@
 		background: #ffffff;
 		border-radius: 4px;
 		cursor: pointer;
-		transition: all 0.2s;
 	}
 	
 	.pagination-buttons button:hover:not(:disabled) {
 		background: #e9ecef;
-		border-color: #adb5bd;
 	}
 	
 	.pagination-buttons button:disabled {
@@ -209,74 +172,33 @@
 		cursor: not-allowed;
 	}
 	
-	/* Table overflow handling */
-	#interview-dashboard-table,
-	#interview-details-table {
-		overflow-x: auto;
+	/* Summary Table Styles */
+	#interview-dashboard-table table {
 		width: 100%;
+		margin-top: 16px;
+		font-size: 13px;
 	}
 	
-	#interview-dashboard-table table,
-	#interview-details-table table {
-		min-width: 100%;
-		table-layout: auto;
+	#interview-dashboard-table th {
+		background: #f8f9fa;
+		font-weight: 600;
+		padding: 12px;
+		border-bottom: 2px solid #dee2e6;
 	}
 	
-	/* Long text handling */
-	#interview-dashboard-table td,
-	#interview-details-table td {
-		word-wrap: break-word;
-		overflow-wrap: break-word;
-		max-width: 300px;
+	#interview-dashboard-table td {
+		padding: 12px;
+		border-bottom: 1px solid #dee2e6;
 	}
 	
-	/* Responsive */
-	@media (max-width: 1200px) {
-		#interview-dashboard-table table,
-		#interview-details-table table {
-			font-size: 12px;
-		}
-	}
-	
-	@media (max-width: 768px) {
-		#interview-kpi-cards {
-			flex-direction: column;
-		}
-		
-		#interview-dashboard-table table,
-		#interview-details-table table {
-			font-size: 11px;
-		}
-		
-		#interview-dashboard-table th,
-		#interview-dashboard-table td,
-		#interview-details-table th,
-		#interview-details-table td {
-			padding: 6px;
-		}
-		
-		.pagination-container {
-			flex-direction: column;
-			gap: 12px;
-			align-items: flex-start;
-		}
-		
-		.pagination-info {
-			font-size: 12px;
-		}
-	}
-	
-	/* Loading state */
-	.loading-state {
+	.loading-state, .empty-state {
 		text-align: center;
 		padding: 40px;
 		color: #6c7680;
 	}
 	
-	/* Empty state */
-	.empty-state {
-		text-align: center;
-		padding: 40px;
-		color: #6c7680;
+	.details-toolbar {
+		padding: 8px 0;
+		border-bottom: 1px solid #eee;
 	}
 </style>
