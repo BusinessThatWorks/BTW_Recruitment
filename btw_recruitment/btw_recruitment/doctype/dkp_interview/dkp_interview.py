@@ -97,9 +97,15 @@ class DKP_Interview(Document):
             self.name
         )
         self.sync_stage_to_opening()
+        
+        # Send interview scheduled emails for new interviews
+        self.send_new_interview_emails()
 
     def on_update(self):
         self.sync_stage_to_opening()
+        
+        # Check for new interview rows added
+        self.check_and_send_interview_emails()
         
         # Create/Update invoice when Joined
         if self.stage == "Joined":
@@ -108,6 +114,334 @@ class DKP_Interview(Document):
         # Update invoice status when Left
         elif self.stage == "Joined And Left" and self.invoice_ref:
             self.update_invoice_on_left()
+            self.send_left_email_to_accountant()  # ✅ NEW
+
+
+    # ==================== INTERVIEW EMAIL FUNCTIONS ====================
+    
+    def send_new_interview_emails(self):
+        """Send emails for all interviews when document is first created"""
+        candidate_email = self.get_candidate_email()
+        
+        for interview in self.interview_child_table:
+            if interview.interview_date and interview.get("from"):
+                self.send_interview_scheduled_email(interview, candidate_email)
+    
+    def check_and_send_interview_emails(self):
+        """Check for newly added interview rows and send emails"""
+        old_doc = self.get_doc_before_save()
+        
+        if not old_doc:
+            return
+        
+        # Get old interview row names
+        old_interview_names = set()
+        for row in old_doc.interview_child_table:
+            if row.name and not row.name.startswith("new-"):
+                old_interview_names.add(row.name)
+        
+        candidate_email = self.get_candidate_email()
+        
+        # Check each current interview
+        for interview in self.interview_child_table:
+            is_new_row = (
+                not interview.name or 
+                interview.name.startswith("new-") or 
+                interview.name not in old_interview_names
+            )
+            
+            if is_new_row and interview.interview_date and interview.get("from"):
+                self.send_interview_scheduled_email(interview, candidate_email)
+    
+    def get_candidate_email(self):
+        """Get candidate email from DKP_Candidate"""
+        if self.candidate_name:
+            return frappe.db.get_value("DKP_Candidate", self.candidate_name, "email")
+        return None
+    
+    def send_interview_scheduled_email(self, interview, candidate_email):
+        """Send interview scheduled email to candidate and interviewer"""
+        
+        candidate_display_name = ""
+        if self.candidate_name:
+            candidate_display_name = frappe.db.get_value(
+                "DKP_Candidate", self.candidate_name, "candidate_name"
+            ) or self.candidate_name
+        
+        job_title = ""
+        company_name = ""
+        if self.job_opening:
+            job_data = frappe.db.get_value(
+                "DKP_Job_Opening", 
+                self.job_opening, 
+                ["designation", "company_name"],
+                as_dict=True
+            )
+            if job_data:
+                job_title = job_data.get("designation", "")
+                company_name = job_data.get("company_name", "")
+        
+        from_time = interview.get("from") or "N/A"
+        to_time = interview.get("to") or "N/A"
+        
+        subject = f"Interview Scheduled - {candidate_display_name} | {interview.interview_stage}"
+        
+        message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <p>Dear Participant,</p>
+            
+            <p>An interview has been scheduled with the following details:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; width: 40%;">Candidate Name</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{candidate_display_name}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Interview Stage</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{interview.interview_stage or "N/A"}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Date</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{frappe.utils.formatdate(interview.interview_date)}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Time</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{from_time} - {to_time}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Position</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{job_title or "N/A"}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Company</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{company_name or "N/A"}</td>
+                </tr>
+            </table>
+            
+            <p style="color: #e74c3c; font-weight: bold;">⏰ Please be available on time.</p>
+            
+            <p>Best Regards,<br><strong>HR Team</strong></p>
+        </div>
+        """
+        
+        recipients = []
+        
+        if candidate_email:
+            recipients.append(candidate_email)
+        
+        if interview.interviewer_email:
+            interviewer_emails = [e.strip() for e in interview.interviewer_email.split(",") if e.strip()]
+            recipients.extend(interviewer_emails)
+        
+        if recipients:
+            try:
+                frappe.sendmail(
+                    recipients=recipients,
+                    subject=subject,
+                    message=message,
+                    now=True
+                )
+                frappe.msgprint(
+                    f"✅ Interview email sent to: {', '.join(recipients)}", 
+                    alert=True
+                )
+            except Exception as e:
+                frappe.log_error(f"Failed to send interview email: {str(e)}", "Interview Email Error")
+
+    # ==================== NEW: ACCOUNTANT EMAIL FUNCTION ====================
+    def send_left_email_to_accountant(self):
+        """Send email to accountant when candidate leaves"""
+        
+        # Get candidate details
+        candidate_display_name = ""
+        if self.candidate_name:
+            candidate_display_name = frappe.db.get_value(
+                "DKP_Candidate", self.candidate_name, "candidate_name"
+            ) or self.candidate_name
+        
+        # Get job details
+        job_title = ""
+        company_name = ""
+        if self.job_opening:
+            job_data = frappe.db.get_value(
+                "DKP_Job_Opening",
+                self.job_opening,
+                ["designation", "company_name"],
+                as_dict=True
+            )
+            if job_data:
+                job_title = job_data.get("designation", "")
+                company_name = job_data.get("company_name", "")
+        
+        # Format dates
+        joining_date = frappe.utils.formatdate(self.joining_date) if self.joining_date else "N/A"
+        left_date = frappe.utils.formatdate(self.candidate_left_date) if self.candidate_left_date else "N/A"
+        
+        subject = f"⚠️ Candidate Left - {candidate_display_name} | {company_name}"
+        
+        message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">⚠️ Candidate Left Alert!</h2>
+            
+            <p>Dear Accounts Team,</p>
+            
+            <p>A candidate has left the organization. Please review the billing status:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr style="background-color: #f8d7da;">
+                    <td style="padding: 12px; border: 1px solid #f5c6cb; font-weight: bold; width: 40%;">Candidate Name</td>
+                    <td style="padding: 12px; border: 1px solid #f5c6cb;">{candidate_display_name}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Company</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{company_name or "N/A"}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Designation</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{job_title or "N/A"}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">📅 Joining Date</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{joining_date}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">📅 Left Date</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{left_date}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">💰 Offered CTC (Yearly)</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">₹ {self.offered_amount or 0:,}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">📄 Invoice Reference</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{self.invoice_ref or "N/A"}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">👤 Recruiter</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{self.added_by or "N/A"}</td>
+                </tr>
+            </table>
+            
+            <p style="color: #e74c3c;"><strong>Action Required:</strong> Please review and update billing accordingly.</p>
+            
+            <p>Best Regards,<br><strong>HR Team</strong></p>
+        </div>
+        """
+        
+        accountant_email = "account@duaspotli.com"
+        
+        try:
+            frappe.sendmail(
+                recipients=[accountant_email],
+                subject=subject,
+                message=message,
+                now=True
+            )
+            frappe.msgprint(
+                f"✅ Left notification sent to Accounts: {accountant_email}",
+                alert=True
+            )
+        except Exception as e:
+            frappe.log_error(
+                f"Failed to send accountant email: {str(e)}",
+                "Accountant Email Error"
+            )
+
+
+    def send_update_email_to_accountant(self, invoice_name, changes):
+        """Send email to accountant when invoice details are updated"""
+        
+        # Get candidate details
+        candidate_display_name = ""
+        if self.candidate_name:
+            candidate_display_name = frappe.db.get_value(
+                "DKP_Candidate", self.candidate_name, "candidate_name"
+            ) or self.candidate_name
+        
+        # Get job details
+        company_name = ""
+        if self.job_opening:
+            company_name = frappe.db.get_value(
+                "DKP_Job_Opening", self.job_opening, "company_name"
+            ) or ""
+        
+        # Format changes list
+        changes_html = "<ul>"
+        for change in changes:
+            changes_html += f"<li>{change}</li>"
+        changes_html += "</ul>"
+        
+        subject = f"📝 Invoice Updated - {candidate_display_name} | {company_name}"
+        
+        message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #3498db;">📝 Invoice Details Updated</h2>
+            
+            <p>Dear Accounts Team,</p>
+            
+            <p>The following changes have been made to an existing invoice:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr style="background-color: #d1ecf1;">
+                    <td style="padding: 12px; border: 1px solid #bee5eb; font-weight: bold; width: 40%;">Invoice Reference</td>
+                    <td style="padding: 12px; border: 1px solid #bee5eb;">{invoice_name}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Candidate Name</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{candidate_display_name}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Company</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{company_name or "N/A"}</td>
+                </tr>
+            </table>
+            
+            <h3 style="color: #2c3e50;">🔄 Changes Made:</h3>
+            {changes_html}
+            
+            <h3 style="color: #2c3e50;">📋 Current Details:</h3>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; width: 40%;">📅 Joining Date</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{frappe.utils.formatdate(self.joining_date) if self.joining_date else "N/A"}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">💰 Offered CTC (Yearly)</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">₹ {self.offered_amount or 0:,}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">📝 Remarks</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">{self.remarks_for_invoice or "N/A"}</td>
+                </tr>
+            </table>
+            
+            <p>Please update your records accordingly.</p>
+            
+            <p>Best Regards,<br><strong>HR Team</strong></p>
+        </div>
+        """
+        
+        accountant_email = "account@duaspotli.com"
+        
+        try:
+            frappe.sendmail(
+                recipients=[accountant_email],
+                subject=subject,
+                message=message,
+                now=True
+            )
+            frappe.msgprint(
+                f"✅ Update notification sent to Accounts: {accountant_email}",
+                alert=True
+            )
+        except Exception as e:
+            frappe.log_error(
+                f"Failed to send accountant update email: {str(e)}",
+                "Accountant Email Error"
+            )
+    # ==================== EXISTING CODE BELOW ====================
 
     def update_invoice_on_left(self):
         """Update invoice status when candidate leaves"""
@@ -244,6 +578,16 @@ class DKP_Interview(Document):
             billing_month = joining.strftime("%B %Y")
 
         invoice = frappe.get_doc("DKP_Joining_Tracker", invoice_name)
+        
+        # ✅ Track what changed
+        changes = []
+        if invoice.joining_date != self.joining_date:
+            changes.append(f"Joining Date: {invoice.joining_date} → {self.joining_date}")
+        if invoice.billable_ctc != str(billable_ctc):
+            changes.append(f"CTC: {invoice.billable_ctc} → {billable_ctc}")
+        if invoice.remarks_by_recruiter != self.remarks_for_invoice:
+            changes.append(f"Remarks changed")
+        
         invoice.status = self.stage
         invoice.joining_date = self.joining_date
         invoice.billable_ctc = str(billable_ctc)
@@ -258,6 +602,10 @@ class DKP_Interview(Document):
         invoice.gstinuin = customer.custom_gstin or ""
         invoice.save(ignore_permissions=True)
         frappe.msgprint(f"✅ Joining Tracker Updated: {invoice_name}")
+    
+        # ✅ Send email to accountant if something changed
+        if changes:
+            self.send_update_email_to_accountant(invoice_name, changes)
 
     # ==================== FREEZE LOGIC ====================
     
@@ -319,24 +667,15 @@ class DKP_Interview(Document):
             return int(numbers[0]) if numbers else 0
 
     def handle_bill_sent_freeze(self, old_doc):
-        """
-        Bill Sent Freeze Logic:
-        - Only allow: Joined → Joined And Left (stage change)
-        - Only allow: candidate_left_date to be filled
-        - Block: Everything else
-        """
-        
         is_leaving = (old_doc.stage == "Joined" and self.stage == "Joined And Left")
         stage_changed = (old_doc.stage != self.stage)
         
-        # Stage change validation
         if stage_changed and not is_leaving:
             frappe.throw(
                 _("Bill sent. Only 'Joined' to 'Joined And Left' allowed."),
                 title=_("Document Frozen")
             )
         
-        # Fields that should NEVER change after Bill Sent
         never_change = ['candidate_name', 'job_opening', 'added_by', 'offered_amount', 'invoice_ref']
         
         for field in never_change:
@@ -349,21 +688,18 @@ class DKP_Interview(Document):
                     title=_("Document Frozen")
                 )
         
-        # joining_date - should never change
         if str(old_doc.joining_date or "") != str(self.joining_date or ""):
             frappe.throw(
                 _("Bill sent. 'joining_date' cannot be modified."),
                 title=_("Document Frozen")
             )
         
-        # remarks_for_invoice - should never change
         if str(old_doc.remarks_for_invoice or "") != str(self.remarks_for_invoice or ""):
             frappe.throw(
                 _("Bill sent. 'remarks_for_invoice' cannot be modified."),
                 title=_("Document Frozen")
             )
         
-        # candidate_left_date - ONLY allow when stage changing to "Joined And Left"
         old_left = str(old_doc.candidate_left_date or "")
         new_left = str(self.candidate_left_date or "")
         
@@ -373,12 +709,12 @@ class DKP_Interview(Document):
                 title=_("Document Frozen")
             )
         
-        # Child table - should never change
         if self.has_child_table_changed(old_doc):
             frappe.throw(
                 _("Bill sent. Interview rounds cannot be modified."), 
                 title=_("Document Frozen")
             )
+
     def handle_full_freeze(self, old_doc):
         company_name = frappe.db.get_value("DKP_Job_Opening", self.job_opening, "company_name")
         replacement_policy = frappe.db.get_value("Customer", company_name, "custom_replacement_policy_")
@@ -427,7 +763,6 @@ def check_interview_freeze_status(interview_name):
         "message": ""
     }
     
-    # Check Replacement Policy first
     if doc.stage == "Joined" and doc.joining_date and doc.job_opening:
         company_name = frappe.db.get_value("DKP_Job_Opening", doc.job_opening, "company_name")
         if company_name:
@@ -450,7 +785,6 @@ def check_interview_freeze_status(interview_name):
                         )
                         return result
     
-    # Check Bill Sent
     joining_tracker = frappe.db.get_value(
         "DKP_Joining_Tracker",
         {"interview_ref": interview_name},

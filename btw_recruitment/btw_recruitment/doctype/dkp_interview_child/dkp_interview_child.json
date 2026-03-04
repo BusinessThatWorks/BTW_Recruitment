@@ -11,7 +11,8 @@
   "from",
   "to",
   "interviewer_email",
-  "feedback"
+  "feedback",
+  "reminder_sent"
  ],
  "fields": [
   {
@@ -44,13 +45,19 @@
    "fieldname": "to",
    "fieldtype": "Time",
    "label": "To"
+  },
+  {
+   "default": "0",
+   "fieldname": "reminder_sent",
+   "fieldtype": "Check",
+   "label": "Reminder Sent"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-14 14:51:37.310753",
+ "modified": "2026-03-04 17:38:44.498150",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview_Child",
