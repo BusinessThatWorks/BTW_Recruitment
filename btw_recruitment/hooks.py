@@ -164,8 +164,12 @@ scheduler_events = {
 	# "monthly": [
 	# 	"btw_recruitment.tasks.monthly"
 	# ],
+	"cron": {
+		"*/5 * * * *": [
+			"btw_recruitment.btw_recruitment.tasks.send_interview_reminders"
+		]
+	}
 }
-
 # Testing
 # -------
 

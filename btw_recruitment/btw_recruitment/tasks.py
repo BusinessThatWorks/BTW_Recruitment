@@ -1,0 +1,223 @@
+import frappe
+from frappe.utils import now_datetime, formatdate, today
+from datetime import datetime, timedelta
+
+
+def send_interview_reminders():
+    """
+    Scheduler job: Runs every 5 minutes
+    Sends reminder emails 25-35 minutes before interview
+    """
+    
+    current_time = now_datetime()
+    current_date = today()
+    
+    # Window: 25 to 35 minutes from now
+    reminder_window_start = current_time + timedelta(minutes=25)
+    reminder_window_end = current_time + timedelta(minutes=35)
+    
+    # Get today's interviews where reminder not sent
+    interviews = frappe.db.sql("""
+        SELECT 
+            parent.name as interview_name,
+            parent.candidate_name,
+            parent.job_opening,
+            parent.added_by,
+            child.name as child_name,
+            child.interview_date,
+            child.`from` as from_time,
+            child.`to` as to_time,
+            child.interview_stage,
+            child.interviewer_email,
+            child.reminder_sent
+        FROM `tabDKP_Interview` parent
+        INNER JOIN `tabDKP_Interview_Child` child ON child.parent = parent.name
+        WHERE child.interview_date = %s
+        AND child.`from` IS NOT NULL
+        AND (child.reminder_sent IS NULL OR child.reminder_sent = 0)
+    """, current_date, as_dict=True)
+    
+    for interview in interviews:
+        try:
+            process_single_interview(interview, reminder_window_start, reminder_window_end)
+        except Exception as e:
+            frappe.log_error(
+                f"Error processing interview reminder: {str(e)}",
+                "Interview Reminder Error"
+            )
+
+
+def process_single_interview(interview, window_start, window_end):
+    """Process single interview row"""
+    
+    interview_time = interview.from_time
+    interview_date = interview.interview_date
+    
+    # Handle timedelta format
+    if isinstance(interview_time, timedelta):
+        total_seconds = int(interview_time.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        interview_time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    else:
+        interview_time_str = str(interview_time)
+    
+    # Create datetime
+    interview_datetime_str = f"{interview_date} {interview_time_str}"
+    interview_datetime = datetime.strptime(interview_datetime_str, "%Y-%m-%d %H:%M:%S")
+    
+    # Check if in window
+    if not (window_start <= interview_datetime <= window_end):
+        return
+    
+    # Get candidate details
+    candidate_email = None
+    candidate_display_name = interview.candidate_name or ""
+    
+    if interview.candidate_name:
+        candidate_data = frappe.db.get_value(
+            "DKP_Candidate",
+            interview.candidate_name,
+            ["email", "candidate_name"],
+            as_dict=True
+        )
+        if candidate_data:
+            candidate_email = candidate_data.get("email")
+            candidate_display_name = candidate_data.get("candidate_name") or interview.candidate_name
+    
+    # Get job details
+    job_title = ""
+    company_name = ""
+    if interview.job_opening:
+        job_data = frappe.db.get_value(
+            "DKP_Job_Opening",
+            interview.job_opening,
+            ["designation", "company_name"],
+            as_dict=True
+        )
+        if job_data:
+            job_title = job_data.get("designation", "")
+            company_name = job_data.get("company_name", "")
+    
+    # Send email
+    success = send_reminder_email(
+        interview=interview,
+        candidate_email=candidate_email,
+        candidate_display_name=candidate_display_name,
+        job_title=job_title,
+        company_name=company_name,
+        from_time_str=interview_time_str
+    )
+    
+    # Mark as sent in database
+    if success:
+        frappe.db.set_value(
+            "DKP_Interview_Child",
+            interview.child_name,
+            "reminder_sent",
+            1
+        )
+        frappe.db.commit()
+
+
+def send_reminder_email(interview, candidate_email, candidate_display_name, job_title, company_name, from_time_str):
+    """Send the reminder email"""
+    
+    subject = f"⏰ Reminder: Interview Coming Up - {candidate_display_name} | {interview.interview_stage}"
+    
+    # Format times
+    from_time = from_time_str[:5] if len(from_time_str) > 5 else from_time_str
+    to_time = interview.to_time
+    
+    if isinstance(to_time, timedelta):
+        total_seconds = int(to_time.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        to_time = f"{hours:02d}:{minutes:02d}"
+    else:
+        to_time = str(to_time)[:5] if to_time else "N/A"
+    
+    message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #e74c3c;">🔔 Interview Reminder!</h2>
+        
+        <p>Dear Participant,</p>
+        
+        <p>This is a friendly reminder that your interview is coming up soon.</p>
+        
+        <h3 style="color: #2c3e50;">📋 Interview Details:</h3>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="background-color: #f8f9fa;">
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; width: 40%;">Candidate Name</td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;">{candidate_display_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Interview Stage</td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;">{interview.interview_stage or "N/A"}</td>
+            </tr>
+            <tr style="background-color: #f8f9fa;">
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">📅 Date</td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;">{formatdate(interview.interview_date)}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">🕐 Time</td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;">{from_time} - {to_time}</td>
+            </tr>
+            <tr style="background-color: #f8f9fa;">
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">💼 Position</td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;">{job_title or "N/A"}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">🏢 Company</td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;">{company_name or "N/A"}</td>
+            </tr>
+        </table>
+        
+        <p style="color: #e74c3c; font-weight: bold;">Please be prepared and join on time. Good luck! 🍀</p>
+        
+        <p>Best Regards,<br><strong>HR Team</strong></p>
+    </div>
+    """
+    
+    recipients = []
+    
+    # Candidate
+    if candidate_email and candidate_email not in ["Not provided", "", None]:
+        recipients.append(candidate_email)
+    
+    # Interviewer(s)
+    if interview.interviewer_email:
+        interviewer_emails = [e.strip() for e in interview.interviewer_email.split(",") if e.strip()]
+        recipients.extend(interviewer_emails)
+    
+    # Recruiter
+    if interview.added_by:
+        recruiter_email = interview.added_by
+        if recruiter_email and "@" not in str(recruiter_email):
+            recruiter_email = frappe.db.get_value("User", interview.added_by, "email")
+        if recruiter_email:
+            recipients.append(recruiter_email)
+    
+    # Remove duplicates
+    recipients = list(set([r for r in recipients if r and str(r).strip()]))
+    
+    if not recipients:
+        return False
+    
+    try:
+        frappe.sendmail(
+            recipients=recipients,
+            subject=subject,
+            message=message,
+            now=True
+        )
+        return True
+        
+    except Exception as e:
+        frappe.log_error(
+            f"Failed to send interview reminder: {str(e)}",
+            "Interview Reminder Error"
+        )
+        return False
