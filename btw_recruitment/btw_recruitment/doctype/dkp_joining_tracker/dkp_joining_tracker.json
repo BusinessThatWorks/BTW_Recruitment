@@ -15,6 +15,7 @@
   "candidate_contact",
   "designation",
   "recruiter",
+  "candidate_left_date",
   "column_break_bjbu",
   "joining_date",
   "interview_ref",
@@ -142,12 +143,17 @@
    "fieldname": "gstinuin",
    "fieldtype": "Data",
    "label": "GSTIN/UIN"
+  },
+  {
+   "fieldname": "candidate_left_date",
+   "fieldtype": "Date",
+   "label": "Candidate Left Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-26 11:23:27.438375",
+ "modified": "2026-03-05 11:47:51.276591",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Joining_Tracker",

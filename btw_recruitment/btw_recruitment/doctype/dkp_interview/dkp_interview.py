@@ -449,12 +449,21 @@ class DKP_Interview(Document):
             return
         
         try:
+            # ✅ Status aur Left Date dono update karo
+            update_fields = {
+                "status": "Joined And Left"
+            }
+            
+            # Agar candidate_left_date hai Interview mein toh Joining Tracker mein bhi daalo
+            if self.candidate_left_date:
+                update_fields["candidate_left_date"] = self.candidate_left_date
+            
             frappe.db.set_value(
                 "DKP_Joining_Tracker", 
                 self.invoice_ref, 
-                "status", 
-                "Joined And Left"
+                update_fields
             )
+            
         except Exception as e:
             frappe.log_error(f"Error updating invoice on left: {e}")
 
