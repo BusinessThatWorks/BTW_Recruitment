@@ -140,11 +140,9 @@ def send_reminder_email(interview, candidate_email, candidate_display_name, job_
     
     message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #e74c3c;">🔔 Interview Reminder!</h2>
-        
         <p>Dear Participant,</p>
         
-        <p>This is a friendly reminder that your interview is coming up soon.</p>
+        <p>Reminder for your upcoming interview.</p>
         
         <h3 style="color: #2c3e50;">📋 Interview Details:</h3>
         
@@ -175,7 +173,7 @@ def send_reminder_email(interview, candidate_email, candidate_display_name, job_
             </tr>
         </table>
         
-        <p style="color: #e74c3c; font-weight: bold;">Please be prepared and join on time. Good luck! 🍀</p>
+        <p style="color: #2c3e50; font-weight: bold;">Please be prepared and join on time. Good luck! 🍀</p>
         
         <p>Best Regards,<br><strong>HR Team</strong></p>
     </div>
