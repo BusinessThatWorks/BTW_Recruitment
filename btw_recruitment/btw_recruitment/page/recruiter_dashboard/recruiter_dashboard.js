@@ -72,6 +72,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		"Positions",
 		"Candidates Mapped",
 		"Joined",
+		"Joined Candidates",
 	];
 
 	// KPI elements
@@ -212,7 +213,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		// update_pagination(0);
 		// reset_kpis();
 		// reset_funnels();
-        refresh_dashboard();
+		refresh_dashboard();
 		frappe.show_alert({
 			message: "Filters cleared",
 			indicator: "blue",
@@ -231,32 +232,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		$kpi_join_rate.text("0%");
 	}
 
-	// function load_kpis() {
-	//     if (!state.recruiter) return;
-
-	//     frappe.call({
-	//         method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiter_kpis",
-	//         args: {
-	//             recruiter: state.recruiter,
-	//             from_date: state.from_date,
-	//             to_date: state.to_date,
-	//             status: state.status
-	//         },
-	//         callback(r) {
-	//             const k = r.message || {};
-
-	//             $kpi_openings.text(k.total_openings || 0);
-	//             $kpi_positions.text(k.total_positions || 0);
-	//             $kpi_candidates.text(k.total_candidates || 0);
-	//             $kpi_joined.text(k.total_joined || 0);
-	//             $kpi_conversion.text((k.avg_conversion || 0) + "%");
-	//             $kpi_join_rate.text((k.candidate_join_rate || 0) + "%");
-	//         }
-	//     });
-	// }
 	function load_kpis() {
-		// ✅ REMOVED recruiter check
-
 		frappe.call({
 			method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiter_kpis",
 			args: {
@@ -282,135 +258,149 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// ✅ FUNNEL FUNCTIONS (Two Separate Funnels)
 	// =============================
 	function reset_funnels() {
-    const empty_html = `
+		const empty_html = `
         <div class="funnel-empty">
             <div class="funnel-empty-icon">📊</div>
             <div class="funnel-empty-text">Select a recruiter</div>
         </div>
     `;
-    $mapping_funnel.html(empty_html);
-    $interview_funnel.html(empty_html);
-}
+		$mapping_funnel.html(empty_html);
+		$interview_funnel.html(empty_html);
+	}
 
 	function load_funnels() {
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_funnel_data",
-        args: {
-            recruiter: state.recruiter || "",
-            from_date: state.from_date,
-            to_date: state.to_date,
-            status: state.status,
-        },
-        callback(r) {
-            const data = r.message || {};
-            render_mapping_funnel(data.mapping_stages || {});
-            render_interview_funnel(data.interview_stages || {});
-        },
-    });
-}
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_funnel_data",
+			args: {
+				recruiter: state.recruiter || "",
+				from_date: state.from_date,
+				to_date: state.to_date,
+				status: state.status,
+			},
+			callback(r) {
+				const data = r.message || {};
+				render_mapping_funnel(data.mapping_stages || {});
+				render_interview_funnel(data.interview_stages || {});
+			},
+		});
+	}
 
-function render_mapping_funnel(data) {
-    const stages = [
-        { name: "Total Mapped", value: data.total_mapped || 0, color: "#8b5cf6", isFirst: true },
-        { name: "No Response", value: data.no_response || 0, color: "#6b7280" },
-        { name: "Submitted To Client", value: data.submitted_to_client || 0, color: "#ec4899" },
-        { name: "Client Rejected", value: data.client_rejected || 0, color: "#ef4444" },
-        { name: "Schedule Interview", value: data.schedule_interview || 0, color: "#3b82f6" },
-    ];
+	function render_mapping_funnel(data) {
+		const stages = [
+			{
+				name: "Total Mapped",
+				value: data.total_mapped || 0,
+				color: "#8b5cf6",
+				isFirst: true,
+			},
+			{ name: "No Response", value: data.no_response || 0, color: "#6b7280" },
+			{
+				name: "Submitted To Client",
+				value: data.submitted_to_client || 0,
+				color: "#ec4899",
+			},
+			{ name: "Client Rejected", value: data.client_rejected || 0, color: "#ef4444" },
+			{ name: "Schedule Interview", value: data.schedule_interview || 0, color: "#3b82f6" },
+		];
 
-    // ✅ Sort and separate: active stages first, then zero stages
-    const sorted = sortFunnelStagesWithZeros(stages);
+		// ✅ Sort and separate: active stages first, then zero stages
+		const sorted = sortFunnelStagesWithZeros(stages);
 
-    render_horizontal_bars($mapping_funnel, sorted);
-}
+		render_horizontal_bars($mapping_funnel, sorted);
+	}
 
-function render_interview_funnel(data) {
-    const stages = [
-        { name: "Total Interview", value: data.total_interview || 0, color: "#8b5cf6", isFirst: true },
-        { name: "No Show", value: data.interview_no_show || 0, color: "#f97316" },
-        { name: "Selected", value: data.selected_for_offer || 0, color: "#22c55e" },
-        { name: "Rejected", value: data.rejected_by_client || 0, color: "#ef4444" },
-        { name: "Offered", value: data.offered || 0, color: "#eab308" },
-        { name: "Accepted", value: data.offer_accepted || 0, color: "#a855f7" },
-        { name: "Declined", value: data.offer_declined || 0, color: "#f43f5e" },
-        { name: "Joined", value: data.joined || 0, color: "#10b981" },
-        { name: "Left", value: data.joined_and_left || 0, color: "#f59e0b" },
-    ];
+	function render_interview_funnel(data) {
+		const stages = [
+			{
+				name: "Total Interview",
+				value: data.total_interview || 0,
+				color: "#8b5cf6",
+				isFirst: true,
+			},
+			{ name: "No Show", value: data.interview_no_show || 0, color: "#f97316" },
+			{ name: "Selected", value: data.selected_for_offer || 0, color: "#22c55e" },
+			{ name: "Rejected", value: data.rejected_by_client || 0, color: "#ef4444" },
+			{ name: "Offered", value: data.offered || 0, color: "#eab308" },
+			{ name: "Accepted", value: data.offer_accepted || 0, color: "#a855f7" },
+			{ name: "Declined", value: data.offer_declined || 0, color: "#f43f5e" },
+			{ name: "Joined", value: data.joined || 0, color: "#10b981" },
+			{ name: "Left", value: data.joined_and_left || 0, color: "#f59e0b" },
+		];
 
-    // ✅ Sort and separate: active stages first, then zero stages
-    const sorted = sortFunnelStagesWithZeros(stages);
+		// ✅ Sort and separate: active stages first, then zero stages
+		const sorted = sortFunnelStagesWithZeros(stages);
 
-    render_horizontal_bars($interview_funnel, sorted);
-}
+		render_horizontal_bars($interview_funnel, sorted);
+	}
 
-// ✅ NEW Sort function - Active stages first (sorted desc), then zero stages at bottom
-function sortFunnelStagesWithZeros(stages) {
-    if (stages.length <= 1) return stages;
+	// ✅ NEW Sort function - Active stages first (sorted desc), then zero stages at bottom
+	function sortFunnelStagesWithZeros(stages) {
+		if (stages.length <= 1) return stages;
 
-    const first = stages[0]; // Always keep first stage at top
-    const rest = stages.slice(1);
-    
-    // Separate active (value > 0) and zero stages
-    const activeStages = rest.filter(s => s.value > 0);
-    const zeroStages = rest.filter(s => s.value === 0);
-    
-    // Sort active stages by value descending
-    activeStages.sort((a, b) => b.value - a.value);
-    
-    // Mark zero stages as inactive for styling
-    zeroStages.forEach(s => s.isZero = true);
+		const first = stages[0]; // Always keep first stage at top
+		const rest = stages.slice(1);
 
-    return [first, ...activeStages, ...zeroStages];
-}
+		// Separate active (value > 0) and zero stages
+		const activeStages = rest.filter((s) => s.value > 0);
+		const zeroStages = rest.filter((s) => s.value === 0);
 
-// ✅ Updated Horizontal Bars Renderer with greyed out zero stages
-// ✅ Updated Horizontal Bars Renderer with greyed out zero stages
-function render_horizontal_bars($container, stages) {
-    $container.empty();
+		// Sort active stages by value descending
+		activeStages.sort((a, b) => b.value - a.value);
 
-    const total = stages[0]?.value || 0;
+		// Mark zero stages as inactive for styling
+		zeroStages.forEach((s) => (s.isZero = true));
 
-    if (total === 0) {
-        $container.html(`
+		return [first, ...activeStages, ...zeroStages];
+	}
+
+	// ✅ Updated Horizontal Bars Renderer with greyed out zero stages
+	// ✅ Updated Horizontal Bars Renderer with greyed out zero stages
+	function render_horizontal_bars($container, stages) {
+		$container.empty();
+
+		const total = stages[0]?.value || 0;
+
+		if (total === 0) {
+			$container.html(`
             <div class="funnel-empty">
                 <div class="funnel-empty-icon">📭</div>
                 <div class="funnel-empty-text">No data</div>
             </div>
         `);
-        return;
-    }
+			return;
+		}
 
-    // ✅ Max value for width calculation (only from non-zero stages)
-    const nonZeroValues = stages.filter(s => s.value > 0).map(s => s.value);
-    const maxValue = Math.max(...nonZeroValues, 1);
+		// ✅ Max value for width calculation (only from non-zero stages)
+		const nonZeroValues = stages.filter((s) => s.value > 0).map((s) => s.value);
+		const maxValue = Math.max(...nonZeroValues, 1);
 
-    stages.forEach((stage) => {
-        const percentage = ((stage.value / total) * 100).toFixed(1);
-        
-        const isZero = stage.isZero || stage.value === 0;
-        
-        // ✅ CHANGED: Smaller width for zero stages (5% instead of 15%)
-        const width = isZero ? 5 : (stage.value / maxValue) * 100;
-        
-        const bgColor = isZero ? '#d1d5db' : stage.color;
-        const textColor = isZero ? '#9ca3af' : '#ffffff';
-        const zeroClass = isZero ? 'zero-stage' : '';
+		stages.forEach((stage) => {
+			const percentage = ((stage.value / total) * 100).toFixed(1);
 
-        const $bar = $(`
+			const isZero = stage.isZero || stage.value === 0;
+
+			// ✅ CHANGED: Smaller width for zero stages (5% instead of 15%)
+			const width = isZero ? 5 : (stage.value / maxValue) * 100;
+
+			const bgColor = isZero ? "#d1d5db" : stage.color;
+			const textColor = isZero ? "#9ca3af" : "#ffffff";
+			const zeroClass = isZero ? "zero-stage" : "";
+
+			const $bar = $(`
             <div class="h-bar-row ${zeroClass}">
-                <div class="h-bar-label" style="${isZero ? 'color: #9ca3af;' : ''}">${stage.name}</div>
+                <div class="h-bar-label" style="${isZero ? "color: #9ca3af;" : ""}">${stage.name}</div>
                 <div class="h-bar-track">
                     <div class="h-bar ${zeroClass}" style="width: ${width}%; background: ${bgColor};">
                         <span class="h-bar-value" style="color: ${textColor};">${stage.value}</span>
                     </div>
                 </div>
-                <div class="h-bar-percent" style="${isZero ? 'color: #9ca3af;' : ''}">${percentage}%</div>
+                <div class="h-bar-percent" style="${isZero ? "color: #9ca3af;" : ""}">${percentage}%</div>
             </div>
         `);
 
-        $container.append($bar);
-    });
-}
+			$container.append($bar);
+		});
+	}
 
 	// =============================
 	// PAGINATION BUTTONS
@@ -470,7 +460,7 @@ function render_horizontal_bars($container, stages) {
 
 		if (!rows.length) {
 			$openings_container.html(
-				'<p class="text-muted text-center mb-0">No openings found</p>'
+				'<p class="text-muted text-center mb-0">No openings found</p>',
 			);
 			openingsDataTable = null;
 			return;
@@ -478,40 +468,59 @@ function render_horizontal_bars($container, stages) {
 
 		const startIndex = (state.page - 1) * state.page_length;
 
+		// ✅ Store rows reference for format function to access
+		const rowsRef = rows;
+
 		const columns = [
-			{ name: "#", width: 1 },
+			{ name: "#", width: 50 },
 			{
 				name: "Job Opening",
-				format: (value, row, col, rowIndex) => {
-					const name = rows[rowIndex]?.job_opening || value || "";
-					const url = `/app/dkp_job_opening/${name}`;
+				width: 150,
+				format: (value) => {
+					const name = value || "";
+					const url = `/app/dkp_job_opening/${encodeURIComponent(name)}`;
 					const label = frappe.utils.escape_html(name || "-");
 					return `<a href="${url}" target="_blank" style="color:#2490ef;font-weight:600;">${label}</a>`;
 				},
 			},
-			{ name: "Company" },
-			{ name: "Designation" },
+			{ name: "Company", width: 120 },
+			{ name: "Designation", width: 120 },
 			{
 				name: "Status",
+				width: 100,
 				format: (value) => {
 					const status = value || "";
 					let status_class = "";
 					if (status === "Open") status_class = "badge badge-success";
 					else if (status === "Closed – Hired") status_class = "badge badge-info";
 					else if (status === "On Hold") status_class = "badge badge-warning";
-					else if (status === "Closed – Cancelled")
-						status_class = "badge badge-danger";
-
-					return `<span class="${status_class}">${frappe.utils.escape_html(
-						status
-					)}</span>`;
+					else if (status === "Closed – Cancelled") status_class = "badge badge-danger";
+					return `<span class="${status_class}">${frappe.utils.escape_html(status)}</span>`;
 				},
 			},
-			{ name: "Positions" },
-			{ name: "Candidates Mapped" },
-			{ name: "Joined" },
+			{ name: "Positions", width: 80 },
+			{ name: "Candidates Mapped", width: 120 },
+			{ name: "Joined", width: 80 },
+			{
+				name: "Joined Candidates",
+				width: 200,
+				focusable: false,
+				format: (value, row, column, data) => {
+					const rowIndex = row?.meta?.rowIndex ?? row?.[0]?.rowIndex;
+					const joinedList = rowsRef[rowIndex]?.joined_candidate_list || [];
+
+					if (!Array.isArray(joinedList) || !joinedList.length) {
+						return '-';
+					}
+
+					// ✅ Simple comma separated names
+					const names = joinedList.map(c => c.candidate_name || c.name || "Unknown");
+					return names.join(', ');
+				},
+			},
 		];
 
+		// ✅ Pass placeholder for last column (actual data from rowsRef)
 		const tableData = rows.map((row, index) => [
 			startIndex + index + 1,
 			row.job_opening || "",
@@ -521,6 +530,7 @@ function render_horizontal_bars($container, stages) {
 			row.number_of_positions || 0,
 			row.total_candidates || 0,
 			row.joined_candidates || 0,
+			"", // ✅ Placeholder - format function uses rowsRef
 		]);
 
 		openingsDataTable = new frappe.DataTable($openings_container[0], {
@@ -530,6 +540,7 @@ function render_horizontal_bars($container, stages) {
 			noDataMessage: __("No openings found"),
 			layout: "fluid",
 			serialNoColumn: false,
+			editing: false,
 		});
 
 		setTimeout(() => {
@@ -537,7 +548,6 @@ function render_horizontal_bars($container, stages) {
 			attach_openings_filter_listeners();
 		}, 100);
 	}
-
 	// =============================
 	// INLINE FILTER HANDLING
 	// =============================
@@ -639,6 +649,7 @@ function render_horizontal_bars($container, stages) {
 					"Positions",
 					"Candidates Mapped",
 					"Joined",
+					"Joined Candidates",
 				];
 
 				const data_rows = rows.map((row, index) => [
@@ -650,6 +661,7 @@ function render_horizontal_bars($container, stages) {
 					row.number_of_positions || 0,
 					row.total_candidates || 0,
 					row.joined_candidates || 0,
+					joinedNames || "-",
 				]);
 
 				download_excel_from_rows("recruiter_openings.xls", headers, data_rows);
@@ -674,5 +686,4 @@ function render_horizontal_bars($container, stages) {
 	// =============================
 	reset_funnels();
 	refresh_dashboard();
-
 };

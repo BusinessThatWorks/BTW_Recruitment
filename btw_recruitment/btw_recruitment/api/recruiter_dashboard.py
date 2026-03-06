@@ -125,6 +125,193 @@ def get_recruiter_kpis(recruiter: str = None, from_date: str = None, to_date: st
     }
 
 
+# @frappe.whitelist()
+# def get_recruiter_openings(
+#     recruiter: str = None, 
+#     from_date: str = None, 
+#     to_date: str = None, 
+#     status: str = None,
+#     limit: int = 20, 
+#     offset: int = 0,
+#     filters: str | dict | None = None,
+# ):
+#     """
+#     Paginated job openings with optional filters
+#     If no recruiter selected, returns data for all recruiters
+#     """
+#     limit = cint(limit)
+#     offset = cint(offset)
+
+#     # Parse inline filters (from DataTable)
+#     parsed_filters: dict[str, str] = {}
+#     if filters:
+#         if isinstance(filters, str):
+#             try:
+#                 parsed_filters = json.loads(filters)
+#             except Exception:
+#                 parsed_filters = {}
+#         elif isinstance(filters, dict):
+#             parsed_filters = filters
+
+#     # Build WHERE conditions
+#     conditions = "WHERE jo.status IN ('Open', 'Closed – Hired')"
+#     params = {}
+
+#     # ✅ Only add recruiter filter if provided
+#     recruiter_join = ""
+#     if recruiter:
+#         recruiter_join = """
+#             INNER JOIN `tabDKP_JobOpeningRecruiter_Child` r
+#                 ON r.parent = jo.name
+#         """
+#         conditions += " AND r.recruiter_name = %(recruiter)s"
+#         params["recruiter"] = recruiter
+
+#     if status:
+#         conditions += " AND jo.status = %(status)s"
+#         params["status"] = status
+
+#     if from_date:
+#         conditions += " AND jo.creation >= %(from_date)s"
+#         params["from_date"] = from_date
+
+#     if to_date:
+#         conditions += " AND jo.creation <= %(to_date)s"
+#         params["to_date"] = to_date
+
+#     # Inline filter mapping: frontend column -> DB field
+#     filter_mapping = {
+#         "Job Opening": "jo.name",
+#         "Company": "jo.company_name",
+#         "Designation": "jo.designation",
+#         "Status": "jo.status",
+#         "Positions": "jo.number_of_positions",
+#     }
+
+#     for col_name, db_field in filter_mapping.items():
+#         value = (parsed_filters or {}).get(col_name)
+#         if value:
+#             key = f"f_{db_field.replace('.', '_')}"
+#             conditions += f" AND {db_field} LIKE %({key})s"
+#             params[key] = f"%{value}%"
+
+#     # Get total count
+#     total = frappe.db.sql(
+#         f"""
+#         SELECT COUNT(DISTINCT jo.name)
+#         FROM `tabDKP_Job_Opening` jo
+#         {recruiter_join}
+#         {conditions}
+#         """,
+#         params,
+#     )[0][0]
+
+#     if not total:
+#         return {"data": [], "total": 0}
+
+#     # Get openings (paginated or full for export)
+#     if limit == 0:
+#         openings = frappe.db.sql(
+#             f"""
+#             SELECT DISTINCT
+#                 jo.name,
+#                 jo.company_name,
+#                 jo.designation,
+#                 jo.status,
+#                 jo.number_of_positions
+#             FROM `tabDKP_Job_Opening` jo
+#             {recruiter_join}
+#             {conditions}
+#             ORDER BY jo.creation DESC
+#             """,
+#             params,
+#             as_dict=True,
+#         )
+#     else:
+#         params["limit"] = limit
+#         params["offset"] = offset
+
+#         openings = frappe.db.sql(
+#             f"""
+#             SELECT DISTINCT
+#                 jo.name,
+#                 jo.company_name,
+#                 jo.designation,
+#                 jo.status,
+#                 jo.number_of_positions
+#             FROM `tabDKP_Job_Opening` jo
+#             {recruiter_join}
+#             {conditions}
+#             ORDER BY jo.creation DESC
+#             LIMIT %(limit)s OFFSET %(offset)s
+#             """,
+#             params,
+#             as_dict=True,
+#         )
+
+#     opening_names = [o["name"] for o in openings]
+#     if not opening_names:
+#         return {"data": [], "total": total}
+
+#     # Build candidate conditions
+#     cand_conditions = ""
+#     cand_params = {
+#         "openings": tuple(opening_names)
+#     }
+
+#     # ✅ Only filter by recruiter if provided
+#     if recruiter:
+#         cand_conditions += " AND added_by = %(recruiter)s"
+#         cand_params["recruiter"] = recruiter
+
+#     if from_date:
+#         cand_conditions += " AND creation >= %(from_date)s"
+#         cand_params["from_date"] = from_date
+
+#     if to_date:
+#         cand_conditions += " AND creation <= %(to_date)s"
+#         cand_params["to_date"] = to_date
+
+#     # ✅ FIXED: COUNT(*) for total mappings
+#     stats_rows = frappe.db.sql(
+#         f"""
+#         SELECT
+#             parent AS job_opening,
+#             COUNT(*) AS total_candidates,
+#             SUM(
+#                 CASE
+#                     WHEN sub_stages_interview = 'Joined' THEN 1
+#                     ELSE 0
+#                 END
+#             ) AS joined_candidates
+#         FROM `tabDKP_JobApplication_Child`
+#         WHERE parent IN %(openings)s
+#           AND parenttype = 'DKP_Job_Opening'
+#           AND IFNULL(candidate_name, '') != ''
+#           {cand_conditions}
+#         GROUP BY parent
+#         """,
+#         cand_params,
+#         as_dict=True,
+#     )
+
+#     stats_by_opening = {row["job_opening"]: row for row in stats_rows}
+
+#     # Build response data
+#     data = []
+#     for o in openings:
+#         stats = stats_by_opening.get(o["name"], {}) or {}
+#         data.append({
+#             "job_opening": o["name"],
+#             "company_name": o.get("company_name"),
+#             "designation": o.get("designation"),
+#             "status": o.get("status"),
+#             "number_of_positions": cint(o.get("number_of_positions") or 0),
+#             "total_candidates": cint(stats.get("total_candidates") or 0),
+#             "joined_candidates": cint(stats.get("joined_candidates") or 0),
+#         })
+
+#     return {"data": data, "total": total}
 @frappe.whitelist()
 def get_recruiter_openings(
     recruiter: str = None, 
@@ -297,6 +484,39 @@ def get_recruiter_openings(
 
     stats_by_opening = {row["job_opening"]: row for row in stats_rows}
 
+    # ✅ NEW: Get joined candidates list with names and links
+    joined_candidates_rows = frappe.db.sql(
+        f"""
+        SELECT
+            jac.parent AS job_opening,
+            jac.name AS child_name,
+            jac.candidate_name,
+            c.candidate_name as full_name
+        FROM `tabDKP_JobApplication_Child` jac
+        LEFT JOIN `tabDKP_Candidate` c ON c.name = jac.candidate_name
+        WHERE jac.parent IN %(openings)s
+          AND jac.parenttype = 'DKP_Job_Opening'
+          AND jac.sub_stages_interview = 'Joined'
+          AND IFNULL(jac.candidate_name, '') != ''
+          {cand_conditions}
+        ORDER BY c.candidate_name
+        """,
+        cand_params,
+        as_dict=True,
+    )
+
+    # ✅ Group joined candidates by job opening
+    joined_by_opening = {}
+    for row in joined_candidates_rows:
+        job_opening = row["job_opening"]
+        if job_opening not in joined_by_opening:
+            joined_by_opening[job_opening] = []
+        
+        joined_by_opening[job_opening].append({
+            "name": row.get("candidate_name"),  # DKP_Candidate ID for link
+            "candidate_name": row.get("full_name") or row.get("candidate_name") or "Unknown",
+        })
+
     # Build response data
     data = []
     for o in openings:
@@ -309,6 +529,7 @@ def get_recruiter_openings(
             "number_of_positions": cint(o.get("number_of_positions") or 0),
             "total_candidates": cint(stats.get("total_candidates") or 0),
             "joined_candidates": cint(stats.get("joined_candidates") or 0),
+            "joined_candidate_list": joined_by_opening.get(o["name"], []),  # ✅ NEW
         })
 
     return {"data": data, "total": total}
