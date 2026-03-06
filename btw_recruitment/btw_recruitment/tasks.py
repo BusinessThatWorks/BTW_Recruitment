@@ -124,7 +124,7 @@ def process_single_interview(interview, window_start, window_end):
 def send_reminder_email(interview, candidate_email, candidate_display_name, job_title, company_name, from_time_str):
     """Send the reminder email"""
     
-    subject = f"⏰ Reminder: Interview Coming Up - {candidate_display_name} | {interview.interview_stage}"
+    subject = f"Reminder: Interview Coming Up - {candidate_display_name} | {interview.interview_stage}"
     
     # Format times
     from_time = from_time_str[:5] if len(from_time_str) > 5 else from_time_str
