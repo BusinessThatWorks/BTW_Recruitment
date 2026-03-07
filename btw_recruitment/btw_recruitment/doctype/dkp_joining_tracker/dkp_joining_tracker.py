@@ -16,6 +16,12 @@ class DKP_Joining_Tracker(Document):
                 "invoice_ref",
                 None
             )
+    # ✅ Set document name = interview_ref
+    def autoname(self):
+        if self.interview_ref:
+            self.name = self.interview_ref
+        else:
+            frappe.throw(_("Interview Reference is required to create Joining Tracker"))        
 
     def validate(self):
         self.check_freeze_status()
