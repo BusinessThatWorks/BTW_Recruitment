@@ -72,6 +72,8 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		"Positions",
 		"Candidates Mapped",
 		"Joined",
+		"Replacements",
+		"Stable Join",
 		"Joined Candidates",
 	];
 
@@ -501,6 +503,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 			{ name: "Positions", width: 80 },
 			{ name: "Candidates Mapped", width: 120 },
 			{ name: "Joined", width: 80 },
+			{ name: "Replacements", width: 100 },
 			{
 				name: "Joined Candidates",
 				width: 200,
@@ -521,6 +524,17 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		];
 
 		// ✅ Pass placeholder for last column (actual data from rowsRef)
+		// const tableData = rows.map((row, index) => [
+		// 	startIndex + index + 1,
+		// 	row.job_opening || "",
+		// 	row.company_name || "",
+		// 	row.designation || "",
+		// 	row.status || "",
+		// 	row.number_of_positions || 0,
+		// 	row.total_candidates || 0,
+		// 	row.joined_candidates || 0,
+		// 	"", // ✅ Placeholder - format function uses rowsRef
+		// ]);
 		const tableData = rows.map((row, index) => [
 			startIndex + index + 1,
 			row.job_opening || "",
@@ -530,7 +544,8 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 			row.number_of_positions || 0,
 			row.total_candidates || 0,
 			row.joined_candidates || 0,
-			"", // ✅ Placeholder - format function uses rowsRef
+			row.replacements || 0,
+			"", // joined candidates placeholder
 		]);
 
 		openingsDataTable = new frappe.DataTable($openings_container[0], {
@@ -641,28 +656,40 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				}
 
 				const headers = [
-					"#",
-					"Job Opening",
-					"Company",
-					"Designation",
-					"Status",
-					"Positions",
-					"Candidates Mapped",
-					"Joined",
-					"Joined Candidates",
+				"#",
+				"Job Opening",
+				"Company",
+				"Designation",
+				"Status",
+				"Positions",
+				"Candidates Mapped",
+				"Joined",
+				"Replacements",
+				// "Stable Join",
+				"Joined Candidates",
 				];
 
-				const data_rows = rows.map((row, index) => [
-					index + 1,
-					row.job_opening || "",
-					row.company_name || "",
-					row.designation || "",
-					row.status || "",
-					row.number_of_positions || 0,
-					row.total_candidates || 0,
-					row.joined_candidates || 0,
-					joinedNames || "-",
-				]);
+				const data_rows = rows.map((row, index) => {
+
+					const joinedList = row.joined_candidate_list || [];
+					const joinedNames = joinedList
+						.map(c => c.candidate_name || c.name || "Unknown")
+						.join(", ");
+
+					return [
+						index + 1,
+						row.job_opening || "",
+						row.company_name || "",
+						row.designation || "",
+						row.status || "",
+						row.number_of_positions || 0,
+						row.total_candidates || 0,
+						row.joined_candidates || 0,
+						row.replacements || 0,
+						row.stable_join || 0,
+						joinedNames || "-"
+					];
+				});
 
 				download_excel_from_rows("recruiter_openings.xls", headers, data_rows);
 

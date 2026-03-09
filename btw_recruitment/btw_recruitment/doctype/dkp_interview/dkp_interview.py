@@ -547,9 +547,48 @@ class DKP_Interview(Document):
 
         job = frappe.get_doc("DKP_Job_Opening", self.job_opening)
 
+        # if self.stage == "Joined And Left":
+        #     if job.status != "Open":
+        #         frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Open")
+        #     return
         if self.stage == "Joined And Left":
-            if job.status != "Open":
+
+            company = job.company_name
+
+            replacement_policy = frappe.db.get_value(
+                "Customer",
+                company,
+                "custom_replacement_policy_"
+            )
+
+            replacement_days = self.extract_days_from_policy(replacement_policy)
+
+            if self.joining_date and self.candidate_left_date and replacement_days:
+
+                diff = frappe.utils.date_diff(
+                    self.candidate_left_date,
+                    self.joining_date
+                )
+
+                if diff <= replacement_days:
+
+                    replacement_used = job.replacement_used or 0
+
+                    frappe.db.set_value(
+                        "DKP_Job_Opening",
+                        job.name,
+                        {
+                            "status": "Open",
+                            "replacement_used": replacement_used + 1
+                        }
+                    )
+
+                else:
+                    return
+
+            else:
                 frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Open")
+
             return
 
         if not job.number_of_positions:

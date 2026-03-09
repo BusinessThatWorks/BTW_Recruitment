@@ -448,7 +448,7 @@ def get_recruiter_openings(
 
     # ✅ Only filter by recruiter if provided
     if recruiter:
-        cand_conditions += " AND added_by = %(recruiter)s"
+        cand_conditions += " AND jac.added_by = %(recruiter)s"
         cand_params["recruiter"] = recruiter
 
     if from_date:
@@ -465,17 +465,26 @@ def get_recruiter_openings(
         SELECT
             parent AS job_opening,
             COUNT(*) AS total_candidates,
+
             SUM(
                 CASE
                     WHEN sub_stages_interview = 'Joined' THEN 1
                     ELSE 0
                 END
-            ) AS joined_candidates
-        FROM `tabDKP_JobApplication_Child`
+            ) AS joined_candidates,
+
+            SUM(
+                CASE
+                    WHEN sub_stages_interview = 'Joined And Left' THEN 1
+                    ELSE 0
+                END
+            ) AS replacements
+
+        FROM `tabDKP_JobApplication_Child` jac
         WHERE parent IN %(openings)s
-          AND parenttype = 'DKP_Job_Opening'
-          AND IFNULL(candidate_name, '') != ''
-          {cand_conditions}
+        AND parenttype = 'DKP_Job_Opening'
+        AND IFNULL(candidate_name, '') != ''
+        {cand_conditions}
         GROUP BY parent
         """,
         cand_params,
@@ -516,20 +525,32 @@ def get_recruiter_openings(
             "name": row.get("candidate_name"),  # DKP_Candidate ID for link
             "candidate_name": row.get("full_name") or row.get("candidate_name") or "Unknown",
         })
-
+    
     # Build response data
     data = []
     for o in openings:
+
         stats = stats_by_opening.get(o["name"], {}) or {}
+
+        joined = cint(stats.get("joined_candidates") or 0)
+        replacements = cint(stats.get("replacements") or 0)
+
+        stable_join = max(joined - replacements, 0)
+
         data.append({
             "job_opening": o["name"],
             "company_name": o.get("company_name"),
             "designation": o.get("designation"),
             "status": o.get("status"),
             "number_of_positions": cint(o.get("number_of_positions") or 0),
+
             "total_candidates": cint(stats.get("total_candidates") or 0),
-            "joined_candidates": cint(stats.get("joined_candidates") or 0),
-            "joined_candidate_list": joined_by_opening.get(o["name"], []),  # ✅ NEW
+
+            "joined_candidates": joined,
+            "replacements": replacements,
+            "stable_join": stable_join if stable_join > 0 else 0,
+
+            "joined_candidate_list": joined_by_opening.get(o["name"], []),
         })
 
     return {"data": data, "total": total}
