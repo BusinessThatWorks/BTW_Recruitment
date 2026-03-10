@@ -462,8 +462,8 @@ function render_kpi_cards(data) {
 
 let jobsDataTable = null;
 let jobs_from_control, jobs_to_control;
-let jobsInlineFilters = {};    // 👈 ADD THIS
-let jobsFilterTimeout = null;   // 👈 ADD THIS
+let jobsInlineFilters = {};
+let jobsFilterTimeout = null;
 
 function init_jobs_tab() {
 	jobs_from_control = frappe.ui.form.make_control({
@@ -608,7 +608,6 @@ function update_jobs_pagination() {
 }
 
 // ============ PAGINATION EVENTS (EVENT DELEGATION) ============
-// 👇 YE CHANGE KIYA - $(document).on use karo!
 
 $(document).on("click", "#jobs-prev-btn", function() { 
     console.log("Prev clicked, current page:", jobsPage);
@@ -784,7 +783,10 @@ function render_job_status_cards(statusCards) {
 	$row.empty();
 
 	statusCards.forEach((item) => {
-		$(`<div class="status-card">
+
+		const link = `/app/dkp_job_opening?status=${encodeURIComponent(item.status)}`;
+
+		$(`<a href="${link}" class="status-card">
                <div class="status-card-header">${item.status}</div>
                <div class="status-card-body">
                    <div class="status-metric">
@@ -796,7 +798,7 @@ function render_job_status_cards(statusCards) {
                        <span class="metric-value">${item.positions}</span>
                    </div>
                </div>
-           </div>`).appendTo($row);
+           </a>`).appendTo($row);
 	});
 }
 
