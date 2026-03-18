@@ -523,18 +523,6 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 			},
 		];
 
-		// ✅ Pass placeholder for last column (actual data from rowsRef)
-		// const tableData = rows.map((row, index) => [
-		// 	startIndex + index + 1,
-		// 	row.job_opening || "",
-		// 	row.company_name || "",
-		// 	row.designation || "",
-		// 	row.status || "",
-		// 	row.number_of_positions || 0,
-		// 	row.total_candidates || 0,
-		// 	row.joined_candidates || 0,
-		// 	"", // ✅ Placeholder - format function uses rowsRef
-		// ]);
 		const tableData = rows.map((row, index) => [
 			startIndex + index + 1,
 			row.job_opening || "",
