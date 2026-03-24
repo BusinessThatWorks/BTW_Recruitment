@@ -581,7 +581,7 @@ function load_jobs_table() {
         args: { 
             from_date: jobs_from_control?.get_value() || null,
             to_date: jobs_to_control?.get_value() || null,
-            limit: jobsLimit,
+            // limit: jobsLimit,
             offset: offset,
              filters: JSON.stringify(jobsInlineFilters) 
         },
