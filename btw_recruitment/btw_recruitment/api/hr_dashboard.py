@@ -149,6 +149,202 @@ JOBS_SORT_FIELDS = {
     "priority", "number_of_positions", "creation"
 }
 
+# @frappe.whitelist()
+# def get_jobs_table(
+#     from_date=None,
+#     to_date=None,
+#     limit=20,
+#     offset=0,
+#     company_name=None,
+#     designation=None,
+#     department=None,
+#     recruiter=None,
+#     status=None,
+#     priority=None,
+#     ageing=None,
+#     sort_by=None,
+#     sort_order=None,
+#     filters=None  # 👈 NEW: Inline filters parameter
+# ):
+#     # Parse inline filters from JSON string
+#     parsed_filters = {}
+#     if filters:
+#         if isinstance(filters, str):
+#             try:
+#                 parsed_filters = json.loads(filters)
+#             except:
+#                 parsed_filters = {}
+#         elif isinstance(filters, dict):
+#             parsed_filters = filters
+    
+#     print(f"Parsed filters: {parsed_filters}")
+    
+#     conditions = []
+#     values = []
+    
+#     # ---------------- Date Filters ----------------
+#     if from_date:
+#         conditions.append("jo.creation >= %s")
+#         values.append(from_date + " 00:00:00")
+#     if to_date:
+#         conditions.append("jo.creation <= %s")
+#         values.append(to_date + " 23:59:59")
+    
+#     # ---------------- Existing Text Filters ----------------
+#     if company_name:
+#         conditions.append("jo.company_name LIKE %s")
+#         values.append(f"%{company_name}%")
+#     if designation:
+#         conditions.append("jo.designation LIKE %s")
+#         values.append(f"%{designation}%")
+    
+#     # ---------------- Existing Exact Filters ----------------
+#     if department:
+#         conditions.append("jo.department = %s")
+#         values.append(department)
+#     if status:
+#         conditions.append("jo.status = %s")
+#         values.append(status)
+#     if priority:
+#         conditions.append("jo.priority = %s")
+#         values.append(priority)
+    
+#     # ---------------- Ageing Filter (Days) ----------------
+#     if ageing not in (None, "", "null"):
+#         conditions.append("DATEDIFF(CURDATE(), jo.creation) >= %s")
+#         values.append(cint(ageing))
+    
+#     # ---------------- Recruiter Filter (Multi-Select) ----------------
+#     if recruiter:
+#         recruiter_list = frappe.parse_json(recruiter)
+#         if recruiter_list:
+#             placeholders = ", ".join(["%s"] * len(recruiter_list))
+#             conditions.append(f"""
+#                 EXISTS (
+#                     SELECT 1
+#                     FROM `tabDKP_JobOpeningRecruiter_Child` r
+#                     WHERE r.parent = jo.name
+#                     AND r.recruiter_name IN ({placeholders})
+#                 )
+#             """)
+#             values.extend(recruiter_list)
+    
+#     # ============================================
+#     # 👇 NEW: INLINE FILTER MAPPING
+#     # Frontend Column Name -> Database Field
+#     # ============================================
+    
+#     filter_mapping = {
+#         "Job Opening": "jo.name",
+#         "Company": "jo.company_name",
+#         "Designation": "jo.designation",
+#         "Department": "jo.department",
+#         "Status": "jo.status",
+#         "Priority": "jo.priority",
+#         "Positions": "jo.number_of_positions"
+#     }
+    
+#     for col_name, db_field in filter_mapping.items():
+#         if parsed_filters.get(col_name):
+#             filter_value = parsed_filters[col_name]
+#             conditions.append(f"{db_field} LIKE %s")
+#             values.append(f"%{filter_value}%")
+    
+#     # Ageing inline filter (special handling - numeric)
+#     if parsed_filters.get("Ageing"):
+#         try:
+#             ageing_val = int(parsed_filters["Ageing"])
+#             conditions.append("DATEDIFF(CURDATE(), jo.creation) >= %s")
+#             values.append(ageing_val)
+#         except:
+#             pass
+    
+#     print(f"Conditions: {conditions}")
+#     print(f"Values: {values}")
+    
+#     # ---------------- WHERE Clause ----------------
+#     where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+    
+#     order_by = "jo.creation DESC"
+#     if sort_by and sort_by in JOBS_SORT_FIELDS and sort_order in ("asc", "desc"):
+#         order_by = f"jo.{sort_by} {sort_order.upper()}"
+    
+#     # ---------------- Total Count ----------------
+#     total = frappe.db.sql(
+#         f"""
+#         SELECT COUNT(DISTINCT jo.name)
+#         FROM `tabDKP_Job_Opening` jo
+#         {where_clause}
+#         """,
+#         values
+#     )[0][0]
+    
+#     # ✅ NAYA CODE (lagao):
+#     if cint(limit) == 0:
+#         # Download - No limit
+#         data = frappe.db.sql(
+#             f"""
+#             SELECT
+#                 jo.name,
+#                 jo.designation,
+#                 jo.company_name,
+#                 jo.department,
+#                 jo.status,
+#                 jo.priority,
+#                 jo.number_of_positions,
+#                 jo.creation
+#             FROM `tabDKP_Job_Opening` jo
+#             {where_clause}
+#             ORDER BY {order_by}
+#             """,
+#             values,
+#             as_dict=1
+#         )
+#     else:
+#         # Paginated
+#         data = frappe.db.sql(
+#             f"""
+#             SELECT
+#                 jo.name,
+#                 jo.designation,
+#                 jo.company_name,
+#                 jo.department,
+#                 jo.status,
+#                 jo.priority,
+#                 jo.number_of_positions,
+#                 jo.creation
+#             FROM `tabDKP_Job_Opening` jo
+#             {where_clause}
+#             ORDER BY {order_by}
+#             LIMIT {cint(limit)} OFFSET {cint(offset)}
+#             """,
+#             values,
+#             as_dict=1
+#         )
+    
+#     # Fetch recruiters for each job
+#     for job in data:
+#         recruiters = frappe.db.sql("""
+#             SELECT recruiter_name 
+#             FROM `tabDKP_JobOpeningRecruiter_Child`
+#             WHERE parent = %s
+#         """, job.name, as_dict=1)
+        
+#         job['recruiters'] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
+    
+#     # 👇 Post-filter for Recruiters (inline filter - after fetching)
+#     if parsed_filters.get("Recruiters"):
+#         recruiter_filter = parsed_filters["Recruiters"].lower()
+#         data = [d for d in data if d.get("recruiters") and recruiter_filter in d["recruiters"].lower()]
+#         total = len(data)
+    
+#     print(f"Query returned {len(data)} records")
+#     print("=" * 60)
+    
+#     return {
+#         "data": data,
+#         "total": total
+#     }
 @frappe.whitelist()
 def get_jobs_table(
     from_date=None,
@@ -164,9 +360,9 @@ def get_jobs_table(
     ageing=None,
     sort_by=None,
     sort_order=None,
-    filters=None  # 👈 NEW: Inline filters parameter
+    filters=None
 ):
-    # Parse inline filters from JSON string
+    # Parse inline filters
     parsed_filters = {}
     if filters:
         if isinstance(filters, str):
@@ -176,8 +372,6 @@ def get_jobs_table(
                 parsed_filters = {}
         elif isinstance(filters, dict):
             parsed_filters = filters
-    
-    print(f"Parsed filters: {parsed_filters}")
     
     conditions = []
     values = []
@@ -190,15 +384,13 @@ def get_jobs_table(
         conditions.append("jo.creation <= %s")
         values.append(to_date + " 23:59:59")
     
-    # ---------------- Existing Text Filters ----------------
+    # ---------------- Existing Filters ----------------
     if company_name:
         conditions.append("jo.company_name LIKE %s")
         values.append(f"%{company_name}%")
     if designation:
         conditions.append("jo.designation LIKE %s")
         values.append(f"%{designation}%")
-    
-    # ---------------- Existing Exact Filters ----------------
     if department:
         conditions.append("jo.department = %s")
         values.append(department)
@@ -209,7 +401,6 @@ def get_jobs_table(
         conditions.append("jo.priority = %s")
         values.append(priority)
     
-    # ---------------- Ageing Filter (Days) ----------------
     if ageing not in (None, "", "null"):
         conditions.append("DATEDIFF(CURDATE(), jo.creation) >= %s")
         values.append(cint(ageing))
@@ -221,17 +412,14 @@ def get_jobs_table(
             placeholders = ", ".join(["%s"] * len(recruiter_list))
             conditions.append(f"""
                 EXISTS (
-                    SELECT 1
-                    FROM `tabDKP_JobOpeningRecruiter_Child` r
-                    WHERE r.parent = jo.name
-                    AND r.recruiter_name IN ({placeholders})
+                    SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
+                    WHERE r.parent = jo.name AND r.recruiter_name IN ({placeholders})
                 )
             """)
             values.extend(recruiter_list)
     
     # ============================================
-    # 👇 NEW: INLINE FILTER MAPPING
-    # Frontend Column Name -> Database Field
+    # INLINE FILTER MAPPING
     # ============================================
     
     filter_mapping = {
@@ -250,7 +438,7 @@ def get_jobs_table(
             conditions.append(f"{db_field} LIKE %s")
             values.append(f"%{filter_value}%")
     
-    # Ageing inline filter (special handling - numeric)
+    # Ageing inline filter
     if parsed_filters.get("Ageing"):
         try:
             ageing_val = int(parsed_filters["Ageing"])
@@ -259,8 +447,19 @@ def get_jobs_table(
         except:
             pass
     
-    print(f"Conditions: {conditions}")
-    print(f"Values: {values}")
+    # ============================================
+    # 👇 FIX: Recruiters INLINE filter - Move to SQL
+    # ============================================
+    if parsed_filters.get("Recruiters"):
+        recruiter_search = parsed_filters["Recruiters"]
+        conditions.append(f"""
+            EXISTS (
+                SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
+                WHERE r.parent = jo.name 
+                AND r.recruiter_name LIKE %s
+            )
+        """)
+        values.append(f"%{recruiter_search}%")
     
     # ---------------- WHERE Clause ----------------
     where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
@@ -279,9 +478,8 @@ def get_jobs_table(
         values
     )[0][0]
     
-    # ✅ NAYA CODE (lagao):
+    # ---------------- Get Data ----------------
     if cint(limit) == 0:
-        # Download - No limit
         data = frappe.db.sql(
             f"""
             SELECT
@@ -301,7 +499,6 @@ def get_jobs_table(
             as_dict=1
         )
     else:
-        # Paginated
         data = frappe.db.sql(
             f"""
             SELECT
@@ -322,24 +519,20 @@ def get_jobs_table(
             as_dict=1
         )
     
-    # Fetch recruiters for each job
+    # Fetch recruiters for display
     for job in data:
         recruiters = frappe.db.sql("""
             SELECT recruiter_name 
             FROM `tabDKP_JobOpeningRecruiter_Child`
             WHERE parent = %s
         """, job.name, as_dict=1)
-        
         job['recruiters'] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
     
-    # 👇 Post-filter for Recruiters (inline filter - after fetching)
-    if parsed_filters.get("Recruiters"):
-        recruiter_filter = parsed_filters["Recruiters"].lower()
-        data = [d for d in data if d.get("recruiters") and recruiter_filter in d["recruiters"].lower()]
-        total = len(data)
-    
-    print(f"Query returned {len(data)} records")
-    print("=" * 60)
+    # ❌ REMOVE THIS BLOCK - No more post-filtering!
+    # if parsed_filters.get("Recruiters"):
+    #     recruiter_filter = parsed_filters["Recruiters"].lower()
+    #     data = [d for d in data if ...]
+    #     total = len(data)
     
     return {
         "data": data,
