@@ -4,48 +4,384 @@ from frappe.model.document import Document
 
 class DKP_Job_Opening(Document):
     def on_update(self):
-        self.send_job_opening_email()
+        self.send_change_notification_email()
 
-    def send_job_opening_email(self):
+    def send_change_notification_email(self):
+        """Send email to assigned recruiters ONLY when actual changes are made"""
+        
         if not self.assign_recruiter:
             return
 
-        # ✅ Extract recruiter emails from child table
+        # ✅ Get previous state of document
+        previous_doc = self.get_doc_before_save()
+        
+        # ✅ If new document (first save) — send "New Job Opening" email
+        if not previous_doc:
+            self.send_new_job_opening_email()
+            return
+        
+        # ✅ Track main field changes
+        main_changes = self.get_field_changes(previous_doc)
+        
+        # ✅ Track child table (candidates) changes
+        candidate_changes = self.get_candidate_table_changes(previous_doc)
+        
+        # ✅ Track recruiter changes
+        recruiter_change = self.get_recruiter_changes(previous_doc)
+        
+        all_changes = main_changes.copy()
+        if recruiter_change:
+            all_changes.append(recruiter_change)
+        
+        # ✅ If nothing changed at all, don't send email
+        if not all_changes and not candidate_changes:
+            return
+        
+        # ✅ Get recruiter emails
         recruiter_emails = [
             row.recruiter_name
             for row in self.assign_recruiter
             if row.recruiter_name
         ]
-
+        
         if not recruiter_emails:
             return
-        # cc_emails = ["sarimk360@gmail.com", "sharda.kumari@clapgrow.com"]
-        subject = f"New Job Opening Assigned – {self.name}"
+        
+        # ✅ Build email content
+        subject = f"Job Opening Updated – {self.name}"
+        
+        html_content = f"""
+        <p>Hello,</p>
 
+        <p>Changes have been made to a job opening assigned to you:</p>
+
+        <p><b>Job Opening:</b> {self.name} | <b>Company:</b> {self.company_name} | <b>Designation:</b> {self.designation}</p>
+        """
+        
+        # ✅ Add main field changes table
+        if all_changes:
+            changes_html = self.build_changes_html(all_changes)
+            html_content += f"""
+            <h3 style="color: #333; margin-top: 20px;">Field Changes:</h3>
+            <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 700px;">
+                <tr style="background-color: #4CAF50; color: white;">
+                    <th style="text-align: left;">Field</th>
+                    <th style="text-align: left;">Old Value</th>
+                    <th style="text-align: left;">New Value</th>
+                </tr>
+                {changes_html}
+            </table>
+            """
+        
+        # ✅ Add candidate changes
+        if candidate_changes:
+            candidate_html = self.build_candidate_changes_html(candidate_changes)
+            html_content += f"""
+            <h3 style="color: #333; margin-top: 20px;">Candidate Changes:</h3>
+            {candidate_html}
+            """
+        
+        html_content += """
+        <br>
+        <p>Regards,<br>HR Team</p>
+        """
+
+        frappe.sendmail(
+            recipients=recruiter_emails,
+            subject=subject,
+            message=html_content,
+        )
+
+
+    def get_field_changes(self, previous_doc):
+        """Compare previous and current doc, return list of changes"""
+        
+        # ✅ Fields to track — apne doctype ke hisaab se
+        fields_to_track = {
+            "company_name": "Company",
+            "designation": "Designation",
+            "department": "Department",
+            "location": "Location",
+            "status": "Status",
+            "number_of_positions": "Number of Positions",
+            "min_experience_years": "Min Experience (Years)",
+            "max_experience_years": "Max Experience (Years)",
+            "min_ctc": "Min CTC Monthly",
+            "max_ctc": "Max CTC Monthly",
+            "gender_preference": "Gender Preference",
+            "work_mode": "Work Mode",
+            "shift": "Shift",
+            "priority": "Priority",
+            "travel_required": "Travel Required",
+            "must_have_skills": "Must Have Skills",
+            "required_qualification": "Required Qualification",
+            "variableincentive": "Variable/Incentive",
+            "closed_reason": "Closed Reason",
+            "notes": "Additional Information",
+        }
+        
+        changes = []
+        
+        for fieldname, label in fields_to_track.items():
+            old_value = previous_doc.get(fieldname)
+            new_value = self.get(fieldname)
+            
+            # ✅ Normalize None/"" for comparison
+            old_value = old_value if old_value else "-"
+            new_value = new_value if new_value else "-"
+            
+            if str(old_value).strip() != str(new_value).strip():
+                changes.append({
+                    "field": label,
+                    "old_value": old_value,
+                    "new_value": new_value
+                })
+        
+        return changes
+
+
+    def get_candidate_table_changes(self, previous_doc):
+        """Track changes in candidates_table child table"""
+        
+        changes = {
+            "added": [],
+            "removed": [],
+            "modified": []
+        }
+        
+        # ✅ Build lookup for previous candidates
+        prev_candidates = {}
+        if previous_doc.candidates_table:
+            for row in previous_doc.candidates_table:
+                if row.candidate_name:
+                    prev_candidates[row.candidate_name] = {
+                        "stage": row.stage or "-",
+                        "sub_stages_interview": row.sub_stages_interview or "-",
+                        "remarks": row.remarks or "-",
+                        "added_by": row.added_by or "-"
+                    }
+        
+        # ✅ Build lookup for current candidates
+        curr_candidates = {}
+        if self.candidates_table:
+            for row in self.candidates_table:
+                if row.candidate_name:
+                    curr_candidates[row.candidate_name] = {
+                        "stage": row.stage or "-",
+                        "sub_stages_interview": row.sub_stages_interview or "-",
+                        "remarks": row.remarks or "-",
+                        "added_by": row.added_by or "-"
+                    }
+        
+        prev_set = set(prev_candidates.keys())
+        curr_set = set(curr_candidates.keys())
+        
+        # ✅ Added candidates
+        for cand in (curr_set - prev_set):
+            cand_data = curr_candidates[cand]
+            changes["added"].append({
+                "candidate": cand,
+                "stage": cand_data["stage"],
+                "added_by": cand_data["added_by"]
+            })
+        
+        # ✅ Removed candidates
+        for cand in (prev_set - curr_set):
+            changes["removed"].append({
+                "candidate": cand
+            })
+        
+        # ✅ Modified candidates (stage/sub_stage/remarks changed)
+        for cand in (prev_set & curr_set):
+            prev_data = prev_candidates[cand]
+            curr_data = curr_candidates[cand]
+            
+            field_changes = []
+            
+            if prev_data["stage"] != curr_data["stage"]:
+                field_changes.append({
+                    "field": "Mapping Stage",
+                    "old": prev_data["stage"],
+                    "new": curr_data["stage"]
+                })
+            
+            if prev_data["sub_stages_interview"] != curr_data["sub_stages_interview"]:
+                field_changes.append({
+                    "field": "Interview Stage",
+                    "old": prev_data["sub_stages_interview"],
+                    "new": curr_data["sub_stages_interview"]
+                })
+            
+            if prev_data["remarks"] != curr_data["remarks"]:
+                field_changes.append({
+                    "field": "Remarks",
+                    "old": prev_data["remarks"],
+                    "new": curr_data["remarks"]
+                })
+            
+            if field_changes:
+                changes["modified"].append({
+                    "candidate": cand,
+                    "changes": field_changes
+                })
+        
+        # ✅ Return None if no changes
+        if not changes["added"] and not changes["removed"] and not changes["modified"]:
+            return None
+        
+        return changes
+
+
+    def get_recruiter_changes(self, previous_doc):
+        """Track changes in assigned recruiters"""
+        
+        old_recruiters = set()
+        new_recruiters = set()
+        
+        if previous_doc.assign_recruiter:
+            old_recruiters = {r.recruiter_name for r in previous_doc.assign_recruiter if r.recruiter_name}
+        
+        if self.assign_recruiter:
+            new_recruiters = {r.recruiter_name for r in self.assign_recruiter if r.recruiter_name}
+        
+        if old_recruiters == new_recruiters:
+            return None
+        
+        return {
+            "field": "Assigned Recruiters",
+            "old_value": ", ".join(sorted(old_recruiters)) if old_recruiters else "-",
+            "new_value": ", ".join(sorted(new_recruiters)) if new_recruiters else "-"
+        }
+
+
+    def build_changes_html(self, changes):
+        """Build HTML table rows for main field changes"""
+        
+        rows = ""
+        for change in changes:
+            old_val = str(change["old_value"])
+            new_val = str(change["new_value"])
+            
+            # ✅ Truncate long text
+            if len(old_val) > 100:
+                old_val = old_val[:100] + "..."
+            if len(new_val) > 100:
+                new_val = new_val[:100] + "..."
+            
+            rows += f"""
+            <tr>
+                <td><b>{change["field"]}</b></td>
+                <td style="color: #888;">{old_val}</td>
+                <td style="color: #2e7d32;">{new_val}</td>
+            </tr>
+            """
+        
+        return rows
+
+
+    def build_candidate_changes_html(self, changes):
+        """Build HTML for candidate table changes"""
+        
+        html = ""
+        
+        # ✅ Added candidates
+        if changes.get("added"):
+            html += """
+            <h4 style="color: #2e7d32; margin-top: 15px;">✅ Candidates Added:</h4>
+            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 600px;">
+                <tr style="background-color: #e8f5e9;">
+                    <th>Candidate</th>
+                    <th>Stage</th>
+                    <th>Added By</th>
+                </tr>
+            """
+            for item in changes["added"]:
+                html += f"""
+                <tr>
+                    <td>{item["candidate"]}</td>
+                    <td>{item["stage"]}</td>
+                    <td>{item["added_by"]}</td>
+                </tr>
+                """
+            html += "</table>"
+        
+        # ✅ Removed candidates
+        if changes.get("removed"):
+            html += """
+            <h4 style="color: #c62828; margin-top: 15px;">❌ Candidates Removed:</h4>
+            <ul>
+            """
+            for item in changes["removed"]:
+                html += f"<li>{item['candidate']}</li>"
+            html += "</ul>"
+        
+        # ✅ Modified candidates
+        if changes.get("modified"):
+            html += """
+            <h4 style="color: #1565c0; margin-top: 15px;">📝 Candidates Updated:</h4>
+            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 700px;">
+                <tr style="background-color: #e3f2fd;">
+                    <th>Candidate</th>
+                    <th>Field</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                </tr>
+            """
+            for item in changes["modified"]:
+                candidate = item["candidate"]
+                for i, change in enumerate(item["changes"]):
+                    html += f"""
+                    <tr>
+                        <td>{"" if i > 0 else candidate}</td>
+                        <td>{change["field"]}</td>
+                        <td style="color: #888;">{change["old"]}</td>
+                        <td style="color: #2e7d32;">{change["new"]}</td>
+                    </tr>
+                    """
+            html += "</table>"
+        
+        return html
+
+
+    def send_new_job_opening_email(self):
+        """Send email when new job opening is created"""
+        
+        recruiter_emails = [
+            row.recruiter_name
+            for row in self.assign_recruiter
+            if row.recruiter_name
+        ]
+        
+        if not recruiter_emails:
+            return
+        
+        subject = f"🆕 New Job Opening Assigned – {self.name}"
+        
         html_content = f"""
         <p>Hello,</p>
 
         <p>A new job opening has been assigned to you.</p>
 
-        <ul>
-            <li><b>Job Opening ID:</b> {self.name}</li>
-            <li><b>Company:</b> {self.company_name}</li>
-            <li><b>Designation:</b> {self.designation}</li>
-            <li><b>Department:</b> {self.department or "-"}</li>
-            <li><b>Location:</b> {self.location or "-"}</li>
-            <li><b>Assigned Recruiters:</b> {', '.join(recruiter_emails)}</li>
-            
-
-        </ul>
+        <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 600px;">
+            <tr><td><b>Job Opening ID</b></td><td>{self.name}</td></tr>
+            <tr><td><b>Company</b></td><td>{self.company_name}</td></tr>
+            <tr><td><b>Designation</b></td><td>{self.designation}</td></tr>
+            <tr><td><b>Department</b></td><td>{self.department or "-"}</td></tr>
+            <tr><td><b>Location</b></td><td>{self.location or "-"}</td></tr>
+            <tr><td><b>Positions</b></td><td>{self.number_of_positions or "-"}</td></tr>
+            <tr><td><b>Experience</b></td><td>{self.min_experience_years or 0} - {self.max_experience_years or 0} Years</td></tr>
+            <tr><td><b>CTC Range</b></td><td>₹{self.min_ctc or 0} - ₹{self.max_ctc or 0} Monthly</td></tr>
+            <tr><td><b>Priority</b></td><td>{self.priority or "-"}</td></tr>
+            <tr><td><b>Assigned Recruiters</b></td><td>{', '.join(recruiter_emails)}</td></tr>
+        </table>
 
         <p>Regards,<br>HR Team</p>
         """
 
         frappe.sendmail(
-            recipients=recruiter_emails,  # ✅ list of emails
+            recipients=recruiter_emails,
             subject=subject,
-            content=html_content,
-            # cc=cc_emails,
+            message=html_content,
         )
 
     def before_save(self):
