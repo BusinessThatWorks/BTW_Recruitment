@@ -447,9 +447,9 @@ def get_recruiter_openings(
     }
 
     # ✅ Only filter by recruiter if provided
-    if recruiter:
-        cand_conditions += " AND jac.added_by = %(recruiter)s"
-        cand_params["recruiter"] = recruiter
+    # if recruiter:
+    #     cand_conditions += " AND jac.added_by = %(recruiter)s"
+    #     cand_params["recruiter"] = recruiter
 
     if from_date:
         cand_conditions += " AND creation >= %(from_date)s"
