@@ -18,7 +18,12 @@ const priorityColors = {
 // ============================================
 // FILTER CAPTURE HELPER
 // ============================================
-
+function getTableLayout() {
+    return window.innerWidth < 768 ? "fixed" : "fluid";
+}
+let companyTable = null;
+let jobsTable = null;
+let candidatesTable = null;
 function get_datatable_filters(dataTable) {
 	if (!dataTable) return {};
 
@@ -368,15 +373,29 @@ function render_candidate_table(data) {
         d.key_certifications || "-",
         d.creation ? frappe.datetime.str_to_user(d.creation) : "-",
     ]);
-    const isMobile = window.innerWidth < 768;
-    candidateDataTable = new frappe.DataTable($container[0], {
+    function renderCandidatesTable(){
+        if(candidateDataTable){
+            candidateDataTable.destroy();
+        }
+        candidateDataTable = new frappe.DataTable($container[0], {
         columns,
         data: tableData,
         inlineFilters: true,
         noDataMessage: "No candidates found",
-        layout: isMobile ? "fixed" : "fluid",
+        layout: getTableLayout(),
         serialNoColumn: false  // 👈 Default serial number hatao
     });
+    }
+    renderCandidatesTable();
+
+    let resizeTimeout;
+    window.addEventListener("resize", () => {  
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            renderCandidatesTable();
+        }, 300); 
+    });
+   
     setTimeout(() => {
         restore_candidates_filters();
         attach_candidates_filter_listeners();
@@ -687,14 +706,26 @@ function render_jobs_table(data) {
         d.creation ? moment(d.creation).format("DD-MM-YYYY hh:mm A") : "-",
         get_ageing_days(d.creation),
     ]);
-    const isMobile = window.innerWidth < 768;
+    function renderJobsTable(){
+        if (jobsDataTable) {
+            jobsDataTable.destroy();
+    }
     jobsDataTable = new frappe.DataTable($container[0], {
         columns,
         data: tableData,
         inlineFilters: true,
         noDataMessage: "No jobs found",
-        layout: isMobile ? "fixed" : "fluid",
+        layout: getTableLayout(),
         serialNoColumn: false
+    });
+}
+    renderJobsTable();
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            renderJobsTable();
+        }, 300);
     });
     // 👇 ADD THIS AT END
     setTimeout(() => {
@@ -929,16 +960,31 @@ function render_company_table(data) {
         `${d.standard_fee_value || "0"}%`,
         d.replacement_policy_days || "-",
     ]);
-    const isMobile = window.innerWidth < 768;
 
-    companyDataTable = new frappe.DataTable($container[0], {
-        columns,
-        data: tableData,
-        inlineFilters: true,
-        // noDataMessage: "No companies found",
-        layout: isMobile ? "fixed" : "fluid",
-        serialNoColumn: false,
-        
+    function renderCompanyTable() {
+        if (companyDataTable) {
+            companyDataTable.destroy();
+        }
+
+        companyDataTable = new frappe.DataTable($container[0], {
+            columns,
+            data: tableData,
+            inlineFilters: true,
+            layout: getTableLayout(),
+            serialNoColumn: false,
+        });
+    }
+
+    // initial render
+    renderCompanyTable();
+
+    // on resize (debounced)
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            renderCompanyTable();
+        }, 300);
     });
 
     // 👇 Attach filter listeners after render
