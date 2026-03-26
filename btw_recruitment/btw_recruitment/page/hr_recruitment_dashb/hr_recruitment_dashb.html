@@ -36,7 +36,9 @@
 			</div>
 
 			<!-- Table -->
-			<div id="company-table"></div>
+			<div class="table-wrapper">
+				<div id="company-table"></div>
+			</div>
             <div id="company-loading" class="table-loading" style="display:none;">
                 <div class="spinner"></div>
                 <div class="loading-text">Loading...</div>
@@ -225,10 +227,15 @@
 	}
 
 	/* ===== COMPANY TAB: 50-50 Split ===== */
+	.table-wrapper {
+		width: 100%;
+		overflow-x: auto;
+	}
 	.company-top-section {
-		display: flex;
-		gap: 24px;
-		margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 20px;
 	}
 
 	.company-kpi-grid {
@@ -244,22 +251,29 @@
 
 	/* ===== JOBS TAB: Status Grid + Chart (50-50) ===== */
 	.jobs-middle-section {
-		display: flex;
-		gap: 24px;
-		margin-bottom: 20px;
-	}
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 20px;
+}
 
-	.jobs-status-grid {
-		flex: 1;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-		min-width: calc(50% - 8px);
-	}
+.jobs-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
 	.jobs-middle-section .chart-box {
 		flex: 1;
-		min-width: calc(50% - 8px);
 	}
+	@media (max-width: 768px) {
+    .jobs-middle-section {
+        grid-template-columns: 1fr;
+    }
+
+    .jobs-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
 	/* Minimal CSS */
 	.pagination-simple {
 		display: flex;
@@ -370,5 +384,33 @@
 	.filter-item .form-group {
 		margin-bottom: 0 !important;
 	}
-    
+    @media (max-width: 768px) {
+		.company-top-section {
+			grid-template-columns: 1fr;
+		}
+
+		.company-kpi-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+	@media (max-width: 768px) {
+		.filter-bar {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 10px;
+		}
+
+		.filter-group {
+			flex-wrap: wrap;
+		}
+
+		.filter-item {
+			flex: 1;
+			min-width: 120px;
+		}
+
+		.filter-bar button {
+			width: 100%;
+		}
+	}
 </style>
