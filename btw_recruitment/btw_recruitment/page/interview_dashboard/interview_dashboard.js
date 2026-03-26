@@ -37,6 +37,10 @@ let details_data_cache = []; // Cache for Excel export
 let filter_debounce_timer = null;
 let summary_search_timer = null;
 
+function getTableLayout() {
+	return window.innerWidth < 768 ? "fixed" : "fluid";
+}
+
 // ==================== PAGE LOAD ====================
 frappe.pages['interview-dashboard'].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
@@ -234,7 +238,9 @@ function render_interview_dashboard_table(data, total) {
 		`);
 	});
 
-	$container.append(table);
+	const wrapper = $('<div class="summary-table-wrapper"></div>');
+wrapper.append(table);
+$container.append(wrapper);
 	render_summary_pagination($container);
 }
 
@@ -299,6 +305,55 @@ function load_interview_details_datatable() {
 	});
 }
 
+// function render_details_datatable(data) {
+// 	const $container = $("#interview-details-table");
+// 	$container.empty();
+
+// 	if (!data || data.length === 0) {
+// 		$container.html('<div class="empty-state">No interview details available</div>');
+// 		return;
+// 	}
+
+// 	// Transform data
+// 	const tableData = data.map(row => [
+// 		row.job_opening || "-",
+// 		row.candidate_display_name || row.candidate_name || "-",
+// 		row.job_application_stage || "-",
+// 		row.interview_stage_main || "-",
+// 		row.interview_stage || "-",
+// 		row.interview_date ? frappe.datetime.str_to_user(row.interview_date) : "-",
+// 		row.interview_time_range || "-"
+// 	]);
+
+// 	// Columns
+// 	const columns = [
+// 		{ name: "Job Opening", width: 200, editable: false },
+// 		{ name: "Candidate", width: 180, editable: false },
+// 		{ name: "Mapping Stage", width: 140, editable: false },
+// 		{ name: "Interview Stage Main", width: 160, editable: false },
+// 		{ name: "Interview Stage", width: 140, editable: false },
+// 		{ name: "Interview Date", width: 120, editable: false },
+// 		{ name: "Time", width: 140, editable: false }
+// 	];
+	
+// 	// ✅ destroy previous
+// 	if (details_datatable) {
+// 		details_datatable.destroy();
+// 	}
+
+// 	// ✅ create with dynamic layout
+// 	details_datatable = new frappe.DataTable($container[0], {
+// 		columns,
+// 		data: tableData,
+// 		inlineFilters: true,
+// 		layout: getTableLayout(),
+// 		noDataMessage: "No records found"
+// 	});
+// }
+// global flag
+let detailsResizeAttached = false;
+let detailsResizeTimeout;
+
 function render_details_datatable(data) {
 	const $container = $("#interview-details-table");
 	$container.empty();
@@ -308,7 +363,6 @@ function render_details_datatable(data) {
 		return;
 	}
 
-	// Transform data
 	const tableData = data.map(row => [
 		row.job_opening || "-",
 		row.candidate_display_name || row.candidate_name || "-",
@@ -319,27 +373,47 @@ function render_details_datatable(data) {
 		row.interview_time_range || "-"
 	]);
 
-	// Columns
 	const columns = [
-		{ name: "Job Opening", width: 200, editable: false },
-		{ name: "Candidate", width: 180, editable: false },
-		{ name: "Mapping Stage", width: 140, editable: false },
-		{ name: "Interview Stage Main", width: 160, editable: false },
-		{ name: "Interview Stage", width: 140, editable: false },
-		{ name: "Interview Date", width: 120, editable: false },
-		{ name: "Time", width: 140, editable: false }
+		{ name: "Job Opening", width: 200 },
+		{ name: "Candidate", width: 180 },
+		{ name: "Mapping Stage", width: 140 },
+		{ name: "Interview Stage Main", width: 160 },
+		{ name: "Interview Stage", width: 140 },
+		{ name: "Interview Date", width: 120 },
+		{ name: "Time", width: 140 }
 	];
 
-	// Create DataTable
+	// destroy previous
+	if (details_datatable) {
+		details_datatable.destroy();
+	}
+
+	// create table
 	details_datatable = new frappe.DataTable($container[0], {
-		columns: columns,
+		columns,
 		data: tableData,
 		inlineFilters: true,
-		layout: "fluid",
+		layout: getTableLayout(),
 		noDataMessage: "No records found"
 	});
-}
 
+	// ✅ attach resize ONLY ONCE
+	if (!detailsResizeAttached) {
+		detailsResizeAttached = true;
+
+		window.addEventListener("resize", () => {
+			clearTimeout(detailsResizeTimeout);
+
+			detailsResizeTimeout = setTimeout(() => {
+				const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
+
+				if (activeTab === "#details-pane") {
+					load_interview_details_datatable();
+				}
+			}, 300);
+		});
+	}
+}
 function update_details_record_count(count, filtered = false) {
 	const total = interview_details_table_state.total;
 	const text = filtered
@@ -431,46 +505,6 @@ function download_summary_excel() {
 		false
 	);
 }
-
-// Excel download - gets filtered data from DataTable
-// function download_details_excel() {
-// 	if (!details_datatable) {
-// 		frappe.msgprint("No data to export");
-// 		return;
-// 	}
-
-// 	// Get current visible/filtered rows
-// 	const rows = details_datatable.datamanager.getRows(true);
-	
-// 	if (!rows || rows.length === 0) {
-// 		frappe.msgprint("No data to export");
-// 		return;
-// 	}
-
-// 	// Build CSV
-// 	const headers = ["Job Opening", "Candidate", "Mapping Stage", "Interview Stage Main", "Interview Stage", "Interview Date", "Time"];
-// 	let csv = headers.join(",") + "\n";
-
-// 	rows.forEach(row => {
-// 		const escaped = row.map(cell => {
-// 			const val = String(cell || "");
-// 			if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-// 				return '"' + val.replace(/"/g, '""') + '"';
-// 			}
-// 			return val;
-// 		});
-// 		csv += escaped.join(",") + "\n";
-// 	});
-
-// 	// Download
-// 	const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-// 	const link = document.createElement("a");
-// 	link.href = URL.createObjectURL(blob);
-// 	link.download = "interview_details.csv";
-// 	link.click();
-
-// 	frappe.show_alert({ message: `Exported ${rows.length} records`, indicator: "green" });
-// }
 function download_details_excel() {
 	if (!details_datatable) {
 		frappe.msgprint("No data to export");

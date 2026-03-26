@@ -535,17 +535,34 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 			row.replacements || 0,
 			"", // joined candidates placeholder
 		]);
+		function getTableLayout() {
+			return window.innerWidth < 768 ? "fixed" : "fluid";
+		}
+		function renderOpeningsTable() {
+			if (openingsDataTable) {
+				openingsDataTable.destroy();
+			}
 
-		openingsDataTable = new frappe.DataTable($openings_container[0], {
-			columns,
-			data: tableData,
-			inlineFilters: true,
-			noDataMessage: __("No openings found"),
-			layout: "fluid",
-			serialNoColumn: false,
-			editing: false,
+			openingsDataTable = new frappe.DataTable($openings_container[0], {
+				columns,
+				data: tableData,
+				inlineFilters: true,
+				noDataMessage: __("No openings found"),
+				layout: getTableLayout(),
+				serialNoColumn: false,
+				editing: false,
+			});
+		}
+		renderOpeningsTable();
+		let resizeTimeout;
+
+		window.addEventListener("resize", () => {
+			clearTimeout(resizeTimeout);
+
+			resizeTimeout = setTimeout(() => {
+				renderOpeningsTable();
+			}, 300);
 		});
-
 		setTimeout(() => {
 			restore_openings_filters();
 			attach_openings_filter_listeners();
