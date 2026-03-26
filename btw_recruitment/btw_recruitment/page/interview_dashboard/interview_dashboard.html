@@ -11,13 +11,12 @@
 				<label class="form-label">To Date</label>
 				<input type="date" class="form-control" id="interview-to-date" />
 			</div>
-			<div class="col-md-2">
-				<button class="btn btn-outline-secondary w-100" id="interview-clear-dates">
+			<div class="col-md-4 ms-auto d-flex gap-2">
+				<button class="btn btn-outline-secondary flex-fill" id="interview-clear-dates">
 					<i class="fa fa-times"></i> Clear Dates
 				</button>
-			</div>
-			<div class="col-md-2 ms-auto">
-				<button class="btn btn-success w-100" id="download-excel-btn">
+
+				<button class="btn btn-success flex-fill" id="download-excel-btn">
 					<i class="fa fa-download"></i> Download Excel
 				</button>
 			</div>
@@ -75,6 +74,20 @@
 </div>
 
 <style>
+	.col-md-4.ms-auto {
+    margin-top: 8px;   /* space above buttons */
+}
+.d-flex.gap-2 {
+    gap: 10px !important;
+}
+.card.p-3 {
+    padding: 16px !important; /* thoda breathing space */
+}
+#interview-clear-dates,
+#download-excel-btn {
+    padding: 6px 12px;
+    white-space: nowrap;
+}
 	.interview-dashboard-container {
 		padding: 16px;
 	}
