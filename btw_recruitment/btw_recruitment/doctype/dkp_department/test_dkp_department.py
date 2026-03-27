@@ -17,5 +17,5 @@ class TestDKP_Department(FrappeTestCase):
 		department_name = f"QA-{frappe.generate_hash(length=6)}"
 		frappe.get_doc({"doctype": "DKP_Department", "department": department_name}).insert()
 
-		with self.assertRaises(frappe.ValidationError):
+		with self.assertRaises(frappe.DuplicateEntryError):
 			frappe.get_doc({"doctype": "DKP_Department", "department": department_name}).insert()
