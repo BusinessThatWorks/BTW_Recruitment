@@ -84,6 +84,12 @@ jobs:
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site
 
+          bench --site test_site install-app erpnext
+          bench --site test_site install-app hrms
+          bench --site test_site install-app commit
+          bench --site test_site install-app raven
+          bench --site test_site install-app wiki
+          bench --site test_site install-app drive
           bench --site test_site install-app btw_recruitment
           bench build
 
