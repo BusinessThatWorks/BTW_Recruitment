@@ -1,11 +1,11 @@
 import frappe
-import PyPDF2
 import zipfile
 import mimetypes
 from anthropic import Anthropic
 import os
 import mammoth
 import easyocr
+import fitz  # PyMuPDF
 
 
 def debug(msg):
@@ -24,29 +24,51 @@ def ocr_image_easy(file_path):
         raise Exception(f"EasyOCR failed: {e}")
 
 
-def ocr_pdf_pages(file_path):
+def ocr_pdf_with_pymupdf(file_path):
     """
-    Convert each PDF page to an image, then OCR it.
-    Requires: pdf2image + poppler installed on server.
-    pip install pdf2image
-    apt-get install poppler-utils
+    Extract text from PDF using PyMuPDF.
+    If text extraction fails, render pages as images and OCR them.
+    NO system dependencies needed!
     """
     try:
-        from pdf2image import convert_from_path
-        images = convert_from_path(file_path, dpi=200)
+        doc = fitz.open(file_path)
+        text = ""
+        
+        # First attempt: direct text extraction
+        for page in doc:
+            text += page.get_text()
+        
+        # If we got meaningful text, return it
+        if text.strip() and len(text.strip()) > 100:
+            debug(f"PyMuPDF extracted {len(text)} chars via text layer")
+            return text.strip()
+        
+        # Otherwise, OCR the pages (image-based PDF)
+        debug("PDF appears to be image-based, switching to OCR")
         reader = easyocr.Reader(['en'], gpu=False)
-        full_text = ""
-        for i, img in enumerate(images):
-            # Save temp image
-            tmp_path = f"/tmp/resume_page_{i}.jpg"
-            img.save(tmp_path, "JPEG")
-            results = reader.readtext(tmp_path, detail=0)
-            full_text += "\n".join(results) + "\n"
-            os.remove(tmp_path)
-        debug(f"PDF OCR extracted {len(full_text)} chars")
-        return full_text.strip()
+        ocr_text = ""
+        
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            # Render page to image at 200 DPI
+            pix = page.get_pixmap(matrix=fitz.Matrix(200/72, 200/72))
+            img_path = f"/tmp/resume_page_{page_num}.png"
+            pix.save(img_path)
+            
+            # OCR the image
+            results = reader.readtext(img_path, detail=0)
+            ocr_text += "\n".join(results) + "\n"
+            
+            # Clean up temp file
+            if os.path.exists(img_path):
+                os.remove(img_path)
+        
+        doc.close()
+        debug(f"PyMuPDF OCR extracted {len(ocr_text)} chars")
+        return ocr_text.strip()
+        
     except Exception as e:
-        raise Exception(f"PDF OCR fallback failed: {e}")
+        raise Exception(f"PyMuPDF extraction failed: {e}")
 
 
 # ── UNIVERSAL TEXT EXTRACTOR ──────────────────────────────────────────────────
@@ -55,24 +77,10 @@ def extract_text_from_file(file_path):
     mime, _ = mimetypes.guess_type(file_path)
     debug(f"Processing file: {file_path}, MIME: {mime}")
 
-    # 1️⃣ PDF — try PyPDF2 first, OCR fallback
-    if mime == "application/pdf":
-        debug("Trying PDF extraction via PyPDF2")
-        reader = PyPDF2.PdfReader(file_path)
-        text = ""
-        for p in reader.pages:
-            try:
-                text += p.extract_text() or ""
-            except Exception:
-                pass
-
-        if text.strip():
-            debug(f"PyPDF2 extracted {len(text)} chars")
-            return text.strip()
-
-        # Image-based or designed PDF — fall back to OCR
-        debug("PyPDF2 returned empty — switching to OCR")
-        return ocr_pdf_pages(file_path)
+    # 1️⃣ PDF — Use PyMuPDF (no system dependencies!)
+    if mime == "application/pdf" or file_path.lower().endswith(".pdf"):
+        debug("Extracting PDF via PyMuPDF")
+        return ocr_pdf_with_pymupdf(file_path)
 
     # 2️⃣ DOCX
     if (
@@ -118,7 +126,7 @@ def extract_text_from_file(file_path):
     )
 
 
-# ── INVALID DATE GUARD (defined once, outside loops) ─────────────────────────
+# ── INVALID DATE GUARD ─────────────────────────────────────────────────────
 
 def is_invalid_date(value):
     if not isinstance(value, str):
@@ -170,58 +178,54 @@ def process_resume(docname):
 
     client = Anthropic(api_key=api_key)
 
-    # ── PROMPT ────────────────────────────────────────────────────────────────
+    # ── IMPROVED PROMPT ────────────────────────────────────────────────────────────────
     prompt = f"""
 You are a senior HR analytics resume parser.
 
 YOUR TASK:
-1. Extract ALL work experiences with exact dates.
-2. Identify gaps BETWEEN experiences automatically.
-3. Calculate TOTAL PROFESSIONAL EXPERIENCE excluding gap periods.
-4. Perform all date calculations carefully.
+Extract structured information from this resume with HIGH ACCURACY.
 
-RULES:
-- Do NOT guess employment not written in the resume.
-- If two jobs have a break between them, count that break as a GAP.
-- If "Present" is mentioned, treat it as the current month.
-- Use month-level precision.
-- If a date value is NOT explicitly mentioned, return null.
-- Do NOT return "N/A", "Not provided", "Unknown", empty string, or placeholders.
-- All date fields MUST be either a valid date in YYYY-MM-DD format OR null.
+CRITICAL RULES:
+- Extract ONLY information that is EXPLICITLY stated in the resume
+- If a field is not mentioned, return null (not "N/A", "Not provided", or empty string)
+- For dates: Use YYYY-MM-DD format, or null if not mentioned
+- For lists: Return as arrays, even if only one item
+- Be precise with names, emails, phone numbers
 
-DATE HANDLING:
-- Month name → number (Jan=01 … Dec=12)
-- If only year is given: assume January for start, December for end
-- Example: "May 2022 – Oct 2023" → 1.42 years
+EXPERIENCE CALCULATION:
+- Calculate total years by looking at employment history
+- If dates are partial (only year), assume: start=January, end=December
+- "Present" means current month
+- Example: "Jan 2020 - Present" in March 2026 = 6.17 years
 
 Resume Text:
 ----------------
 {extracted_text}
 ----------------
 
-Return ONLY valid raw JSON (no markdown, no explanation, no comments):
+Return ONLY valid JSON (no markdown, no comments):
 {{
-  "candidate_name": "",
-  "email": "",
-  "mobile_number": "",
+  "candidate_name": null,
+  "email": null,
+  "mobile_number": null,
   "alternate_mobile_number": null,
-  "current_location": "",
-  "total_experience_years": 0.0,
-  "current_company": "",
-  "current_designation": "",
+  "current_location": null,
+  "total_experience_years": null,
+  "current_company": null,
+  "current_designation": null,
   "skills": [],
   "certifications": [],
-  "highest_qualification": "",
-  "institute": "",
+  "highest_qualification": null,
+  "institute": null,
   "languages_known": [],
   "date_of_birth": null,
-  "address": "",
+  "address": null,
   "age": null
 }}
 """
 
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-20250514",  # Using Sonnet for better accuracy
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -253,7 +257,7 @@ Return ONLY valid raw JSON (no markdown, no explanation, no comments):
     confidence_score = round(len(extracted_fields) / len(EXPECTED_FIELDS) * 100)
     debug(f"Confidence: {confidence_score}% | Missing: {missing_fields}")
 
-    if confidence_score < 50:
+    if confidence_score < 40:  # Lowered threshold for designer resumes
         frappe.throw(
             f"Resume parsing confidence too low ({confidence_score}%). "
             "Upload a clearer or more complete resume."
@@ -262,7 +266,7 @@ Return ONLY valid raw JSON (no markdown, no explanation, no comments):
     # ── FLATTEN LISTS ─────────────────────────────────────────────────────────
     for f in ["skills", "certifications", "languages_known", "institute"]:
         if isinstance(data.get(f), list):
-            data[f] = ", ".join(str(x) for x in data[f])
+            data[f] = ", ".join(str(x) for x in data[f] if x)
 
     # ── MAP TO DOC ────────────────────────────────────────────────────────────
     mapping = {

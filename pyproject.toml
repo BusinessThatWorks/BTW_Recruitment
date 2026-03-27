@@ -11,15 +11,13 @@ dynamic = ["version"]
 
 dependencies = [
     "PyPDF2",
-    "python-docx",
     "pillow",
-    "pytesseract",
     "anthropic",
     "mammoth",
     "easyocr==1.7.2",
     "torch",
     "torchvision",
-    "torchaudio"
+    "pymupdf",
 ]
 
 [tool.bench.frappe-dependencies]
