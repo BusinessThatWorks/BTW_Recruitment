@@ -390,13 +390,19 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 
 			const $bar = $(`
             <div class="h-bar-row ${zeroClass}">
-                <div class="h-bar-label" style="${isZero ? "color: #9ca3af;" : ""}">${stage.name}</div>
+                <div class="h-bar-label" style="${isZero ? "color: #9ca3af;" : ""}">${
+				stage.name
+			}</div>
                 <div class="h-bar-track">
                     <div class="h-bar ${zeroClass}" style="width: ${width}%; background: ${bgColor};">
-                        <span class="h-bar-value" style="color: ${textColor};">${stage.value}</span>
+                        <span class="h-bar-value" style="color: ${textColor};">${
+				stage.value
+			}</span>
                     </div>
                 </div>
-                <div class="h-bar-percent" style="${isZero ? "color: #9ca3af;" : ""}">${percentage}%</div>
+                <div class="h-bar-percent" style="${
+					isZero ? "color: #9ca3af;" : ""
+				}">${percentage}%</div>
             </div>
         `);
 
@@ -462,7 +468,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 
 		if (!rows.length) {
 			$openings_container.html(
-				'<p class="text-muted text-center mb-0">No openings found</p>',
+				'<p class="text-muted text-center mb-0">No openings found</p>'
 			);
 			openingsDataTable = null;
 			return;
@@ -497,7 +503,9 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 					else if (status === "Closed – Hired") status_class = "badge badge-info";
 					else if (status === "On Hold") status_class = "badge badge-warning";
 					else if (status === "Closed – Cancelled") status_class = "badge badge-danger";
-					return `<span class="${status_class}">${frappe.utils.escape_html(status)}</span>`;
+					return `<span class="${status_class}">${frappe.utils.escape_html(
+						status
+					)}</span>`;
 				},
 			},
 			{ name: "Positions", width: 80 },
@@ -513,12 +521,12 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 					const joinedList = rowsRef[rowIndex]?.joined_candidate_list || [];
 
 					if (!Array.isArray(joinedList) || !joinedList.length) {
-						return '-';
+						return "-";
 					}
 
 					// ✅ Simple comma separated names
-					const names = joinedList.map(c => c.candidate_name || c.name || "Unknown");
-					return names.join(', ');
+					const names = joinedList.map((c) => c.candidate_name || c.name || "Unknown");
+					return names.join(", ");
 				},
 			},
 		];
@@ -661,24 +669,23 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				}
 
 				const headers = [
-				"#",
-				"Job Opening",
-				"Company",
-				"Designation",
-				"Status",
-				"Positions",
-				"Candidates Mapped",
-				"Joined",
-				"Replacements",
-				// "Stable Join",
-				"Joined Candidates",
+					"#",
+					"Job Opening",
+					"Company",
+					"Designation",
+					"Status",
+					"Positions",
+					"Candidates Mapped",
+					"Joined",
+					"Replacements",
+					// "Stable Join",
+					"Joined Candidates",
 				];
 
 				const data_rows = rows.map((row, index) => {
-
 					const joinedList = row.joined_candidate_list || [];
 					const joinedNames = joinedList
-						.map(c => c.candidate_name || c.name || "Unknown")
+						.map((c) => c.candidate_name || c.name || "Unknown")
 						.join(", ");
 
 					return [
@@ -692,7 +699,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 						row.joined_candidates || 0,
 						row.replacements || 0,
 						row.stable_join || 0,
-						joinedNames || "-"
+						joinedNames || "-",
 					];
 				});
 

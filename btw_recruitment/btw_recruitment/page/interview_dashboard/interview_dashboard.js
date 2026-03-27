@@ -1,14 +1,14 @@
 // Global filters
 let interview_dashboard_filters = {
 	from_date: null,
-	to_date: null
+	to_date: null,
 };
 
 // Summary table state
 let job_openings_table_state = {
 	limit: 20,
 	offset: 0,
-	total: 0
+	total: 0,
 };
 let summary_table_filters = { search: "" };
 
@@ -16,7 +16,7 @@ let summary_table_filters = { search: "" };
 let interview_details_table_state = {
 	limit: 20,
 	offset: 0,
-	total: 0
+	total: 0,
 };
 
 // Inline filters for details DataTable
@@ -27,7 +27,7 @@ let details_inline_filters = {
 	interview_stage_main: "",
 	interview_stage: "",
 	interview_date: "",
-	time: ""
+	time: "",
 };
 
 // DataTable instance
@@ -42,11 +42,11 @@ function getTableLayout() {
 }
 
 // ==================== PAGE LOAD ====================
-frappe.pages['interview-dashboard'].on_page_load = function (wrapper) {
+frappe.pages["interview-dashboard"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
 		title: "Interview Dashboard",
-		single_column: true
+		single_column: true,
 	});
 
 	$(frappe.render_template("interview_dashboard")).appendTo(page.body);
@@ -167,7 +167,9 @@ function bind_summary_search() {
 
 function load_interview_dashboard_data() {
 	const $container = $("#interview-dashboard-table");
-	$container.html('<div class="loading-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
+	$container.html(
+		'<div class="loading-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div>'
+	);
 
 	frappe.call({
 		method: "btw_recruitment.btw_recruitment.api.interview_dashboard.get_interview_dashboard_data",
@@ -176,7 +178,7 @@ function load_interview_dashboard_data() {
 			to_date: interview_dashboard_filters.to_date,
 			search: summary_table_filters.search,
 			limit: job_openings_table_state.limit,
-			offset: job_openings_table_state.offset
+			offset: job_openings_table_state.offset,
 		},
 		callback: function (r) {
 			if (r.message) {
@@ -188,7 +190,7 @@ function load_interview_dashboard_data() {
 		},
 		error: function () {
 			$container.html('<div class="empty-state">Error loading data</div>');
-		}
+		},
 	});
 }
 
@@ -220,10 +222,11 @@ function render_interview_dashboard_table(data, total) {
 
 	const tbody = table.find("tbody");
 
-	data.forEach(row => {
-		const stages = row.stages && row.stages.length > 0
-			? row.stages.map(s => `${s.stage} (${s.count})`).join(", ")
-			: "-";
+	data.forEach((row) => {
+		const stages =
+			row.stages && row.stages.length > 0
+				? row.stages.map((s) => `${s.stage} (${s.count})`).join(", ")
+				: "-";
 
 		tbody.append(`
 			<tr>
@@ -239,8 +242,8 @@ function render_interview_dashboard_table(data, total) {
 	});
 
 	const wrapper = $('<div class="summary-table-wrapper"></div>');
-wrapper.append(table);
-$container.append(wrapper);
+	wrapper.append(table);
+	$container.append(wrapper);
 	render_summary_pagination($container);
 }
 
@@ -255,9 +258,9 @@ function render_summary_pagination($container) {
 		<div class="pagination-container" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:12px;background:#f8f9fa;border-radius:4px;">
 			<div class="pagination-info">Showing ${start} to ${end} of ${state.total} entries</div>
 			<div class="pagination-buttons">
-				<button class="prev-btn" ${state.offset === 0 ? 'disabled' : ''}>Previous</button>
+				<button class="prev-btn" ${state.offset === 0 ? "disabled" : ""}>Previous</button>
 				<span style="padding:6px 12px;">Page ${current_page} of ${total_pages}</span>
-				<button class="next-btn" ${current_page >= total_pages ? 'disabled' : ''}>Next</button>
+				<button class="next-btn" ${current_page >= total_pages ? "disabled" : ""}>Next</button>
 			</div>
 		</div>
 	`);
@@ -289,8 +292,8 @@ function load_interview_details_datatable() {
 		args: {
 			from_date: interview_dashboard_filters.from_date,
 			to_date: interview_dashboard_filters.to_date,
-			limit: 1000,  // Load more for client-side filtering
-			offset: 0
+			limit: 1000, // Load more for client-side filtering
+			offset: 0,
 		},
 		callback: function (r) {
 			if (r.message && r.message.data) {
@@ -301,7 +304,7 @@ function load_interview_details_datatable() {
 		},
 		error: function () {
 			$container.html('<div class="empty-state">Error loading data</div>');
-		}
+		},
 	});
 }
 
@@ -335,7 +338,7 @@ function load_interview_details_datatable() {
 // 		{ name: "Interview Date", width: 120, editable: false },
 // 		{ name: "Time", width: 140, editable: false }
 // 	];
-	
+
 // 	// ✅ destroy previous
 // 	if (details_datatable) {
 // 		details_datatable.destroy();
@@ -363,14 +366,14 @@ function render_details_datatable(data) {
 		return;
 	}
 
-	const tableData = data.map(row => [
+	const tableData = data.map((row) => [
 		row.job_opening || "-",
 		row.candidate_display_name || row.candidate_name || "-",
 		row.job_application_stage || "-",
 		row.interview_stage_main || "-",
 		row.interview_stage || "-",
 		row.interview_date ? frappe.datetime.str_to_user(row.interview_date) : "-",
-		row.interview_time_range || "-"
+		row.interview_time_range || "-",
 	]);
 
 	const columns = [
@@ -380,7 +383,7 @@ function render_details_datatable(data) {
 		{ name: "Interview Stage Main", width: 160 },
 		{ name: "Interview Stage", width: 140 },
 		{ name: "Interview Date", width: 120 },
-		{ name: "Time", width: 140 }
+		{ name: "Time", width: 140 },
 	];
 
 	// destroy previous
@@ -394,7 +397,7 @@ function render_details_datatable(data) {
 		data: tableData,
 		inlineFilters: true,
 		layout: getTableLayout(),
-		noDataMessage: "No records found"
+		noDataMessage: "No records found",
 	});
 
 	// ✅ attach resize ONLY ONCE
@@ -435,9 +438,9 @@ function render_details_pagination() {
 	$container.html(`
 		<div class="pagination-info">Showing ${start} to ${end} of ${state.total} entries</div>
 		<div class="pagination-buttons">
-			<button class="prev-btn" ${state.offset === 0 ? 'disabled' : ''}>Previous</button>
+			<button class="prev-btn" ${state.offset === 0 ? "disabled" : ""}>Previous</button>
 			<span style="padding:6px 12px;">Page ${current_page} of ${total_pages}</span>
-			<button class="next-btn" ${current_page >= total_pages ? 'disabled' : ''}>Next</button>
+			<button class="next-btn" ${current_page >= total_pages ? "disabled" : ""}>Next</button>
 		</div>
 	`);
 
@@ -467,7 +470,7 @@ function bind_details_clear_filters() {
 			interview_stage_main: "",
 			interview_stage: "",
 			interview_date: "",
-			time: ""
+			time: "",
 		};
 
 		// Clear filter inputs in DataTable
@@ -500,7 +503,7 @@ function download_summary_excel() {
 			tab: "summary",
 			from_date: interview_dashboard_filters.from_date || null,
 			to_date: interview_dashboard_filters.to_date || null,
-			search: summary_table_filters.search || null
+			search: summary_table_filters.search || null,
 		},
 		false
 	);
@@ -512,28 +515,28 @@ function download_details_excel() {
 	}
 
 	const rows = details_datatable.datamanager.getRows(true);
-	
+
 	if (!rows || rows.length === 0) {
 		frappe.msgprint("No data to export");
 		return;
 	}
 
 	// Extract values properly
-	const filtered_data = rows.map(row => ({
+	const filtered_data = rows.map((row) => ({
 		job_opening: row[0]?.content || row[0] || "",
 		candidate: row[1]?.content || row[1] || "",
 		mapping_stage: row[2]?.content || row[2] || "",
 		interview_stage_main: row[3]?.content || row[3] || "",
 		interview_stage: row[4]?.content || row[4] || "",
 		interview_date: row[5]?.content || row[5] || "",
-		time: row[6]?.content || row[6] || ""
+		time: row[6]?.content || row[6] || "",
 	}));
 
 	// Direct download
 	open_url_post(
 		"/api/method/btw_recruitment.btw_recruitment.api.interview_dashboard.download_filtered_excel",
 		{
-			data: JSON.stringify(filtered_data)
+			data: JSON.stringify(filtered_data),
 		}
 	);
 }
@@ -553,7 +556,7 @@ $(document).on("click.interview", "#download-excel-btn", function () {
 				tab: "summary",
 				from_date: interview_dashboard_filters.from_date || null,
 				to_date: interview_dashboard_filters.to_date || null,
-				search: summary_table_filters.search || null
+				search: summary_table_filters.search || null,
 			}
 		);
 	}
@@ -561,11 +564,19 @@ $(document).on("click.interview", "#download-excel-btn", function () {
 
 function export_details_to_excel_client(data) {
 	// Use frappe's built-in export or create CSV
-	const headers = ["Job Opening", "Candidate", "Mapping Stage", "Interview Stage Main", "Interview Stage", "Interview Date", "Time"];
-	
+	const headers = [
+		"Job Opening",
+		"Candidate",
+		"Mapping Stage",
+		"Interview Stage Main",
+		"Interview Stage",
+		"Interview Date",
+		"Time",
+	];
+
 	let csv_content = headers.join(",") + "\n";
-	
-	data.forEach(row => {
+
+	data.forEach((row) => {
 		const values = [
 			escape_csv(row.job_opening),
 			escape_csv(row.candidate),
@@ -573,7 +584,7 @@ function export_details_to_excel_client(data) {
 			escape_csv(row.interview_stage_main),
 			escape_csv(row.interview_stage),
 			escape_csv(row.interview_date),
-			escape_csv(row.time)
+			escape_csv(row.time),
 		];
 		csv_content += values.join(",") + "\n";
 	});
@@ -589,10 +600,13 @@ function export_details_to_excel_client(data) {
 	link.click();
 	document.body.removeChild(link);
 
-	frappe.show_alert({
-		message: `Exported ${data.length} filtered records`,
-		indicator: "green"
-	}, 3);
+	frappe.show_alert(
+		{
+			message: `Exported ${data.length} filtered records`,
+			indicator: "green",
+		},
+		3
+	);
 }
 
 function escape_csv(value) {

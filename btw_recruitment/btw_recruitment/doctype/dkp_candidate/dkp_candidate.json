@@ -7,6 +7,7 @@
  "field_order": [
   "candidate_details_section",
   "resume_attachment",
+  "resume_parsed",
   "confidence_score",
   "candidate_name",
   "department",
@@ -155,6 +156,14 @@
    "fieldname": "resume_attachment",
    "fieldtype": "Attach",
    "label": "Resume Attachment"
+  },
+  {
+   "default": "0",
+   "fieldname": "resume_parsed",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Resume Parsed",
+   "read_only": 1
   },
   {
    "fieldname": "resume_source",

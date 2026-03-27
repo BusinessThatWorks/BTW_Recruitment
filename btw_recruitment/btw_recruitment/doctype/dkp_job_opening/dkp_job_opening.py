@@ -3,65 +3,61 @@ from frappe.model.document import Document
 
 
 class DKP_Job_Opening(Document):
-    def on_update(self):
-        self.send_change_notification_email()
+	def on_update(self):
+		self.send_change_notification_email()
 
-    def send_change_notification_email(self):
-        """Send email to assigned recruiters ONLY when actual changes are made"""
-        
-        if not self.assign_recruiter:
-            return
+	def send_change_notification_email(self):
+		"""Send email to assigned recruiters ONLY when actual changes are made"""
 
-        # ✅ Get previous state of document
-        previous_doc = self.get_doc_before_save()
-        
-        # ✅ If new document (first save) — send "New Job Opening" email
-        if not previous_doc:
-            self.send_new_job_opening_email()
-            return
-        
-        # ✅ Track main field changes
-        main_changes = self.get_field_changes(previous_doc)
-        
-        # ✅ Track child table (candidates) changes
-        candidate_changes = self.get_candidate_table_changes(previous_doc)
-        
-        # ✅ Track recruiter changes
-        recruiter_change = self.get_recruiter_changes(previous_doc)
-        
-        all_changes = main_changes.copy()
-        if recruiter_change:
-            all_changes.append(recruiter_change)
-        
-        # ✅ If nothing changed at all, don't send email
-        if not all_changes and not candidate_changes:
-            return
-        
-        # ✅ Get recruiter emails
-        recruiter_emails = [
-            row.recruiter_name
-            for row in self.assign_recruiter
-            if row.recruiter_name
-        ]
-        
-        if not recruiter_emails:
-            return
-        
-        # ✅ Build email content
-        subject = f"Job Opening Updated – {self.name}"
-        
-        html_content = f"""
+		if not self.assign_recruiter:
+			return
+
+		# ✅ Get previous state of document
+		previous_doc = self.get_doc_before_save()
+
+		# ✅ If new document (first save) — send "New Job Opening" email
+		if not previous_doc:
+			self.send_new_job_opening_email()
+			return
+
+		# ✅ Track main field changes
+		main_changes = self.get_field_changes(previous_doc)
+
+		# ✅ Track child table (candidates) changes
+		candidate_changes = self.get_candidate_table_changes(previous_doc)
+
+		# ✅ Track recruiter changes
+		recruiter_change = self.get_recruiter_changes(previous_doc)
+
+		all_changes = main_changes.copy()
+		if recruiter_change:
+			all_changes.append(recruiter_change)
+
+		# ✅ If nothing changed at all, don't send email
+		if not all_changes and not candidate_changes:
+			return
+
+		# ✅ Get recruiter emails
+		recruiter_emails = [row.recruiter_name for row in self.assign_recruiter if row.recruiter_name]
+
+		if not recruiter_emails:
+			return
+
+		# ✅ Build email content
+		subject = f"Job Opening Updated – {self.name}"  # noqa: RUF001
+
+		html_content = f"""
         <p>Hello,</p>
 
         <p>Changes have been made to a job opening assigned to you:</p>
 
         <p><b>Job Opening:</b> {self.name} | <b>Company:</b> {self.company_name} | <b>Designation:</b> {self.designation}</p>
         """
-        
-        # ✅ Add main field changes table
-        if all_changes:
-            changes_html = self.build_changes_html(all_changes)
-            html_content += f"""
+
+		# ✅ Add main field changes table
+		if all_changes:
+			changes_html = self.build_changes_html(all_changes)
+			html_content += f"""
             <h3 style="color: #333; margin-top: 20px;">Field Changes:</h3>
             <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 700px;">
                 <tr style="background-color: #4CAF50; color: white;">
@@ -72,221 +68,199 @@ class DKP_Job_Opening(Document):
                 {changes_html}
             </table>
             """
-        
-        # ✅ Add candidate changes
-        if candidate_changes:
-            candidate_html = self.build_candidate_changes_html(candidate_changes)
-            html_content += f"""
+
+		# ✅ Add candidate changes
+		if candidate_changes:
+			candidate_html = self.build_candidate_changes_html(candidate_changes)
+			html_content += f"""
             <h3 style="color: #333; margin-top: 20px;">Candidate Changes:</h3>
             {candidate_html}
             """
-        
-        html_content += """
+
+		html_content += """
         <br>
         <p>Regards,<br>HR Team</p>
         """
 
-        frappe.sendmail(
-            recipients=recruiter_emails,
-            subject=subject,
-            message=html_content,
-        )
+		frappe.sendmail(
+			recipients=recruiter_emails,
+			subject=subject,
+			message=html_content,
+		)
 
+	def get_field_changes(self, previous_doc):
+		"""Compare previous and current doc, return list of changes"""
 
-    def get_field_changes(self, previous_doc):
-        """Compare previous and current doc, return list of changes"""
-        
-        # ✅ Fields to track — apne doctype ke hisaab se
-        fields_to_track = {
-            "company_name": "Company",
-            "designation": "Designation",
-            "department": "Department",
-            "location": "Location",
-            "status": "Status",
-            "number_of_positions": "Number of Positions",
-            "min_experience_years": "Min Experience (Years)",
-            "max_experience_years": "Max Experience (Years)",
-            "min_ctc": "Min CTC Monthly",
-            "max_ctc": "Max CTC Monthly",
-            "gender_preference": "Gender Preference",
-            "work_mode": "Work Mode",
-            "shift": "Shift",
-            "priority": "Priority",
-            "travel_required": "Travel Required",
-            "must_have_skills": "Must Have Skills",
-            "required_qualification": "Required Qualification",
-            "variableincentive": "Variable/Incentive",
-            "closed_reason": "Closed Reason",
-            "notes": "Additional Information",
-        }
-        
-        changes = []
-        
-        for fieldname, label in fields_to_track.items():
-            old_value = previous_doc.get(fieldname)
-            new_value = self.get(fieldname)
-            
-            # ✅ Normalize None/"" for comparison
-            old_value = old_value if old_value else "-"
-            new_value = new_value if new_value else "-"
-            
-            if str(old_value).strip() != str(new_value).strip():
-                changes.append({
-                    "field": label,
-                    "old_value": old_value,
-                    "new_value": new_value
-                })
-        
-        return changes
+		# ✅ Fields to track — apne doctype ke hisaab se
+		fields_to_track = {
+			"company_name": "Company",
+			"designation": "Designation",
+			"department": "Department",
+			"location": "Location",
+			"status": "Status",
+			"number_of_positions": "Number of Positions",
+			"min_experience_years": "Min Experience (Years)",
+			"max_experience_years": "Max Experience (Years)",
+			"min_ctc": "Min CTC Monthly",
+			"max_ctc": "Max CTC Monthly",
+			"gender_preference": "Gender Preference",
+			"work_mode": "Work Mode",
+			"shift": "Shift",
+			"priority": "Priority",
+			"travel_required": "Travel Required",
+			"must_have_skills": "Must Have Skills",
+			"required_qualification": "Required Qualification",
+			"variableincentive": "Variable/Incentive",
+			"closed_reason": "Closed Reason",
+			"notes": "Additional Information",
+		}
 
+		changes = []
 
-    def get_candidate_table_changes(self, previous_doc):
-        """Track changes in candidates_table child table"""
-        
-        changes = {
-            "added": [],
-            "removed": [],
-            "modified": []
-        }
-        
-        # ✅ Build lookup for previous candidates
-        prev_candidates = {}
-        if previous_doc.candidates_table:
-            for row in previous_doc.candidates_table:
-                if row.candidate_name:
-                    prev_candidates[row.candidate_name] = {
-                        "stage": row.stage or "-",
-                        "sub_stages_interview": row.sub_stages_interview or "-",
-                        "remarks": row.remarks or "-",
-                        "added_by": row.added_by or "-"
-                    }
-        
-        # ✅ Build lookup for current candidates
-        curr_candidates = {}
-        if self.candidates_table:
-            for row in self.candidates_table:
-                if row.candidate_name:
-                    curr_candidates[row.candidate_name] = {
-                        "stage": row.stage or "-",
-                        "sub_stages_interview": row.sub_stages_interview or "-",
-                        "remarks": row.remarks or "-",
-                        "added_by": row.added_by or "-"
-                    }
-        
-        prev_set = set(prev_candidates.keys())
-        curr_set = set(curr_candidates.keys())
-        
-        # ✅ Added candidates
-        for cand in (curr_set - prev_set):
-            cand_data = curr_candidates[cand]
-            changes["added"].append({
-                "candidate": cand,
-                "stage": cand_data["stage"],
-                "added_by": cand_data["added_by"]
-            })
-        
-        # ✅ Removed candidates
-        for cand in (prev_set - curr_set):
-            changes["removed"].append({
-                "candidate": cand
-            })
-        
-        # ✅ Modified candidates (stage/sub_stage/remarks changed)
-        for cand in (prev_set & curr_set):
-            prev_data = prev_candidates[cand]
-            curr_data = curr_candidates[cand]
-            
-            field_changes = []
-            
-            if prev_data["stage"] != curr_data["stage"]:
-                field_changes.append({
-                    "field": "Mapping Stage",
-                    "old": prev_data["stage"],
-                    "new": curr_data["stage"]
-                })
-            
-            if prev_data["sub_stages_interview"] != curr_data["sub_stages_interview"]:
-                field_changes.append({
-                    "field": "Interview Stage",
-                    "old": prev_data["sub_stages_interview"],
-                    "new": curr_data["sub_stages_interview"]
-                })
-            
-            if prev_data["remarks"] != curr_data["remarks"]:
-                field_changes.append({
-                    "field": "Remarks",
-                    "old": prev_data["remarks"],
-                    "new": curr_data["remarks"]
-                })
-            
-            if field_changes:
-                changes["modified"].append({
-                    "candidate": cand,
-                    "changes": field_changes
-                })
-        
-        # ✅ Return None if no changes
-        if not changes["added"] and not changes["removed"] and not changes["modified"]:
-            return None
-        
-        return changes
+		for fieldname, label in fields_to_track.items():
+			old_value = previous_doc.get(fieldname)
+			new_value = self.get(fieldname)
 
+			# ✅ Normalize None/"" for comparison
+			old_value = old_value if old_value else "-"
+			new_value = new_value if new_value else "-"
 
-    def get_recruiter_changes(self, previous_doc):
-        """Track changes in assigned recruiters"""
-        
-        old_recruiters = set()
-        new_recruiters = set()
-        
-        if previous_doc.assign_recruiter:
-            old_recruiters = {r.recruiter_name for r in previous_doc.assign_recruiter if r.recruiter_name}
-        
-        if self.assign_recruiter:
-            new_recruiters = {r.recruiter_name for r in self.assign_recruiter if r.recruiter_name}
-        
-        if old_recruiters == new_recruiters:
-            return None
-        
-        return {
-            "field": "Assigned Recruiters",
-            "old_value": ", ".join(sorted(old_recruiters)) if old_recruiters else "-",
-            "new_value": ", ".join(sorted(new_recruiters)) if new_recruiters else "-"
-        }
+			if str(old_value).strip() != str(new_value).strip():
+				changes.append({"field": label, "old_value": old_value, "new_value": new_value})
 
+		return changes
 
-    def build_changes_html(self, changes):
-        """Build HTML table rows for main field changes"""
-        
-        rows = ""
-        for change in changes:
-            old_val = str(change["old_value"])
-            new_val = str(change["new_value"])
-            
-            # ✅ Truncate long text
-            if len(old_val) > 100:
-                old_val = old_val[:100] + "..."
-            if len(new_val) > 100:
-                new_val = new_val[:100] + "..."
-            
-            rows += f"""
+	def get_candidate_table_changes(self, previous_doc):
+		"""Track changes in candidates_table child table"""
+
+		changes = {"added": [], "removed": [], "modified": []}
+
+		# ✅ Build lookup for previous candidates
+		prev_candidates = {}
+		if previous_doc.candidates_table:
+			for row in previous_doc.candidates_table:
+				if row.candidate_name:
+					prev_candidates[row.candidate_name] = {
+						"stage": row.stage or "-",
+						"sub_stages_interview": row.sub_stages_interview or "-",
+						"remarks": row.remarks or "-",
+						"added_by": row.added_by or "-",
+					}
+
+		# ✅ Build lookup for current candidates
+		curr_candidates = {}
+		if self.candidates_table:
+			for row in self.candidates_table:
+				if row.candidate_name:
+					curr_candidates[row.candidate_name] = {
+						"stage": row.stage or "-",
+						"sub_stages_interview": row.sub_stages_interview or "-",
+						"remarks": row.remarks or "-",
+						"added_by": row.added_by or "-",
+					}
+
+		prev_set = set(prev_candidates.keys())
+		curr_set = set(curr_candidates.keys())
+
+		# ✅ Added candidates
+		for cand in curr_set - prev_set:
+			cand_data = curr_candidates[cand]
+			changes["added"].append(
+				{"candidate": cand, "stage": cand_data["stage"], "added_by": cand_data["added_by"]}
+			)
+
+		# ✅ Removed candidates
+		for cand in prev_set - curr_set:
+			changes["removed"].append({"candidate": cand})
+
+		# ✅ Modified candidates (stage/sub_stage/remarks changed)
+		for cand in prev_set & curr_set:
+			prev_data = prev_candidates[cand]
+			curr_data = curr_candidates[cand]
+
+			field_changes = []
+
+			if prev_data["stage"] != curr_data["stage"]:
+				field_changes.append(
+					{"field": "Mapping Stage", "old": prev_data["stage"], "new": curr_data["stage"]}
+				)
+
+			if prev_data["sub_stages_interview"] != curr_data["sub_stages_interview"]:
+				field_changes.append(
+					{
+						"field": "Interview Stage",
+						"old": prev_data["sub_stages_interview"],
+						"new": curr_data["sub_stages_interview"],
+					}
+				)
+
+			if prev_data["remarks"] != curr_data["remarks"]:
+				field_changes.append(
+					{"field": "Remarks", "old": prev_data["remarks"], "new": curr_data["remarks"]}
+				)
+
+			if field_changes:
+				changes["modified"].append({"candidate": cand, "changes": field_changes})
+
+		# ✅ Return None if no changes
+		if not changes["added"] and not changes["removed"] and not changes["modified"]:
+			return None
+
+		return changes
+
+	def get_recruiter_changes(self, previous_doc):
+		"""Track changes in assigned recruiters"""
+
+		old_recruiters = set()
+		new_recruiters = set()
+
+		if previous_doc.assign_recruiter:
+			old_recruiters = {r.recruiter_name for r in previous_doc.assign_recruiter if r.recruiter_name}
+
+		if self.assign_recruiter:
+			new_recruiters = {r.recruiter_name for r in self.assign_recruiter if r.recruiter_name}
+
+		if old_recruiters == new_recruiters:
+			return None
+
+		return {
+			"field": "Assigned Recruiters",
+			"old_value": ", ".join(sorted(old_recruiters)) if old_recruiters else "-",
+			"new_value": ", ".join(sorted(new_recruiters)) if new_recruiters else "-",
+		}
+
+	def build_changes_html(self, changes):
+		"""Build HTML table rows for main field changes"""
+
+		rows = ""
+		for change in changes:
+			old_val = str(change["old_value"])
+			new_val = str(change["new_value"])
+
+			# ✅ Truncate long text
+			if len(old_val) > 100:
+				old_val = old_val[:100] + "..."
+			if len(new_val) > 100:
+				new_val = new_val[:100] + "..."
+
+			rows += f"""
             <tr>
                 <td><b>{change["field"]}</b></td>
                 <td style="color: #888;">{old_val}</td>
                 <td style="color: #2e7d32;">{new_val}</td>
             </tr>
             """
-        
-        return rows
 
+		return rows
 
-    def build_candidate_changes_html(self, changes):
-        """Build HTML for candidate table changes"""
-        
-        html = ""
-        
-        # ✅ Added candidates
-        if changes.get("added"):
-            html += """
+	def build_candidate_changes_html(self, changes):
+		"""Build HTML for candidate table changes"""
+
+		html = ""
+
+		# ✅ Added candidates
+		if changes.get("added"):
+			html += """
             <h4 style="color: #2e7d32; margin-top: 15px;">✅ Candidates Added:</h4>
             <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 600px;">
                 <tr style="background-color: #e8f5e9;">
@@ -295,29 +269,29 @@ class DKP_Job_Opening(Document):
                     <th>Added By</th>
                 </tr>
             """
-            for item in changes["added"]:
-                html += f"""
+			for item in changes["added"]:
+				html += f"""
                 <tr>
                     <td>{item["candidate"]}</td>
                     <td>{item["stage"]}</td>
                     <td>{item["added_by"]}</td>
                 </tr>
                 """
-            html += "</table>"
-        
-        # ✅ Removed candidates
-        if changes.get("removed"):
-            html += """
+			html += "</table>"
+
+		# ✅ Removed candidates
+		if changes.get("removed"):
+			html += """
             <h4 style="color: #c62828; margin-top: 15px;">❌ Candidates Removed:</h4>
             <ul>
             """
-            for item in changes["removed"]:
-                html += f"<li>{item['candidate']}</li>"
-            html += "</ul>"
-        
-        # ✅ Modified candidates
-        if changes.get("modified"):
-            html += """
+			for item in changes["removed"]:
+				html += f"<li>{item['candidate']}</li>"
+			html += "</ul>"
+
+		# ✅ Modified candidates
+		if changes.get("modified"):
+			html += """
             <h4 style="color: #1565c0; margin-top: 15px;">📝 Candidates Updated:</h4>
             <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 700px;">
                 <tr style="background-color: #e3f2fd;">
@@ -327,10 +301,10 @@ class DKP_Job_Opening(Document):
                     <th>New Value</th>
                 </tr>
             """
-            for item in changes["modified"]:
-                candidate = item["candidate"]
-                for i, change in enumerate(item["changes"]):
-                    html += f"""
+			for item in changes["modified"]:
+				candidate = item["candidate"]
+				for i, change in enumerate(item["changes"]):
+					html += f"""
                     <tr>
                         <td>{"" if i > 0 else candidate}</td>
                         <td>{change["field"]}</td>
@@ -338,26 +312,21 @@ class DKP_Job_Opening(Document):
                         <td style="color: #2e7d32;">{change["new"]}</td>
                     </tr>
                     """
-            html += "</table>"
-        
-        return html
+			html += "</table>"
 
+		return html
 
-    def send_new_job_opening_email(self):
-        """Send email when new job opening is created"""
-        
-        recruiter_emails = [
-            row.recruiter_name
-            for row in self.assign_recruiter
-            if row.recruiter_name
-        ]
-        
-        if not recruiter_emails:
-            return
-        
-        subject = f"🆕 New Job Opening Assigned – {self.name}"
-        
-        html_content = f"""
+	def send_new_job_opening_email(self):
+		"""Send email when new job opening is created"""
+
+		recruiter_emails = [row.recruiter_name for row in self.assign_recruiter if row.recruiter_name]
+
+		if not recruiter_emails:
+			return
+
+		subject = f"🆕 New Job Opening Assigned – {self.name}"  # noqa: RUF001
+
+		html_content = f"""
         <p>Hello,</p>
 
         <p>A new job opening has been assigned to you.</p>
@@ -372,466 +341,461 @@ class DKP_Job_Opening(Document):
             <tr><td><b>Experience</b></td><td>{self.min_experience_years or 0} - {self.max_experience_years or 0} Years</td></tr>
             <tr><td><b>CTC Range</b></td><td>₹{self.min_ctc or 0} - ₹{self.max_ctc or 0} Monthly</td></tr>
             <tr><td><b>Priority</b></td><td>{self.priority or "-"}</td></tr>
-            <tr><td><b>Assigned Recruiters</b></td><td>{', '.join(recruiter_emails)}</td></tr>
+            <tr><td><b>Assigned Recruiters</b></td><td>{", ".join(recruiter_emails)}</td></tr>
         </table>
 
         <p>Regards,<br>HR Team</p>
         """
 
-        frappe.sendmail(
-            recipients=recruiter_emails,
-            subject=subject,
-            message=html_content,
-        )
+		frappe.sendmail(
+			recipients=recruiter_emails,
+			subject=subject,
+			message=html_content,
+		)
 
-    def before_save(self):
-        for row in self.candidates_table:
-            if row.is_new() and not row.added_by:
-                row.added_by = frappe.session.user
-
+	def before_save(self):
+		for row in self.candidates_table:
+			if row.is_new() and not row.added_by:
+				row.added_by = frappe.session.user
 
 
 @frappe.whitelist()
 def get_matching_candidates(job_opening_name=None, existing_candidates=None):
-    """
-    Get candidate suggestions based on job opening criteria matching.
-    Matches candidates on: designation, skills, experience, location, certifications.
-    Uses the exact name of the job opening document.
-    """
-    if not job_opening_name:
-        return {"success": False, "message": "Job opening name is required"}
+	"""
+	Get candidate suggestions based on job opening criteria matching.
+	Matches candidates on: designation, skills, experience, location, certifications.
+	Uses the exact name of the job opening document.
+	"""
+	if not job_opening_name:
+		return {"success": False, "message": "Job opening name is required"}
 
-    # Get job opening document directly using the exact name
-    try:
-        job_opening = frappe.get_doc("DKP_Job_Opening", job_opening_name)
-    except frappe.DoesNotExistError:
-        return {"success": False, "message": f"Job opening '{job_opening_name}' not found"}
-    except Exception as e:  # pragma: no cover - defensive
-        return {"success": False, "message": f"Error fetching job opening: {str(e)}"}
+	# Get job opening document directly using the exact name
+	try:
+		job_opening = frappe.get_doc("DKP_Job_Opening", job_opening_name)
+	except frappe.DoesNotExistError:
+		return {"success": False, "message": f"Job opening '{job_opening_name}' not found"}
+	except Exception as e:  # pragma: no cover - defensive
+		return {"success": False, "message": f"Error fetching job opening: {e!s}"}
 
-    # Get already added candidates to exclude them
-    # Handle existing_candidates parameter (from unsaved form or saved document)
-    if existing_candidates:
-        if isinstance(existing_candidates, str):
-            # If it's a string, try to parse it as JSON
-            try:
-                existing_candidates = frappe.parse_json(existing_candidates)
-            except Exception:
-                # If not JSON, treat as single value or comma-separated
-                existing_candidates = [c.strip() for c in existing_candidates.split(",") if c.strip()]
-        elif not isinstance(existing_candidates, list):
-            existing_candidates = []
-    else:
-        existing_candidates = []
+	# Get already added candidates to exclude them
+	# Handle existing_candidates parameter (from unsaved form or saved document)
+	if existing_candidates:
+		if isinstance(existing_candidates, str):
+			# If it's a string, try to parse it as JSON
+			try:
+				existing_candidates = frappe.parse_json(existing_candidates)
+			except Exception:
+				# If not JSON, treat as single value or comma-separated
+				existing_candidates = [c.strip() for c in existing_candidates.split(",") if c.strip()]
+		elif not isinstance(existing_candidates, list):
+			existing_candidates = []
+	else:
+		existing_candidates = []
 
-    # Build matching criteria from job opening
-    criteria = {
-        "designation": job_opening.designation,
-        "must_have_skills": job_opening.must_have_skills or "",
-        "good_to_have_skills": job_opening.good_to_have_skills or "",
-        "required_certifications": job_opening.required_certifications or "",
-        "min_experience": job_opening.min_experience_years or 0,
-        "max_experience": job_opening.max_experience_years or 99,
-        "location": job_opening.location or "",
-        "department": job_opening.department or "",
-        "gender_preference": (job_opening.gender_preference or "").strip(),
-        "min_ctc": job_opening.min_ctc or "",
-        "max_ctc": job_opening.max_ctc or "",
-    }
-    # STRICT: If both must_have_skills and designation missing in Job Opening → show nothing
-    if not (criteria["must_have_skills"].strip() or (criteria["designation"] or "").strip()):
-        return {
-            "success": True,
-            "candidates": [],
-            "total_matched": 0,
-            "job_opening": job_opening_name,
-            "criteria": criteria,
-            "message": "No candidates: Opening must have either Must Have Skills or Designation"
-        }
-    # Get all candidates (excluding blacklisted and already added)
-    candidate_filters = {}
-    or_filters = [
-        ["blacklisted", "=", "No"],
-        ["blacklisted", "=", ""],
-        ["blacklisted", "is", "not set"],
-    ]
+	# Build matching criteria from job opening
+	criteria = {
+		"designation": job_opening.designation,
+		"must_have_skills": job_opening.must_have_skills or "",
+		"good_to_have_skills": job_opening.good_to_have_skills or "",
+		"required_certifications": job_opening.required_certifications or "",
+		"min_experience": job_opening.min_experience_years or 0,
+		"max_experience": job_opening.max_experience_years or 99,
+		"location": job_opening.location or "",
+		"department": job_opening.department or "",
+		"gender_preference": (job_opening.gender_preference or "").strip(),
+		"min_ctc": job_opening.min_ctc or "",
+		"max_ctc": job_opening.max_ctc or "",
+	}
+	# STRICT: If both must_have_skills and designation missing in Job Opening → show nothing
+	if not (criteria["must_have_skills"].strip() or (criteria["designation"] or "").strip()):
+		return {
+			"success": True,
+			"candidates": [],
+			"total_matched": 0,
+			"job_opening": job_opening_name,
+			"criteria": criteria,
+			"message": "No candidates: Opening must have either Must Have Skills or Designation",
+		}
+	# Get all candidates (excluding blacklisted and already added)
+	candidate_filters = {}
+	or_filters = [
+		["blacklisted", "=", "No"],
+		["blacklisted", "=", ""],
+		["blacklisted", "is", "not set"],
+	]
 
-    if existing_candidates:
-        candidate_filters["name"] = ["not in", existing_candidates]
+	if existing_candidates:
+		candidate_filters["name"] = ["not in", existing_candidates]
 
-    all_candidates = frappe.get_all(
-        "DKP_Candidate",
-        filters=candidate_filters,
-        or_filters=or_filters,
-        fields=[
-            "name",
-            "candidate_name",
-            "current_designation",
-            "total_experience_years",
-            "skills_tags",
-            "key_certifications",
-            "current_location",
-            "department",
-            "current_ctc_monthly as current_ctc",
-            "expected_ctc_monthly as expected_ctc",
-            "email",
-            "mobile_number",
-            "current_company_master",
-            "gender",
-            "age",
-        ],
-    )
+	all_candidates = frappe.get_all(
+		"DKP_Candidate",
+		filters=candidate_filters,
+		or_filters=or_filters,
+		fields=[
+			"name",
+			"candidate_name",
+			"current_designation",
+			"total_experience_years",
+			"skills_tags",
+			"key_certifications",
+			"current_location",
+			"department",
+			"current_ctc_monthly as current_ctc",
+			"expected_ctc_monthly as expected_ctc",
+			"email",
+			"mobile_number",
+			"current_company_master",
+			"gender",
+			"age",
+		],
+	)
 
-    # Score and match candidates
-    matched_candidates = []
+	# Score and match candidates
+	matched_candidates = []
 
-    for candidate in all_candidates:
-        # We'll keep per-category scores with explicit weights so that
-        # skills can be prioritized over other criteria.
-        category_scores: list[float] = []
-        category_weights: list[float] = []
-        match_reasons: list[str] = []
-        matched_skill_names: list[str] = []
+	for candidate in all_candidates:
+		# We'll keep per-category scores with explicit weights so that
+		# skills can be prioritized over other criteria.
+		category_scores: list[float] = []
+		category_weights: list[float] = []
+		match_reasons: list[str] = []
+		matched_skill_names: list[str] = []
 
-        # 1. Designation match
-        # if criteria["designation"] and candidate.current_designation:
-        #     if (
-        #         criteria["designation"].lower() in candidate.current_designation.lower()
-        #         or candidate.current_designation.lower() in criteria["designation"].lower()
-        #     ):
-        #         category_scores.append(1.0)
-        #         category_weights.append(1.0)
-        #         match_reasons.append("Designation match")
-        #     else:
-        #         category_scores.append(0.0)
-        #         category_weights.append(1.0)
-        # if criteria["designation"]:
-        #     if candidate.current_designation:
-        #         if (
-        #             criteria["designation"].lower() in candidate.current_designation.lower()
-        #             or candidate.current_designation.lower() in criteria["designation"].lower()
-        #         ):
-        #             category_scores.append(1.0)
-        #             category_weights.append(1.0)
-        #             match_reasons.append("Designation match")
-        #         else:
-        #             category_scores.append(0.0)
-        #             category_weights.append(1.0)
-        #     else:
-        #         # candidate missing designation => penalty
-        #         category_scores.append(0.0)
-        #         category_weights.append(1.0)
-        #         match_reasons.append("Designation missing")
-        designation_matched = False
+		# 1. Designation match
+		# if criteria["designation"] and candidate.current_designation:
+		#     if (
+		#         criteria["designation"].lower() in candidate.current_designation.lower()
+		#         or candidate.current_designation.lower() in criteria["designation"].lower()
+		#     ):
+		#         category_scores.append(1.0)
+		#         category_weights.append(1.0)
+		#         match_reasons.append("Designation match")
+		#     else:
+		#         category_scores.append(0.0)
+		#         category_weights.append(1.0)
+		# if criteria["designation"]:
+		#     if candidate.current_designation:
+		#         if (
+		#             criteria["designation"].lower() in candidate.current_designation.lower()
+		#             or candidate.current_designation.lower() in criteria["designation"].lower()
+		#         ):
+		#             category_scores.append(1.0)
+		#             category_weights.append(1.0)
+		#             match_reasons.append("Designation match")
+		#         else:
+		#             category_scores.append(0.0)
+		#             category_weights.append(1.0)
+		#     else:
+		#         # candidate missing designation => penalty
+		#         category_scores.append(0.0)
+		#         category_weights.append(1.0)
+		#         match_reasons.append("Designation missing")
+		designation_matched = False
 
-        if criteria["designation"]:
-            if candidate.current_designation:
-                if (
-                    criteria["designation"].lower() in candidate.current_designation.lower()
-                    or candidate.current_designation.lower() in criteria["designation"].lower()
-                ):
-                    designation_matched = True
-                    category_scores.append(1.0)
-                    category_weights.append(1.0)
-                    match_reasons.append("Designation match")
-                else:
-                    category_scores.append(0.0)
-                    category_weights.append(1.0)
-            else:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
-                match_reasons.append("Designation missing")
+		if criteria["designation"]:
+			if candidate.current_designation:
+				if (
+					criteria["designation"].lower() in candidate.current_designation.lower()
+					or candidate.current_designation.lower() in criteria["designation"].lower()
+				):
+					designation_matched = True
+					category_scores.append(1.0)
+					category_weights.append(1.0)
+					match_reasons.append("Designation match")
+				else:
+					category_scores.append(0.0)
+					category_weights.append(1.0)
+			else:
+				category_scores.append(0.0)
+				category_weights.append(1.0)
+				match_reasons.append("Designation missing")
 
+		# 3. Skills match (PRIORITY)
+		#    Matching is now based ONLY on:
+		#    - Job Opening: must_have_skills
+		#    - Candidate: skills_tags
+		#    Other skill fields (good_to_have_skills, primary_skill_set,
+		#    secondary_skill_set) are ignored for matching.
+		# Parse skills - handle comma, semicolon, or newline separated
+		def parse_skills(skills_str):
+			if not skills_str:
+				return []
+			# Split by comma, semicolon, or newline
+			for delimiter in [",", ";", "\n"]:
+				if delimiter in skills_str:
+					return [s.strip().lower() for s in skills_str.split(delimiter) if s.strip()]
+			# If no delimiter, treat as single skill or space-separated
+			return [s.strip().lower() for s in skills_str.split() if s.strip()]
 
+		must_have_skills = parse_skills(criteria["must_have_skills"])
 
-        
+		# Build candidate skills string using only skills_tags
+		candidate_skills = (candidate.skills_tags or "").lower()
 
-        # 3. Skills match (PRIORITY)
-        #    Matching is now based ONLY on:
-        #    - Job Opening: must_have_skills
-        #    - Candidate: skills_tags
-        #    Other skill fields (good_to_have_skills, primary_skill_set,
-        #    secondary_skill_set) are ignored for matching.
-        # Parse skills - handle comma, semicolon, or newline separated
-        def parse_skills(skills_str):
-            if not skills_str:
-                return []
-            # Split by comma, semicolon, or newline
-            for delimiter in [",", ";", "\n"]:
-                if delimiter in skills_str:
-                    return [s.strip().lower() for s in skills_str.split(delimiter) if s.strip()]
-            # If no delimiter, treat as single skill or space-separated
-            return [s.strip().lower() for s in skills_str.split() if s.strip()]
+		# Check for skill matches (partial matching) only against must-have skills
+		matched_skill_names = [skill for skill in must_have_skills if skill and skill in candidate_skills]
+		skills_matched = False
 
-        must_have_skills = parse_skills(criteria["must_have_skills"])
+		must_have_matches = len(matched_skill_names)
 
-        # Build candidate skills string using only skills_tags
-        candidate_skills = (candidate.skills_tags or "").lower()
+		# If there are must-have skills defined on the opening, we will
+		# ONLY consider candidates that match at least one of them.
+		# This makes skills the primary eligibility gate.
+		skill_score = None
+		if must_have_skills:
+			if must_have_matches == 0:
+				# No overlap with must-have skills → exclude this candidate
+				continue
+			skills_matched = True
 
-        # Check for skill matches (partial matching) only against must-have skills
-        matched_skill_names = [
-            skill for skill in must_have_skills if skill and skill in candidate_skills
-        ]
-        skills_matched = False
+			skill_score = min(1.0, must_have_matches / len(must_have_skills))
 
-        must_have_matches = len(matched_skill_names)
+			# Equal weight: match % is (sum of category scores) / (number of criteria) * 100
+			category_scores.append(skill_score)
+			category_weights.append(1.0)
 
-        # If there are must-have skills defined on the opening, we will
-        # ONLY consider candidates that match at least one of them.
-        # This makes skills the primary eligibility gate.
-        skill_score = None
-        if must_have_skills:
-            if must_have_matches == 0:
-                # No overlap with must-have skills → exclude this candidate
-                continue
-            skills_matched = True
+			match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
+		# STRICT: Candidate must match either skills OR designation
+		if not (skills_matched or designation_matched):
+			continue
 
-            skill_score = min(1.0, must_have_matches / len(must_have_skills))
+		# 2. Experience match (only when job has a meaningful range, else it dilutes the score)
+		min_exp = criteria["min_experience"]
+		max_exp = criteria["max_experience"]
+		experience_is_relevant = min_exp > 0 or max_exp < 99
+		if experience_is_relevant:
+			candidate_exp = candidate.total_experience_years or 0
+			if min_exp <= candidate_exp <= max_exp:
+				category_scores.append(1.0)
+				category_weights.append(1.0)
+				match_reasons.append("Experience within range")
+			elif candidate_exp >= min_exp:
+				category_scores.append(0.5)
+				category_weights.append(1.0)
+				match_reasons.append("Experience above minimum")
+			else:
+				category_scores.append(0.0)
+				category_weights.append(1.0)
+		# 4. Certifications match
+		# 4. Certifications match
+		if criteria["required_certifications"]:
+			certs_str = criteria["required_certifications"]
+			required_certs = []
 
-            # Equal weight: match % is (sum of category scores) / (number of criteria) * 100
-            category_scores.append(skill_score)
-            category_weights.append(1.0)
+			for delimiter in [",", ";", "\n"]:
+				if delimiter in certs_str:
+					required_certs = [c.strip().lower() for c in certs_str.split(delimiter) if c.strip()]
+					break
 
-            match_reasons.append(f"{must_have_matches}/{len(must_have_skills)} must-have skills")
-        # STRICT: Candidate must match either skills OR designation
-        if not (skills_matched or designation_matched):
-            continue
+			if not required_certs:
+				required_certs = [c.strip().lower() for c in certs_str.split() if c.strip()]
 
-        # 2. Experience match (only when job has a meaningful range, else it dilutes the score)
-        min_exp = criteria["min_experience"]
-        max_exp = criteria["max_experience"]
-        experience_is_relevant = min_exp > 0 or max_exp < 99
-        if experience_is_relevant:
-            candidate_exp = candidate.total_experience_years or 0
-            if min_exp <= candidate_exp <= max_exp:
-                category_scores.append(1.0)
-                category_weights.append(1.0)
-                match_reasons.append("Experience within range")
-            elif candidate_exp >= min_exp:
-                category_scores.append(0.5)
-                category_weights.append(1.0)
-                match_reasons.append("Experience above minimum")
-            else:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
-        # 4. Certifications match
-        # 4. Certifications match
-        if criteria["required_certifications"]:
-            certs_str = criteria["required_certifications"]
-            required_certs = []
+			candidate_certs = (candidate.key_certifications or "").lower().strip()
 
-            for delimiter in [",", ";", "\n"]:
-                if delimiter in certs_str:
-                    required_certs = [c.strip().lower() for c in certs_str.split(delimiter) if c.strip()]
-                    break
+			if not candidate_certs:
+				# candidate missing certifications => penalty only once
+				category_scores.append(0.0)
+				category_weights.append(1.0)
+				match_reasons.append("Certifications missing")
+			else:
+				cert_matches = sum(1 for cert in required_certs if cert and cert in candidate_certs)
 
-            if not required_certs:
-                required_certs = [c.strip().lower() for c in certs_str.split() if c.strip()]
+				if cert_matches > 0:
+					cert_score = min(1.0, cert_matches / len(required_certs))
+					category_scores.append(cert_score)
+					category_weights.append(1.0)
+					match_reasons.append(f"{cert_matches}/{len(required_certs)} certifications")
+				else:
+					category_scores.append(0.0)
+					category_weights.append(1.0)
 
-            candidate_certs = (candidate.key_certifications or "").lower().strip()
+		# 5. Location match
+		# if criteria["location"] and candidate.current_location:
+		#     if (
+		#         criteria["location"].lower() in candidate.current_location.lower()
+		#         or candidate.current_location.lower() in criteria["location"].lower()
+		#     ):
+		#         category_scores.append(1.0)
+		#         category_weights.append(1.0)
+		#         match_reasons.append("Location match")
+		#     else:
+		#         category_scores.append(0.0)
+		#         category_weights.append(1.0)
+		if criteria["location"]:
+			if candidate.current_location:
+				if (
+					criteria["location"].lower() in candidate.current_location.lower()
+					or candidate.current_location.lower() in criteria["location"].lower()
+				):
+					category_scores.append(1.0)
+					category_weights.append(1.0)
+					match_reasons.append("Location match")
+				else:
+					category_scores.append(0.0)
+					category_weights.append(1.0)
+			else:
+				category_scores.append(0.0)
+				category_weights.append(1.0)
+				match_reasons.append("Location missing")
 
-            if not candidate_certs:
-                # candidate missing certifications => penalty only once
-                category_scores.append(0.0)
-                category_weights.append(1.0)
-                match_reasons.append("Certifications missing")
-            else:
-                cert_matches = sum(1 for cert in required_certs if cert and cert in candidate_certs)
+		# 6. Gender match
+		gender_pref = criteria.get("gender_preference")
+		cand_gender = (candidate.gender or "").strip()
+		if gender_pref and gender_pref not in ("NA", "Any"):
+			if cand_gender and cand_gender == gender_pref:
+				category_scores.append(1.0)
+				category_weights.append(1.0)
+				match_reasons.append(f"Gender match ({cand_gender})")
+			else:
+				category_scores.append(0.0)
+				category_weights.append(1.0)
 
-                if cert_matches > 0:
-                    cert_score = min(1.0, cert_matches / len(required_certs))
-                    category_scores.append(cert_score)
-                    category_weights.append(1.0)
-                    match_reasons.append(f"{cert_matches}/{len(required_certs)} certifications")
-                else:
-                    category_scores.append(0.0)
-                    category_weights.append(1.0)
+		# 7. CTC match (using expected_ctc if available, else current_ctc)
+		def parse_number(raw):
+			if not raw:
+				return None
+			try:
+				# Remove non-numeric except dot
+				import re
 
+				cleaned = re.sub(r"[^0-9.]", "", str(raw))
+				return float(cleaned) if cleaned else None
+			except Exception:
+				return None
 
-        # 5. Location match
-        # if criteria["location"] and candidate.current_location:
-        #     if (
-        #         criteria["location"].lower() in candidate.current_location.lower()
-        #         or candidate.current_location.lower() in criteria["location"].lower()
-        #     ):
-        #         category_scores.append(1.0)
-        #         category_weights.append(1.0)
-        #         match_reasons.append("Location match")
-        #     else:
-        #         category_scores.append(0.0)
-        #         category_weights.append(1.0)
-        if criteria["location"]:
-            if candidate.current_location:
-                if (
-                    criteria["location"].lower() in candidate.current_location.lower()
-                    or candidate.current_location.lower() in criteria["location"].lower()
-                ):
-                    category_scores.append(1.0)
-                    category_weights.append(1.0)
-                    match_reasons.append("Location match")
-                else:
-                    category_scores.append(0.0)
-                    category_weights.append(1.0)
-            else:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
-                match_reasons.append("Location missing")
+		min_ctc = parse_number(criteria.get("min_ctc"))
+		max_ctc = parse_number(criteria.get("max_ctc"))
+		cand_ctc = parse_number(candidate.expected_ctc or candidate.current_ctc)
 
+		if cand_ctc is not None and (min_ctc is not None or max_ctc is not None):
+			if cand_ctc is None:
+				category_scores.append(0.0)
+				category_weights.append(1.0)
+				match_reasons.append("CTC missing")
+			in_range = True
+			if min_ctc is not None and cand_ctc < min_ctc:
+				in_range = False
+			if max_ctc is not None and cand_ctc > max_ctc:
+				in_range = False
+			if in_range:
+				category_scores.append(1.0)
+				category_weights.append(1.0)
+				match_reasons.append("CTC within range")
+			else:
+				category_scores.append(0.0)
+				category_weights.append(1.0)
 
-        # 6. Gender match
-        gender_pref = criteria.get("gender_preference")
-        cand_gender = (candidate.gender or "").strip()
-        if gender_pref and gender_pref not in ("NA", "Any"):
-            if cand_gender and cand_gender == gender_pref:
-                category_scores.append(1.0)
-                category_weights.append(1.0)
-                match_reasons.append(f"Gender match ({cand_gender})")
-            else:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
+		# Compute final score as weighted average of category scores
+		# (skills have higher weight via category_weights).
+		valid_pairs = [
+			(score, weight)
+			for score, weight in zip(category_scores, category_weights, strict=False)
+			if score is not None and weight is not None
+		]
 
-        # 7. CTC match (using expected_ctc if available, else current_ctc)
-        def parse_number(raw):
-            if not raw:
-                return None
-            try:
-                # Remove non-numeric except dot
-                import re
+		if not valid_pairs:
+			continue
 
-                cleaned = re.sub(r"[^0-9.]", "", str(raw))
-                return float(cleaned) if cleaned else None
-            except Exception:
-                return None
+		total_weight = sum(w for _, w in valid_pairs)
+		weighted_sum = sum(s * w for s, w in valid_pairs)
+		match_score = (weighted_sum / total_weight) * 100.0
 
-        min_ctc = parse_number(criteria.get("min_ctc"))
-        max_ctc = parse_number(criteria.get("max_ctc"))
-        cand_ctc = parse_number(candidate.expected_ctc or candidate.current_ctc)
+		# Only include candidates with match_score > 0 (blacklisted are already filtered out)
+		if match_score > 0:
+			candidate["match_score"] = round(match_score, 1)
+			candidate["match_reasons"] = match_reasons
+			candidate["matched_skills"] = [s.strip().title() for s in matched_skill_names]
 
-        if cand_ctc is not None and (min_ctc is not None or max_ctc is not None):
-            if cand_ctc is None:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
-                match_reasons.append("CTC missing")
-            in_range = True
-            if min_ctc is not None and cand_ctc < min_ctc:
-                in_range = False
-            if max_ctc is not None and cand_ctc > max_ctc:
-                in_range = False
-            if in_range:
-                category_scores.append(1.0)
-                category_weights.append(1.0)
-                match_reasons.append("CTC within range")
-            else:
-                category_scores.append(0.0)
-                category_weights.append(1.0)
+			# Check no-poach status (Customer custom field)
+			company_row = None
+			if candidate.current_company_master:
+				company_row = frappe.db.get_value(
+					"Customer",
+					candidate.current_company_master,
+					["custom_no_poach_flag", "customer_name"],
+					as_dict=True,
+				)
+			no_poach_flag = (company_row or {}).get("custom_no_poach_flag")
+			customer_label = (
+				(company_row or {}).get("customer_name") or candidate.current_company_master or ""
+			)
 
-        # Compute final score as weighted average of category scores
-        # (skills have higher weight via category_weights).
-        valid_pairs = [
-            (score, weight)
-            for score, weight in zip(category_scores, category_weights)
-            if score is not None and weight is not None
-        ]
+			if no_poach_flag == "Yes":
+				candidate["is_no_poach"] = True
+				candidate["no_poach_company"] = customer_label
+			else:
+				candidate["is_no_poach"] = False
+				candidate["no_poach_company"] = ""
 
-        if not valid_pairs:
-            continue
+			matched_candidates.append(candidate)
 
-        total_weight = sum(w for _, w in valid_pairs)
-        weighted_sum = sum(s * w for s, w in valid_pairs)
-        match_score = (weighted_sum / total_weight) * 100.0
+	# Sort by match score (highest first)
+	matched_candidates.sort(key=lambda x: x["match_score"], reverse=True)
 
-        # Only include candidates with match_score > 0 (blacklisted are already filtered out)
-        if match_score > 0:
-            candidate["match_score"] = round(match_score, 1)
-            candidate["match_reasons"] = match_reasons
-            candidate["matched_skills"] = [s.strip().title() for s in matched_skill_names]
+	# Limit to top 20 matches
+	matched_candidates = matched_candidates[:20]
 
-            # Check no-poach status (Customer custom field)
-            company_row = None
-            if candidate.current_company_master:
-                company_row = frappe.db.get_value(
-                    "Customer",
-                    candidate.current_company_master,
-                    ["custom_no_poach_flag", "customer_name"],
-                    as_dict=True,
-                )
-            no_poach_flag = (company_row or {}).get("custom_no_poach_flag")
-            customer_label = (company_row or {}).get("customer_name") or candidate.current_company_master or ""
+	return {
+		"success": True,
+		"candidates": matched_candidates,
+		"total_matched": len(matched_candidates),
+		"job_opening": job_opening_name,
+		"criteria": criteria,
+	}
 
-            if no_poach_flag == "Yes":
-                candidate["is_no_poach"] = True
-                candidate["no_poach_company"] = customer_label
-            else:
-                candidate["is_no_poach"] = False
-                candidate["no_poach_company"] = ""
-
-            matched_candidates.append(candidate)
-
-    # Sort by match score (highest first)
-    matched_candidates.sort(key=lambda x: x["match_score"], reverse=True)
-
-    # Limit to top 20 matches
-    matched_candidates = matched_candidates[:20]
-
-    return {
-        "success": True,
-        "candidates": matched_candidates,
-        "total_matched": len(matched_candidates),
-        "job_opening": job_opening_name,
-        "criteria": criteria,
-    }
 
 def get_previous_openings_days():
-    """
-    Fetch number of days from singleton.
-    Defaults to 7 if not set or invalid.
-    """
-    try:
-        days = frappe.db.get_single_value(
-            "DKP_Previous_Openings_Days",
-            "filter_openings"
-        )
+	"""
+	Fetch number of days from singleton.
+	Defaults to 7 if not set or invalid.
+	"""
+	try:
+		days = frappe.db.get_single_value("DKP_Previous_Openings_Days", "filter_openings")
 
-        days = int(days)
-        return days if days > 0 else 7
-    except Exception:
-        return 7
+		days = int(days)
+		return days if days > 0 else 7
+	except Exception:
+		return 7
+
+
 @frappe.whitelist()
 def get_candidate_previous_openings(candidate_name, current_job_opening=None):
-    """
-    Get all previous job openings for a candidate with their stages.
-    Excludes the current job opening if provided.
-    Only returns openings from the last 7 days.
-    """
-    if not candidate_name:
-        return {"success": False, "message": "Candidate name is required"}
+	"""
+	Get all previous job openings for a candidate with their stages.
+	Excludes the current job opening if provided.
+	Only returns openings from the last 7 days.
+	"""
+	if not candidate_name:
+		return {"success": False, "message": "Candidate name is required"}
 
-    # Calculate date 7 days ago
-    from frappe.utils import add_days, now_datetime
-    # seven_days_ago = add_days(now_datetime(), -7)
-    days = get_previous_openings_days()
-    from_date = add_days(now_datetime(), -days)
+	# Calculate date 7 days ago
+	from frappe.utils import add_days, now_datetime
 
-    # Query to get all job openings where this candidate was added
-    # Join DKP_JobApplication_Child with DKP_Job_Opening to get opening details
-    conditions = ["child.candidate_name = %s"]
-    values = [candidate_name]
+	# seven_days_ago = add_days(now_datetime(), -7)
+	days = get_previous_openings_days()
+	from_date = add_days(now_datetime(), -days)
 
-    if current_job_opening:
-        conditions.append("jo.name != %s")
-        values.append(current_job_opening)
+	# Query to get all job openings where this candidate was added
+	# Join DKP_JobApplication_Child with DKP_Job_Opening to get opening details
+	conditions = ["child.candidate_name = %s"]
+	values = [candidate_name]
 
-    # Filter for openings created in the last 7 days
+	if current_job_opening:
+		conditions.append("jo.name != %s")
+		values.append(current_job_opening)
 
-    # conditions.append("jo.creation >= %s")
-    # values.append(from_date)
-    conditions.append("child.modified >= %s")
-    values.append(from_date)
+	# Filter for openings created in the last 7 days
 
-    where_clause = "WHERE " + " AND ".join(conditions)
+	# conditions.append("jo.creation >= %s")
+	# values.append(from_date)
+	conditions.append("child.modified >= %s")
+	values.append(from_date)
 
-    openings = frappe.db.sql(f"""
-        SELECT 
+	where_clause = "WHERE " + " AND ".join(conditions)
+
+	openings = frappe.db.sql(
+		f"""
+        SELECT
             jo.name AS job_opening_name,
             jo.designation,
             jo.company_name,
@@ -848,52 +812,52 @@ def get_candidate_previous_openings(candidate_name, current_job_opening=None):
             ON jo.name = child.parent
         {where_clause}
         ORDER BY child.modified DESC
-    """, values, as_dict=True)
+    """,
+		values,
+		as_dict=True,
+	)
 
-    return {
-        "success": True,
-        "openings": openings,
-        "total": len(openings),
-        "days_used": days,
-    }
+	return {
+		"success": True,
+		"openings": openings,
+		"total": len(openings),
+		"days_used": days,
+	}
+
 
 @frappe.whitelist()
 def get_candidate_previous_openings_count(candidate_name, current_job_opening=None):
-    if not candidate_name:
-        return {"success": False, "count": 0}
+	if not candidate_name:
+		return {"success": False, "count": 0}
 
-    from frappe.utils import add_days, now_datetime
+	from frappe.utils import add_days, now_datetime
 
-    days = get_previous_openings_days()
-    from_date = add_days(now_datetime(), -days)
+	days = get_previous_openings_days()
+	from_date = add_days(now_datetime(), -days)
 
-    conditions = ["child.candidate_name = %s"]
-    values = [candidate_name]
+	conditions = ["child.candidate_name = %s"]
+	values = [candidate_name]
 
-    if current_job_opening:
-        conditions.append("jo.name != %s")
-        values.append(current_job_opening)
+	if current_job_opening:
+		conditions.append("jo.name != %s")
+		values.append(current_job_opening)
 
-    # conditions.append("jo.creation >= %s")
-    # values.append(from_date)
-    conditions.append("child.modified >= %s")
-    values.append(from_date)
+	# conditions.append("jo.creation >= %s")
+	# values.append(from_date)
+	conditions.append("child.modified >= %s")
+	values.append(from_date)
 
-    where_clause = "WHERE " + " AND ".join(conditions)
+	where_clause = "WHERE " + " AND ".join(conditions)
 
-    count = frappe.db.sql(f"""
+	count = frappe.db.sql(
+		f"""
         SELECT COUNT(*)
         FROM `tabDKP_JobApplication_Child` child
         INNER JOIN `tabDKP_Job_Opening` jo
             ON jo.name = child.parent
         {where_clause}
-    """, values)[0][0]
+    """,
+		values,
+	)[0][0]
 
-    return {
-        "success": True,
-        "count": count,
-        "days_used": days
-    }
-
-
-
+	return {"success": True, "count": count, "days_used": days}

@@ -1,48 +1,48 @@
 let company_dashboard_filters = {
-    from_date: null,
-    to_date: null
+	from_date: null,
+	to_date: null,
 };
 let company_table_state = {
-    limit: 10,
-    offset: 0,
-    total: 0
+	limit: 10,
+	offset: 0,
+	total: 0,
 };
 let company_table_filters = {
-    client_type: null,
-    industry: null,
-    client_status: null
+	client_type: null,
+	industry: null,
+	client_status: null,
 };
 
-frappe.pages['hr-recruitment-compa'].on_page_load = function(wrapper) {
+frappe.pages["hr-recruitment-compa"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
-		title: 'HR Recruitment Company',
-		single_column: true
+		title: "HR Recruitment Company",
+		single_column: true,
 	});
 
-    // Date Filters
-    page.add_field({
-        label: 'From Date',
-        fieldtype: 'Date',
-        fieldname: 'from_date',
-        change() {
-            company_dashboard_filters.from_date = this.value;
-            load_company_dashboard();
-        }
-    });
+	// Date Filters
+	page.add_field({
+		label: "From Date",
+		fieldtype: "Date",
+		fieldname: "from_date",
+		change() {
+			company_dashboard_filters.from_date = this.value;
+			load_company_dashboard();
+		},
+	});
 
-    page.add_field({
-        label: 'To Date',
-        fieldtype: 'Date',
-        fieldname: 'to_date',
-        change() {
-            company_dashboard_filters.to_date = this.value;
-            load_company_dashboard();
-        }
-    });
+	page.add_field({
+		label: "To Date",
+		fieldtype: "Date",
+		fieldname: "to_date",
+		change() {
+			company_dashboard_filters.to_date = this.value;
+			load_company_dashboard();
+		},
+	});
 
-    // Layout
-    $(`
+	// Layout
+	$(`
         <div class="company-dashboard">
             <div class="row" id="company-kpi-cards"></div>
 
@@ -96,108 +96,116 @@ frappe.pages['hr-recruitment-compa'].on_page_load = function(wrapper) {
         </div>
     `).appendTo(page.body);
 
-	$(document).on("change", "#filter-client-type, #filter-industry, #filter-client-status", function () {
-    company_table_filters.client_type = $("#filter-client-type").val() || null;
-    company_table_filters.industry = $("#filter-industry").val() || null;
-    company_table_filters.client_status = $("#filter-client-status").val() || null;
+	$(document).on(
+		"change",
+		"#filter-client-type, #filter-industry, #filter-client-status",
+		function () {
+			company_table_filters.client_type = $("#filter-client-type").val() || null;
+			company_table_filters.industry = $("#filter-industry").val() || null;
+			company_table_filters.client_status = $("#filter-client-status").val() || null;
 
-    // Reset pagination
-    company_table_state.offset = 0;
+			// Reset pagination
+			company_table_state.offset = 0;
 
-    load_company_table();
+			load_company_table();
+		}
+	);
+	$(document).on("click", "#clear-company-filters", function () {
+		// Reset UI selects
+		$("#filter-client-type").val("");
+		$("#filter-industry").val("");
+		$("#filter-client-status").val("");
+
+		// Reset filter state object
+		company_table_filters = {
+			client_type: null,
+			industry: null,
+			client_status: null,
+		};
+
+		// Reset pagination
+		company_table_state.offset = 0;
+
+		// Reload table
+		load_company_table();
 	});
-    $(document).on("click", "#clear-company-filters", function() {
-    // Reset UI selects
-    $("#filter-client-type").val("");
-    $("#filter-industry").val("");
-    $("#filter-client-status").val("");
-
-    // Reset filter state object
-    company_table_filters = {
-    client_type: null,
-    industry: null,
-    client_status: null
-};
-
-    // Reset pagination
-    company_table_state.offset = 0;
-
-    // Reload table
-    load_company_table();
-});
 	load_industry_filter_options();
-    load_company_dashboard();
+	load_company_dashboard();
 };
 
 function load_company_dashboard() {
-    load_company_kpis();
-    load_client_type_chart();
-    load_industry_chart();
-	load_company_table(); 
+	load_company_kpis();
+	load_client_type_chart();
+	load_industry_chart();
+	load_company_table();
 	// load_industry_filter_options();
-
 }
 
 // ---------------- KPIs ----------------
 function load_company_kpis() {
-    frappe.call({
-        method: "frappe.desk.query_report.run",
-        args: {
-            report_name: "Company Recruitment KPIs",
-            filters: {
-                from_date: company_dashboard_filters.from_date,
-                to_date: company_dashboard_filters.to_date
-            }
-        },
-        callback(r) {
-            if(r.message) {
+	frappe.call({
+		method: "frappe.desk.query_report.run",
+		args: {
+			report_name: "Company Recruitment KPIs",
+			filters: {
+				from_date: company_dashboard_filters.from_date,
+				to_date: company_dashboard_filters.to_date,
+			},
+		},
+		callback(r) {
+			if (r.message) {
 				console.log(r.message.result);
-				
-                render_company_kpi_cards(r.message.result);
-            }
-        }
-    });
+
+				render_company_kpi_cards(r.message.result);
+			}
+		},
+	});
 }
 
 function render_company_kpi_cards(data) {
-    const kpiLinks = {
-        "Total Companies": "/app/Customer",
-        "Active Clients": "/app/Customer?client_status=Active",
-        "Inactive Clients": "/app/Customer?client_status=Inactive",
-        "Clients with Open Jobs": "/app/dkp_job_opening?status=Open",
-    };
+	const kpiLinks = {
+		"Total Companies": "/app/Customer",
+		"Active Clients": "/app/Customer?client_status=Active",
+		"Inactive Clients": "/app/Customer?client_status=Inactive",
+		"Clients with Open Jobs": "/app/dkp_job_opening?status=Open",
+	};
 
-    const $row = $("#company-kpi-cards");
-    $row.empty();
+	const $row = $("#company-kpi-cards");
+	$row.empty();
 
-    data.forEach(item => {
-        const link = kpiLinks[item.kpi];
+	data.forEach((item) => {
+		const link = kpiLinks[item.kpi];
 
-        $(`
+		$(`
             <div class="kpi-col">
-                ${link ? `
+                ${
+					link
+						? `
                     <a href="${link}" class="kpi-link">
                         <div class="card kpi-card">
                             <div class="kpi-value">${item.value}</div>
                             <div class="kpi-label">${item.kpi}</div>
                         </div>
                     </a>
-                ` : `
+                `
+						: `
                     <div class="card kpi-card">
                         <div class="kpi-value">${item.value}</div>
                         <div class="kpi-label">${item.kpi}</div>
                     </div>
-                `}
+                `
+				}
             </div>
         `).appendTo($row);
-    });
+	});
 }
 
 if (!$("#company-kpi-cards").length) {
-        $("<style>")
-            .prop("type", "text/css")
-            .attr("id", "company-kpi-card-style")
-            .html(`
+	$("<style>")
+		.prop("type", "text/css")
+		.attr("id", "company-kpi-card-style")
+		.html(
+			`
 				#company-kpi-cards {
             display: flex;
             gap: 12px;
@@ -238,102 +246,102 @@ if (!$("#company-kpi-cards").length) {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.12);
 }
-					`)							
-		.appendTo("head");                
-    }
-
+					`
+		)
+		.appendTo("head");
+}
 
 // ---------------- Client Type Chart ----------------
 function load_client_type_chart() {
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_client_type_distribution",
-        args: {
-            from_date: company_dashboard_filters.from_date,
-            to_date: company_dashboard_filters.to_date
-        },
-        callback(r) {
-            if(r.message) {
-                const chart_data = r.message;
-                new frappe.Chart("#client-type-chart", {
-                    title: "Client Type Distribution",
-                    data: chart_data.data,
-                    type: "pie",
-                    height: 300,
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_client_type_distribution",
+		args: {
+			from_date: company_dashboard_filters.from_date,
+			to_date: company_dashboard_filters.to_date,
+		},
+		callback(r) {
+			if (r.message) {
+				const chart_data = r.message;
+				new frappe.Chart("#client-type-chart", {
+					title: "Client Type Distribution",
+					data: chart_data.data,
+					type: "pie",
+					height: 300,
 					// legend: {
 					// 	position: "top"
 					// }
-                });
-            }
-        }
-    });
+				});
+			}
+		},
+	});
 }
 
 // ---------------- Industry Chart ----------------
 function load_industry_chart() {
-    frappe.call({
-        method: "frappe.desk.query_report.run",
-        args: {
-            report_name: "Company Recruitment KPIs",
-            filters: {
-                from_date: company_dashboard_filters.from_date,
-                to_date: company_dashboard_filters.to_date
-            }
-        },
-        callback(r) {
-            if (!r.message || !r.message.chart) return;
+	frappe.call({
+		method: "frappe.desk.query_report.run",
+		args: {
+			report_name: "Company Recruitment KPIs",
+			filters: {
+				from_date: company_dashboard_filters.from_date,
+				to_date: company_dashboard_filters.to_date,
+			},
+		},
+		callback(r) {
+			if (!r.message || !r.message.chart) return;
 
-            const chart = r.message.chart;
-            const labels = chart.data.labels;
-            const values = chart.data.datasets[0].values;
+			const chart = r.message.chart;
+			const labels = chart.data.labels;
+			const values = chart.data.datasets[0].values;
 
-            // ✅ Same proven pattern
-            const datasets = labels.map((label, index) => ({
-                name: label,
-                values: labels.map((_, i) => i === index ? values[index] : 0),
-                chartType: "bar"
-            }));
+			// ✅ Same proven pattern
+			const datasets = labels.map((label, index) => ({
+				name: label,
+				values: labels.map((_, i) => (i === index ? values[index] : 0)),
+				chartType: "bar",
+			}));
 
-            new frappe.Chart("#industry-chart", {
-                title: "Industry-wise Client Count",
-                data: {
-                    labels,
-                    datasets
-                },
-                type: "bar",
-                height: 250,
-                barOptions: {
-                    stacked: true,
-                    spaceRatio: 0.75
-                }
-            });
-        }
-    });
+			new frappe.Chart("#industry-chart", {
+				title: "Industry-wise Client Count",
+				data: {
+					labels,
+					datasets,
+				},
+				type: "bar",
+				height: 250,
+				barOptions: {
+					stacked: true,
+					spaceRatio: 0.75,
+				},
+			});
+		},
+	});
 }
 
 function load_company_table() {
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_company_table",
-        args: {
-            from_date: company_dashboard_filters.from_date,
-            to_date: company_dashboard_filters.to_date,
-            limit: company_table_state.limit,
-            offset: company_table_state.offset,
-			 client_type: company_table_filters.client_type,
-    industry: company_table_filters.industry,
-    client_status: company_table_filters.client_status,
-        },
-        callback(r) {
-            if (r.message) {
-                render_company_table(r.message.data, r.message.total);
-            }
-        }
-    });
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_company_table",
+		args: {
+			from_date: company_dashboard_filters.from_date,
+			to_date: company_dashboard_filters.to_date,
+			limit: company_table_state.limit,
+			offset: company_table_state.offset,
+			client_type: company_table_filters.client_type,
+			industry: company_table_filters.industry,
+			client_status: company_table_filters.client_status,
+		},
+		callback(r) {
+			if (r.message) {
+				render_company_table(r.message.data, r.message.total);
+			}
+		},
+	});
 }
 function render_company_table(data, total) {
-    const $container = $("#company-table");
-    $container.empty();
+	const $container = $("#company-table");
+	$container.empty();
 
-    const table = $(`
+	const table = $(`
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
@@ -350,8 +358,8 @@ function render_company_table(data, total) {
         </table>
     `);
 
-    data.forEach(d => {
-        $(`
+	data.forEach((d) => {
+		$(`
             <tr>
                 <td>
                     <a href="/app/Customer/${d.name}">
@@ -366,16 +374,16 @@ function render_company_table(data, total) {
                 <td>${d.replacement_days || "-"}</td>
             </tr>
         `).appendTo(table.find("tbody"));
-    });
+	});
 
-    $container.append(table);
+	$container.append(table);
 
-    // ---------------- Pagination (INSIDE TABLE CONTAINER) ----------------
-    const total_pages = Math.ceil(total / company_table_state.limit);
+	// ---------------- Pagination (INSIDE TABLE CONTAINER) ----------------
+	const total_pages = Math.ceil(total / company_table_state.limit);
 
-    const current_page = Math.floor(company_table_state.offset / company_table_state.limit) + 1;
+	const current_page = Math.floor(company_table_state.offset / company_table_state.limit) + 1;
 
-    const pagination = $(`
+	const pagination = $(`
         <div class="mt-2">
             <button class="btn btn-sm btn-primary" id="company-prev">Prev</button>
             Page ${current_page} of ${total_pages}
@@ -383,38 +391,34 @@ function render_company_table(data, total) {
         </div>
     `);
 
-    $container.append(pagination);
+	$container.append(pagination);
 
-    $("#company-prev")
-        .prop("disabled", company_table_state.offset === 0)
-        .click(() => {
-            company_table_state.offset -= company_table_state.limit;
-            load_company_table();
-        });
+	$("#company-prev")
+		.prop("disabled", company_table_state.offset === 0)
+		.click(() => {
+			company_table_state.offset -= company_table_state.limit;
+			load_company_table();
+		});
 
-    $("#company-next")
-        .prop("disabled", current_page >= total_pages)
-        .click(() => {
-            company_table_state.offset += company_table_state.limit;
-            load_company_table();
-        });
+	$("#company-next")
+		.prop("disabled", current_page >= total_pages)
+		.click(() => {
+			company_table_state.offset += company_table_state.limit;
+			load_company_table();
+		});
 }
 
 function load_industry_filter_options() {
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_distinct_industries",
-        callback(r) {
-            const $industry = $("#filter-industry");
-            $industry.empty();
-            $industry.append(`<option value="">All</option>`);
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_distinct_industries",
+		callback(r) {
+			const $industry = $("#filter-industry");
+			$industry.empty();
+			$industry.append(`<option value="">All</option>`);
 
-            (r.message || []).forEach(ind => {
-                $industry.append(
-                    `<option value="${(ind)}">${ind.toUpperCase()}</option>`
-                );
-            });
-        }
-    });
+			(r.message || []).forEach((ind) => {
+				$industry.append(`<option value="${ind}">${ind.toUpperCase()}</option>`);
+			});
+		},
+	});
 }
-
-

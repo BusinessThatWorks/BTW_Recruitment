@@ -9,7 +9,7 @@ class DKP_Department(Document):
 	pass
 	# def before_insert(self):
 	# 	if self.department:
-			
+
 	# 			dept_name = self.department.strip()
 
 	# 			if frappe.db.exists("DKP_Department", dept_name):

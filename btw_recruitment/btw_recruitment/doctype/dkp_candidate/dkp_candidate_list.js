@@ -2,21 +2,17 @@ frappe.listview_settings["DKP_Candidate"] = {
 	hide_name_column: true,
 	hide_name_filter: true,
 	onload(listview) {
+		const mark_btn = listview.page.add_inner_button(__("Add to openings"), () => {
+			const selected = listview.get_checked_items();
 
-		const mark_btn = listview.page.add_inner_button(
-			__("Add to openings"),
-			() => {
-				const selected = listview.get_checked_items();
-
-				if (!selected.length) {
-					frappe.msgprint(__("Please select at least one record"));
-					return;
-				}
-
-				open_job_opening_dialog(selected);
+			if (!selected.length) {
+				frappe.msgprint(__("Please select at least one record"));
+				return;
 			}
-		);
-	}
+
+			open_job_opening_dialog(selected);
+		});
+	},
 };
 
 function normalizeSearchTerm(term) {
@@ -26,8 +22,7 @@ function normalizeSearchTerm(term) {
 
 function normalMatch(searchTerm, text) {
 	if (!searchTerm || !text) return false;
-	return normalizeSearchTerm(text)
-		.includes(normalizeSearchTerm(searchTerm));
+	return normalizeSearchTerm(text).includes(normalizeSearchTerm(searchTerm));
 }
 
 function open_job_opening_dialog(selected_candidates) {
@@ -41,7 +36,7 @@ function open_job_opening_dialog(selected_candidates) {
 		status: "",
 		priority: "",
 		department: "",
-		company: ""
+		company: "",
 	};
 
 	// Build HTML structure
@@ -107,8 +102,8 @@ function open_job_opening_dialog(selected_candidates) {
 		fields: [
 			{
 				fieldtype: "HTML",
-				options: openings_html
-			}
+				options: openings_html,
+			},
 		],
 		primary_action_label: __("Add to Selected Opening"),
 		primary_action() {
@@ -116,26 +111,26 @@ function open_job_opening_dialog(selected_candidates) {
 				frappe.msgprint({
 					title: __("No Selection"),
 					message: __("Please select a job opening to add candidates."),
-					indicator: "orange"
+					indicator: "orange",
 				});
 				return;
 			}
 			add_candidates_to_opening(selected_opening, selected_candidates);
 			dialog.hide();
-		}
+		},
 	});
 
 	dialog.show();
 
 	// Load filter options
 	load_filter_options(dialog);
-	
+
 	// Load job openings
 	load_openings(dialog, current_page);
 
 	// Bind filter events
 	let searchTimeout;
-	dialog.$wrapper.find("#candidate-dialog-search").on("keyup", function() {
+	dialog.$wrapper.find("#candidate-dialog-search").on("keyup", function () {
 		clearTimeout(searchTimeout);
 		searchTimeout = setTimeout(() => {
 			filter_state.search = normalizeSearchTerm($(this).val());
@@ -144,59 +139,61 @@ function open_job_opening_dialog(selected_candidates) {
 		}, 300);
 	});
 
-	dialog.$wrapper.find("#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-company").on("change", function() {
-		const id = $(this).attr("id");
-		if (id === "candidate-dialog-status") {
-			filter_state.status = $(this).val();
-		} else if (id === "candidate-dialog-priority") {
-			filter_state.priority = $(this).val();
-		} else if (id === "candidate-dialog-department") {
-			filter_state.department = $(this).val();
-		} 
+	dialog.$wrapper
+		.find(
+			"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-company"
+		)
+		.on("change", function () {
+			const id = $(this).attr("id");
+			if (id === "candidate-dialog-status") {
+				filter_state.status = $(this).val();
+			} else if (id === "candidate-dialog-priority") {
+				filter_state.priority = $(this).val();
+			} else if (id === "candidate-dialog-department") {
+				filter_state.department = $(this).val();
+			}
+			current_page = 1;
+			apply_filters(dialog);
+		});
+	// ⬇️ SEPARATE handler for company (datalist)
+	dialog.$wrapper.find("#candidate-dialog-company").on("input", function () {
+		const val = this.value;
+
+		const option = dialog.$wrapper.find(`#candidate-company-list option[value="${val}"]`);
+
+		filter_state.company = option.length ? option.data("id") : null;
+
 		current_page = 1;
 		apply_filters(dialog);
 	});
-	// ⬇️ SEPARATE handler for company (datalist)
-	dialog.$wrapper.find("#candidate-dialog-company").on("input", function () {
-	const val = this.value;
-
-	const option = dialog.$wrapper.find(
-		`#candidate-company-list option[value="${val}"]`
-	);
-
-	filter_state.company = option.length ? option.data("id") : null;
-
-	current_page = 1;
-	apply_filters(dialog);
-	});
 	dialog.$wrapper.find("#candidate-clear-filters").on("click", function () {
+		// Stop pending search debounce
+		clearTimeout(searchTimeout);
 
-	// Stop pending search debounce
-	clearTimeout(searchTimeout);
+		// 1️⃣ Clear UI fields
+		dialog.$wrapper
+			.find(
+				"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-search"
+			)
+			.val("");
 
-	// 1️⃣ Clear UI fields
-	dialog.$wrapper.find(
-		"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-search"
-	).val("");
+		dialog.$wrapper.find("#candidate-dialog-company").val("");
 
-	dialog.$wrapper.find("#candidate-dialog-company").val("");
+		// 2️⃣ Reset filter state
+		filter_state = {
+			status: null,
+			priority: null,
+			department: null,
+			company: null,
+			search: null,
+		};
 
-	// 2️⃣ Reset filter state
-	filter_state = {
-		status: null,
-		priority: null,
-		department: null,
-		company: null,
-		search: null
-	};
+		// 3️⃣ Reset pagination
+		current_page = 1;
 
-	// 3️⃣ Reset pagination
-	current_page = 1;
-
-	// 4️⃣ Re-render
-	apply_filters(dialog);
-});
-
+		// 4️⃣ Re-render
+		apply_filters(dialog);
+	});
 
 	function load_filter_options(d) {
 		// Load departments
@@ -205,17 +202,17 @@ function open_job_opening_dialog(selected_candidates) {
 			args: {
 				doctype: "DKP_Department",
 				fields: ["department"],
-				distinct: true
+				distinct: true,
 			},
 			callback(r) {
 				if (r.message) {
-					const depts = r.message.filter(d => d.department).map(d => d.department);
+					const depts = r.message.filter((d) => d.department).map((d) => d.department);
 					const $deptSelect = d.$wrapper.find("#candidate-dialog-department");
-					depts.forEach(dept => {
+					depts.forEach((dept) => {
 						$deptSelect.append(`<option value="${dept}">${dept}</option>`);
 					});
 				}
-			}
+			},
 		});
 
 		// Load companies
@@ -224,22 +221,21 @@ function open_job_opening_dialog(selected_candidates) {
 			args: {
 				doctype: "DKP_Company",
 				fields: ["name", "company_name"],
-				limit_page_length: 1000
+				limit_page_length: 1000,
 			},
 			callback(r) {
 				if (r.message) {
 					const $datalist = d.$wrapper.find("#candidate-company-list");
 					$datalist.empty();
 
-					r.message.forEach(comp => {
+					r.message.forEach((comp) => {
 						$datalist.append(`
 							<option value="${comp.company_name || comp.name}" data-id="${comp.name}"></option>
 						`);
 					});
 				}
-			}
+			},
 		});
-
 	}
 
 	function load_openings(d, page) {
@@ -252,25 +248,27 @@ function open_job_opening_dialog(selected_candidates) {
 				status: filter_state.status || null,
 				priority: filter_state.priority || null,
 				department: filter_state.department || null,
-				company: filter_state.company || null
+				company: filter_state.company || null,
 			},
 			callback(r) {
 				if (r.message && r.message.data) {
 					all_openings = r.message.data;
 					apply_filters(d);
 				}
-			}
+			},
 		});
 	}
 
 	function apply_filters(d) {
 		// Apply client-side fuzzy search if search term exists
 		if (filter_state.search) {
-			filtered_openings = all_openings.filter(opening => {
-				return normalMatch(filter_state.search, opening.name) ||
+			filtered_openings = all_openings.filter((opening) => {
+				return (
+					normalMatch(filter_state.search, opening.name) ||
 					normalMatch(filter_state.search, opening.designation) ||
 					normalMatch(filter_state.search, opening.company) ||
-					normalMatch(filter_state.search, opening.department);
+					normalMatch(filter_state.search, opening.department)
+				);
 			});
 		} else {
 			filtered_openings = [...all_openings];
@@ -278,16 +276,22 @@ function open_job_opening_dialog(selected_candidates) {
 
 		// Apply other filters
 		if (filter_state.status) {
-			filtered_openings = filtered_openings.filter(o => o.status === filter_state.status);
+			filtered_openings = filtered_openings.filter((o) => o.status === filter_state.status);
 		}
 		if (filter_state.priority) {
-			filtered_openings = filtered_openings.filter(o => o.priority === filter_state.priority);
+			filtered_openings = filtered_openings.filter(
+				(o) => o.priority === filter_state.priority
+			);
 		}
 		if (filter_state.department) {
-			filtered_openings = filtered_openings.filter(o => o.department === filter_state.department);
+			filtered_openings = filtered_openings.filter(
+				(o) => o.department === filter_state.department
+			);
 		}
 		if (filter_state.company) {
-			filtered_openings = filtered_openings.filter(o => o.company_name === filter_state.company);
+			filtered_openings = filtered_openings.filter(
+				(o) => o.company_name === filter_state.company
+			);
 		}
 
 		render_openings(d);
@@ -310,24 +314,24 @@ function open_job_opening_dialog(selected_candidates) {
 		const page_openings = filtered_openings.slice(start_idx, end_idx);
 
 		// Render cards
-		page_openings.forEach(opening => {
+		page_openings.forEach((opening) => {
 			const isSelected = selected_opening === opening.name;
 			const priorityColors = {
-				"Low": "#6c757d",
-				"Medium": "#ffc107",
-				"High": "#fd7e14",
-				"Critical": "#dc3545"
+				Low: "#6c757d",
+				Medium: "#ffc107",
+				High: "#fd7e14",
+				Critical: "#dc3545",
 			};
 			const statusColors = {
-				"Open": "#28a745",
-				"Closed": "#6c757d",
-				"On Hold": "#ffc107"
+				Open: "#28a745",
+				Closed: "#6c757d",
+				"On Hold": "#ffc107",
 			};
 
 			const cardHtml = `
-				<div class="opening-card mb-3 p-3" 
-					 style="border: 2px solid ${isSelected ? "#007bff" : "#dee2e6"}; 
-							border-radius: 6px; 
+				<div class="opening-card mb-3 p-3"
+					 style="border: 2px solid ${isSelected ? "#007bff" : "#dee2e6"};
+							border-radius: 6px;
 							background: ${isSelected ? "#e7f3ff" : "#fff"};
 							cursor: pointer;
 							transition: all 0.2s;"
@@ -335,8 +339,8 @@ function open_job_opening_dialog(selected_candidates) {
 					<div class="d-flex justify-content-between align-items-start">
 						<div class="flex-grow-1">
 							<div class="d-flex align-items-center mb-2">
-								<input type="radio" name="opening-selection" 
-									   value="${opening.name}" 
+								<input type="radio" name="opening-selection"
+									   value="${opening.name}"
 									   id="opening-${opening.name}"
 									   ${isSelected ? "checked" : ""}
 									   style="margin-right: 8px;">
@@ -345,37 +349,61 @@ function open_job_opening_dialog(selected_candidates) {
 								</label>
 							</div>
 							<div class="mb-2">
-								<span class="badge" style="background: ${statusColors[opening.status] || "#6c757d"}; color: white; margin-right: 5px;">
+								<span class="badge" style="background: ${
+									statusColors[opening.status] || "#6c757d"
+								}; color: white; margin-right: 5px;">
 									${opening.status || "N/A"}
 								</span>
-								${opening.priority ? `
-									<span class="badge" style="background: ${priorityColors[opening.priority] || "#6c757d"}; color: white;">
+								${
+									opening.priority
+										? `
+									<span class="badge" style="background: ${
+										priorityColors[opening.priority] || "#6c757d"
+									}; color: white;">
 										${opening.priority}
 									</span>
-								` : ""}
+								`
+										: ""
+								}
 							</div>
 							<div style="font-size: 0.9em; color: #495057;">
 								<div><strong>Designation:</strong> ${opening.designation || "N/A"}</div>
 								<div><strong>Company:</strong> ${opening.company || "N/A"}</div>
 								${opening.department ? `<div><strong>Department:</strong> ${opening.department}</div>` : ""}
 								${opening.location ? `<div><strong>Location:</strong> ${opening.location}</div>` : ""}
-								${opening.number_of_positions ? `<div><strong>Positions:</strong> ${opening.number_of_positions}</div>` : ""}
-								${opening.min_experience_years || opening.max_experience_years ? `
-									<div><strong>Experience:</strong> 
+								${
+									opening.number_of_positions
+										? `<div><strong>Positions:</strong> ${opening.number_of_positions}</div>`
+										: ""
+								}
+								${
+									opening.min_experience_years || opening.max_experience_years
+										? `
+									<div><strong>Experience:</strong>
 										${opening.min_experience_years || 0} - ${opening.max_experience_years || "∞"} years
 									</div>
-								` : ""}
-								${opening.min_ctc || opening.max_ctc ? `
-									<div><strong>CTC:</strong> 
+								`
+										: ""
+								}
+								${
+									opening.min_ctc || opening.max_ctc
+										? `
+									<div><strong>CTC:</strong>
 										${opening.min_ctc ? opening.min_ctc + " - " : ""}${opening.max_ctc || "∞"}
 									</div>
-								` : ""}
-								${opening.assign_recruiter ? `<div><strong>Recruiter:</strong> ${opening.assign_recruiter}</div>` : ""}
+								`
+										: ""
+								}
+								${
+									opening.assign_recruiter
+										? `<div><strong>Recruiter:</strong> ${opening.assign_recruiter}</div>`
+										: ""
+								}
 							</div>
 						</div>
 						<div>
-							<a href="/app/dkp_job_opening/${opening.name}" target="_blank" 
-							   class="btn btn-sm btn-secondary" 
+							<a href="/app/dkp_job_opening/${opening.name}" target="_blank"
+							   class="btn btn-sm btn-secondary"
 							   onclick="event.stopPropagation();">
 								View
 							</a>
@@ -387,8 +415,12 @@ function open_job_opening_dialog(selected_candidates) {
 		});
 
 		// Bind click events
-		d.$wrapper.find(".opening-card").on("click", function(e) {
-			if ($(e.target).is("input[type='radio']") || $(e.target).is("label") || $(e.target).is("a")) {
+		d.$wrapper.find(".opening-card").on("click", function (e) {
+			if (
+				$(e.target).is("input[type='radio']") ||
+				$(e.target).is("label") ||
+				$(e.target).is("a")
+			) {
 				return;
 			}
 			const opening_name = $(this).data("opening");
@@ -397,7 +429,7 @@ function open_job_opening_dialog(selected_candidates) {
 			render_openings(d);
 		});
 
-		d.$wrapper.find('input[type="radio"][name="opening-selection"]').on("change", function() {
+		d.$wrapper.find('input[type="radio"][name="opening-selection"]').on("change", function () {
 			selected_opening = $(this).val();
 			render_openings(d);
 		});
@@ -408,11 +440,15 @@ function open_job_opening_dialog(selected_candidates) {
 		if (total_pages > 1) {
 			$pagination.html(`
 				<div class="d-flex align-items-center gap-2">
-					<button class="btn btn-sm btn-primary" ${current_page === 1 ? "disabled" : ""} id="candidate-openings-prev">
+					<button class="btn btn-sm btn-primary" ${
+						current_page === 1 ? "disabled" : ""
+					} id="candidate-openings-prev">
 						Prev
 					</button>
 					<span>Page ${current_page} of ${total_pages} (${filtered_openings.length} total)</span>
-					<button class="btn btn-sm btn-primary" ${current_page === total_pages ? "disabled" : ""} id="candidate-openings-next">
+					<button class="btn btn-sm btn-primary" ${
+						current_page === total_pages ? "disabled" : ""
+					} id="candidate-openings-next">
 						Next
 					</button>
 				</div>
@@ -436,12 +472,11 @@ function open_job_opening_dialog(selected_candidates) {
 }
 
 function add_candidates_to_opening(job_opening, selected_candidates) {
-
 	frappe.call({
 		method: "frappe.client.get",
 		args: {
 			doctype: "DKP_Job_Opening",
-			name: job_opening
+			name: job_opening,
 		},
 		callback(r) {
 			if (!r.message) return;
@@ -450,9 +485,9 @@ function add_candidates_to_opening(job_opening, selected_candidates) {
 
 			const already_existing = [];
 
-			selected_candidates.forEach(row => {
+			selected_candidates.forEach((row) => {
 				const exists = (doc.candidates_table || []).some(
-					d => d.candidate_name === row.name
+					(d) => d.candidate_name === row.name
 				);
 
 				if (exists) {
@@ -462,10 +497,9 @@ function add_candidates_to_opening(job_opening, selected_candidates) {
 
 				doc.candidates_table = doc.candidates_table || [];
 				doc.candidates_table.push({
-					candidate_name: row.name
+					candidate_name: row.name,
 				});
 			});
-
 
 			frappe.call({
 				method: "frappe.client.save",
@@ -475,16 +509,16 @@ function add_candidates_to_opening(job_opening, selected_candidates) {
 
 					if (already_existing.length) {
 						const existing_list = already_existing.join(", ");
-						message =__("Already there: {0}", [existing_list]);
+						message = __("Already there: {0}", [existing_list]);
 					}
 
 					frappe.msgprint({
 						title: __("Success"),
 						message: message,
-						indicator: "green"
+						indicator: "green",
 					});
-				}
+				},
 			});
-		}
+		},
 	});
 }

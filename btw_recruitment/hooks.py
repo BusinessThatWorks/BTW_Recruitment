@@ -152,9 +152,7 @@ scheduler_events = {
 	# "all": [
 	# 	"btw_recruitment.tasks.all"
 	# ],
-	"daily": [
-		"btw_recruitment.btw_recruitment.api.company_rules.mark_inactive_companies"
-	],
+	"daily": ["btw_recruitment.btw_recruitment.api.company_rules.mark_inactive_companies"],
 	# "hourly": [
 	# 	"btw_recruitment.tasks.hourly"
 	# ],
@@ -164,11 +162,7 @@ scheduler_events = {
 	# "monthly": [
 	# 	"btw_recruitment.tasks.monthly"
 	# ],
-	"cron": {
-		"*/5 * * * *": [
-			"btw_recruitment.btw_recruitment.tasks.send_interview_reminders"
-		]
-	}
+	"cron": {"*/5 * * * *": ["btw_recruitment.btw_recruitment.tasks.send_interview_reminders"]},
 }
 # Testing
 # -------
@@ -284,9 +278,7 @@ app_include_head = """
 """
 
 # Include PWA JS (service worker registration)
-app_include_js = [
-    "/assets/btw_recruitment/pwa.js"
-]
+app_include_js = ["/assets/btw_recruitment/pwa.js"]
 
 # fixtures = ["Custom Field"]
 
