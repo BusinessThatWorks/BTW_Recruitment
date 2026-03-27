@@ -167,7 +167,7 @@ scheduler_events = {
 # Testing
 # -------
 
-# before_tests = "btw_recruitment.install.before_tests"
+before_tests = "btw_recruitment.tests.before_tests.before_tests"
 
 # Overriding Methods
 # ------------------------------
