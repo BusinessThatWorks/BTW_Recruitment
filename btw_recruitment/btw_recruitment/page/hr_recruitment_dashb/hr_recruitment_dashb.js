@@ -19,7 +19,7 @@ const priorityColors = {
 // FILTER CAPTURE HELPER
 // ============================================
 function getTableLayout() {
-    return window.innerWidth < 768 ? "fixed" : "fluid";
+	return window.innerWidth < 768 ? "fixed" : "fluid";
 }
 let companyTable = null;
 let jobsTable = null;
@@ -212,9 +212,9 @@ function init_candidate_tab() {
 					from_date: from_date,
 					to_date: to_date,
 					// filters: inline_filters,
-                    limit: 0,  // 👈 CHANGE: 0 means get all
-                    offset: 0,
-                    filters: JSON.stringify(candidatesInlineFilters)  // 👈 CHANGE
+					limit: 0, // 👈 CHANGE: 0 means get all
+					offset: 0,
+					filters: JSON.stringify(candidatesInlineFilters), // 👈 CHANGE
 				},
 				callback(r) {
 					console.log("Candidates Response:", r.message?.data?.length, "records");
@@ -261,185 +261,199 @@ function init_candidate_tab() {
 let candidatesPage = 1;
 const candidatesLimit = 20;
 let candidatesTotal = 0;
-let candidatesInlineFilters = {};    // 👈 ADD THIS
-let candidatesFilterTimeout = null;   // 👈 ADD THIS
+let candidatesInlineFilters = {}; // 👈 ADD THIS
+let candidatesFilterTimeout = null; // 👈 ADD THIS
 
 // ============ LOAD TABLE ============
 function load_candidate_table() {
-    const offset = (candidatesPage - 1) * candidatesLimit;
-    
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidate_table",
-        args: { 
-            from_date: candidate_from_control?.get_value() || null,
-            to_date: candidate_to_control?.get_value() || null,
-            limit: candidatesLimit,
-            offset: offset,
-            filters: JSON.stringify(candidatesInlineFilters)  // 👈 ADD THIS
-        },
-        callback: function(r) {
-            candidatesTotal = r.message?.total || 0;
-            render_candidate_table(r.message?.data || []);
-            update_candidates_pagination();
-        }
-    });
+	const offset = (candidatesPage - 1) * candidatesLimit;
+
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_candidate_table",
+		args: {
+			from_date: candidate_from_control?.get_value() || null,
+			to_date: candidate_to_control?.get_value() || null,
+			limit: candidatesLimit,
+			offset: offset,
+			filters: JSON.stringify(candidatesInlineFilters), // 👈 ADD THIS
+		},
+		callback: function (r) {
+			candidatesTotal = r.message?.total || 0;
+			render_candidate_table(r.message?.data || []);
+			update_candidates_pagination();
+		},
+	});
 }
 
 // ============ UPDATE PAGINATION UI ============
 function update_candidates_pagination() {
-    const totalPages = Math.ceil(candidatesTotal / candidatesLimit) || 1;
-    const start = candidatesTotal ? ((candidatesPage - 1) * candidatesLimit) + 1 : 0;
-    const end = Math.min(candidatesPage * candidatesLimit, candidatesTotal);
-    
-    $("#candidates-showing-text").text(`Showing ${start}-${end} of ${candidatesTotal}`);
-    $("#candidates-current-page").text(candidatesPage);
-    $("#candidates-total-pages").text(totalPages);
-    
-    $("#candidates-prev-btn").prop("disabled", candidatesPage <= 1);
-    $("#candidates-next-btn").prop("disabled", candidatesPage >= totalPages);
+	const totalPages = Math.ceil(candidatesTotal / candidatesLimit) || 1;
+	const start = candidatesTotal ? (candidatesPage - 1) * candidatesLimit + 1 : 0;
+	const end = Math.min(candidatesPage * candidatesLimit, candidatesTotal);
+
+	$("#candidates-showing-text").text(`Showing ${start}-${end} of ${candidatesTotal}`);
+	$("#candidates-current-page").text(candidatesPage);
+	$("#candidates-total-pages").text(totalPages);
+
+	$("#candidates-prev-btn").prop("disabled", candidatesPage <= 1);
+	$("#candidates-next-btn").prop("disabled", candidatesPage >= totalPages);
 }
 
 // ============ PAGINATION EVENTS ============
-$(document).on("click", "#candidates-prev-btn", function() { 
-    if (candidatesPage > 1) { 
-        candidatesPage--; 
-        load_candidate_table(); 
-    }
+$(document).on("click", "#candidates-prev-btn", function () {
+	if (candidatesPage > 1) {
+		candidatesPage--;
+		load_candidate_table();
+	}
 });
 
-$(document).on("click", "#candidates-next-btn", function() { 
-    const totalPages = Math.ceil(candidatesTotal / candidatesLimit);
-    if (candidatesPage < totalPages) { 
-        candidatesPage++; 
-        load_candidate_table(); 
-    }
+$(document).on("click", "#candidates-next-btn", function () {
+	const totalPages = Math.ceil(candidatesTotal / candidatesLimit);
+	if (candidatesPage < totalPages) {
+		candidatesPage++;
+		load_candidate_table();
+	}
 });
 
-$(document).on("click", "#candidate-clear-dates", function() {
-    candidate_from_control?.set_value("");
-    candidate_to_control?.set_value("");
-    candidatesPage = 1;
-    load_candidate_table();
+$(document).on("click", "#candidate-clear-dates", function () {
+	candidate_from_control?.set_value("");
+	candidate_to_control?.set_value("");
+	candidatesPage = 1;
+	load_candidate_table();
 });
 
 // ============ RENDER TABLE ============
 function render_candidate_table(data) {
-    const $container = $("#candidates-table");
-    $container.empty();
+	const $container = $("#candidates-table");
+	$container.empty();
 
-    if (!data.length) {
-        $container.html('<p class="text-muted text-center">No candidates found</p>');
-        candidateDataTable = null;
-        return;
-    }
+	if (!data.length) {
+		$container.html('<p class="text-muted text-center">No candidates found</p>');
+		candidateDataTable = null;
+		return;
+	}
 
-    // 👇 Starting index for serial number
-    const startIndex = (candidatesPage - 1) * candidatesLimit;
+	// 👇 Starting index for serial number
+	const startIndex = (candidatesPage - 1) * candidatesLimit;
 
-    const columns = [
-        { name: "#", width: 1 },  // 👈 Serial Number
-        {
-            name: "Candidate",
-            format: (value, row, col, rowIndex) => {
-                const name = data[rowIndex]?.name || "";
-                return `<a href="/app/dkp_candidate/${value}" target="_blank" style="color:#2490ef;font-weight:600;">${value || "-"}</a>`;
-            },
-        },
-        { name: "Department" },
-        { name: "Designation" },
-        { name: "Experience (Yrs)" },
-        {
-            name: "Skills",
-            format: (value) => {
-                return `<div style="max-width:250px;white-space:normal;word-break:break-word;">${value || "-"}</div>`;
-            },
-        },
-        {
-            name: "Certifications",
-            format: (value) => {
-                return `<div style="max-width:200px;white-space:normal;word-break:break-word;">${value || "-"}</div>`;
-            },
-        },
-        { name: "Created On" },
-    ];
+	const columns = [
+		{ name: "#", width: 1 }, // 👈 Serial Number
+		{
+			name: "Candidate",
+			format: (value, row, col, rowIndex) => {
+				const name = data[rowIndex]?.name || "";
+				return `<a href="/app/dkp_candidate/${value}" target="_blank" style="color:#2490ef;font-weight:600;">${
+					value || "-"
+				}</a>`;
+			},
+		},
+		{ name: "Department" },
+		{ name: "Designation" },
+		{ name: "Experience (Yrs)" },
+		{
+			name: "Skills",
+			format: (value) => {
+				return `<div style="max-width:250px;white-space:normal;word-break:break-word;">${
+					value || "-"
+				}</div>`;
+			},
+		},
+		{
+			name: "Certifications",
+			format: (value) => {
+				return `<div style="max-width:200px;white-space:normal;word-break:break-word;">${
+					value || "-"
+				}</div>`;
+			},
+		},
+		{ name: "Created On" },
+	];
 
-    const tableData = data.map((d, index) => [
-        startIndex + index + 1,  // 👈 Correct serial number
-        d.candidate_name || d.name || "-",
-        d.department || "-",
-        d.current_designation || "-",
-        d.total_experience_years ?? "-",
-        d.skills_tags || "-",
-        d.key_certifications || "-",
-        d.creation ? frappe.datetime.str_to_user(d.creation) : "-",
-    ]);
-    function renderCandidatesTable(){
-        if(candidateDataTable){
-            candidateDataTable.destroy();
-        }
-        candidateDataTable = new frappe.DataTable($container[0], {
-        columns,
-        data: tableData,
-        inlineFilters: true,
-        noDataMessage: "No candidates found",
-        layout: getTableLayout(),
-        serialNoColumn: false  // 👈 Default serial number hatao
-    });
-    }
-    renderCandidatesTable();
+	const tableData = data.map((d, index) => [
+		startIndex + index + 1, // 👈 Correct serial number
+		d.candidate_name || d.name || "-",
+		d.department || "-",
+		d.current_designation || "-",
+		d.total_experience_years ?? "-",
+		d.skills_tags || "-",
+		d.key_certifications || "-",
+		d.creation ? frappe.datetime.str_to_user(d.creation) : "-",
+	]);
+	function renderCandidatesTable() {
+		if (candidateDataTable) {
+			candidateDataTable.destroy();
+		}
+		candidateDataTable = new frappe.DataTable($container[0], {
+			columns,
+			data: tableData,
+			inlineFilters: true,
+			noDataMessage: "No candidates found",
+			layout: getTableLayout(),
+			serialNoColumn: false, // 👈 Default serial number hatao
+		});
+	}
+	renderCandidatesTable();
 
-    let resizeTimeout;
-    window.addEventListener("resize", () => {  
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            renderCandidatesTable();
-        }, 300); 
-    });
-   
-    setTimeout(() => {
-        restore_candidates_filters();
-        attach_candidates_filter_listeners();
-    }, 100);
+	let resizeTimeout;
+	window.addEventListener("resize", () => {
+		clearTimeout(resizeTimeout);
+		resizeTimeout = setTimeout(() => {
+			renderCandidatesTable();
+		}, 300);
+	});
+
+	setTimeout(() => {
+		restore_candidates_filters();
+		attach_candidates_filter_listeners();
+	}, 100);
 }
 // ============ INLINE FILTER HANDLING ============
-const candidatesColumns = ["#", "Candidate", "Department", "Designation", 
-                           "Experience (Yrs)", "Skills", "Certifications", "Created On"];
+const candidatesColumns = [
+	"#",
+	"Candidate",
+	"Department",
+	"Designation",
+	"Experience (Yrs)",
+	"Skills",
+	"Certifications",
+	"Created On",
+];
 
 function restore_candidates_filters() {
-    if (Object.keys(candidatesInlineFilters).length === 0) return;
-    
-    $("#candidates-table .dt-filter").each(function(index) {
-        const colName = candidatesColumns[index];
-        if (candidatesInlineFilters[colName]) {
-            $(this).val(candidatesInlineFilters[colName]);
-        }
-    });
+	if (Object.keys(candidatesInlineFilters).length === 0) return;
+
+	$("#candidates-table .dt-filter").each(function (index) {
+		const colName = candidatesColumns[index];
+		if (candidatesInlineFilters[colName]) {
+			$(this).val(candidatesInlineFilters[colName]);
+		}
+	});
 }
 
 function attach_candidates_filter_listeners() {
-    $("#candidates-table .dt-filter").off("input.backend").on("input.backend", function() {
-        
-        clearTimeout(candidatesFilterTimeout);
-        
-        candidatesFilterTimeout = setTimeout(() => {
-            const filters = {};
-            
-            $("#candidates-table .dt-filter").each(function(index) {
-                const value = $(this).val()?.trim();
-                const colName = candidatesColumns[index];
-                if (value && colName !== "#") {
-                    filters[colName] = value;
-                }
-            });
-            
-            console.log("Candidates inline filters:", filters);
-            
-            candidatesPage = 1;
-            candidatesInlineFilters = filters;
-            load_candidate_table();
-            
-        }, 500);
-    });
+	$("#candidates-table .dt-filter")
+		.off("input.backend")
+		.on("input.backend", function () {
+			clearTimeout(candidatesFilterTimeout);
+
+			candidatesFilterTimeout = setTimeout(() => {
+				const filters = {};
+
+				$("#candidates-table .dt-filter").each(function (index) {
+					const value = $(this).val()?.trim();
+					const colName = candidatesColumns[index];
+					if (value && colName !== "#") {
+						filters[colName] = value;
+					}
+				});
+
+				console.log("Candidates inline filters:", filters);
+
+				candidatesPage = 1;
+				candidatesInlineFilters = filters;
+				load_candidate_table();
+			}, 500);
+		});
 }
 function load_kpis() {
 	const from_date = candidate_from_control?.get_value() || null;
@@ -535,9 +549,9 @@ function init_jobs_tab() {
 				args: {
 					from_date: from_date,
 					to_date: to_date,
-                    limit: 0,  // 👈 CHANGE: 0 means get all
-                    offset: 0,
-					filters: JSON.stringify(jobsInlineFilters) // 👈 Send inline filters
+					limit: 0, // 👈 CHANGE: 0 means get all
+					offset: 0,
+					filters: JSON.stringify(jobsInlineFilters), // 👈 Send inline filters
 				},
 				callback(r) {
 					console.log("Jobs Response:", r.message?.data?.length, "records");
@@ -593,185 +607,203 @@ let jobsTotal = 0;
 
 // ============ LOAD TABLE ============
 function load_jobs_table() {
-    const offset = (jobsPage - 1) * jobsLimit;
-    
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
-        args: { 
-            from_date: jobs_from_control?.get_value() || null,
-            to_date: jobs_to_control?.get_value() || null,
-            limit: jobsLimit,
-            offset: offset,
-             filters: JSON.stringify(jobsInlineFilters) 
-        },
-        callback: function(r) {
-            jobsTotal = r.message?.total || 0;
-            render_jobs_table(r.message?.data || []);
-            update_jobs_pagination();
-        }
-    });
+	const offset = (jobsPage - 1) * jobsLimit;
+
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
+		args: {
+			from_date: jobs_from_control?.get_value() || null,
+			to_date: jobs_to_control?.get_value() || null,
+			limit: jobsLimit,
+			offset: offset,
+			filters: JSON.stringify(jobsInlineFilters),
+		},
+		callback: function (r) {
+			jobsTotal = r.message?.total || 0;
+			render_jobs_table(r.message?.data || []);
+			update_jobs_pagination();
+		},
+	});
 }
 
 // ============ UPDATE PAGINATION UI ============
 function update_jobs_pagination() {
-    const totalPages = Math.ceil(jobsTotal / jobsLimit) || 1;
-    const start = jobsTotal ? ((jobsPage - 1) * jobsLimit) + 1 : 0;
-    const end = Math.min(jobsPage * jobsLimit, jobsTotal);
-    
-    $("#jobs-showing-text").text(`Showing ${start}-${end} of ${jobsTotal}`);
-    $("#jobs-current-page").text(jobsPage);
-    $("#jobs-total-pages").text(totalPages);
-    
-    $("#jobs-prev-btn").prop("disabled", jobsPage <= 1);
-    $("#jobs-next-btn").prop("disabled", jobsPage >= totalPages);
+	const totalPages = Math.ceil(jobsTotal / jobsLimit) || 1;
+	const start = jobsTotal ? (jobsPage - 1) * jobsLimit + 1 : 0;
+	const end = Math.min(jobsPage * jobsLimit, jobsTotal);
+
+	$("#jobs-showing-text").text(`Showing ${start}-${end} of ${jobsTotal}`);
+	$("#jobs-current-page").text(jobsPage);
+	$("#jobs-total-pages").text(totalPages);
+
+	$("#jobs-prev-btn").prop("disabled", jobsPage <= 1);
+	$("#jobs-next-btn").prop("disabled", jobsPage >= totalPages);
 }
 
 // ============ PAGINATION EVENTS (EVENT DELEGATION) ============
 
-$(document).on("click", "#jobs-prev-btn", function() { 
-    console.log("Prev clicked, current page:", jobsPage);
-    if (jobsPage > 1) { 
-        jobsPage--; 
-        load_jobs_table(); 
-    }
+$(document).on("click", "#jobs-prev-btn", function () {
+	console.log("Prev clicked, current page:", jobsPage);
+	if (jobsPage > 1) {
+		jobsPage--;
+		load_jobs_table();
+	}
 });
 
-$(document).on("click", "#jobs-next-btn", function() { 
-    const totalPages = Math.ceil(jobsTotal / jobsLimit);
-    console.log("Next clicked, current page:", jobsPage, "total:", totalPages);
-    if (jobsPage < totalPages) { 
-        jobsPage++; 
-        load_jobs_table(); 
-    }
+$(document).on("click", "#jobs-next-btn", function () {
+	const totalPages = Math.ceil(jobsTotal / jobsLimit);
+	console.log("Next clicked, current page:", jobsPage, "total:", totalPages);
+	if (jobsPage < totalPages) {
+		jobsPage++;
+		load_jobs_table();
+	}
 });
 
-$(document).on("click", "#jobs-clear-dates", function() {
-    jobs_from_control?.set_value("");
-    jobs_to_control?.set_value("");
-    jobsPage = 1;
-    load_jobs_table();
+$(document).on("click", "#jobs-clear-dates", function () {
+	jobs_from_control?.set_value("");
+	jobs_to_control?.set_value("");
+	jobsPage = 1;
+	load_jobs_table();
 });
 
 function render_jobs_table(data) {
-    const $container = $("#jobs-table");
-    $container.empty();
+	const $container = $("#jobs-table");
+	$container.empty();
 
-    // 👇 Starting number calculate karo based on current page
-    const startIndex = (jobsPage - 1) * jobsLimit;
+	// 👇 Starting number calculate karo based on current page
+	const startIndex = (jobsPage - 1) * jobsLimit;
 
-    const columns = [
-        { name: "#", width: 1 },  // 👈 Serial Number Column
-        {
-            name: "Job Opening",
-            format: (value, row, col, rowIndex) => {
-                const name = data[rowIndex]?.name || "";
-                return `<a href="/app/dkp_job_opening/${value}" target="_blank" style="color:#2490ef;font-weight:600;">${value || "-"}</a>`;
-            },
-        },
-        { name: "Company" },
-        { name: "Designation" },
-        { name: "Department" },
-        { name: "Recruiters" },
-        { name: "Status" },
-        {
-            name: "Priority",
-            format: (value) => {
-                const bg = priorityColors[value] || "#6c757d";
-                return `<span style="padding:4px 10px;border-radius:12px;color:#fff;font-weight:600;background:${bg};">${value || "-"}</span>`;
-            },
-        },
-        { name: "Positions" },
-        { name: "Created On" },
-        {
-            name: "Ageing",
-            format: (value) => {
-                const days = parseInt(value) || 0;
-                const style = days > 45 ? "background:#f8d7da;font-weight:600;padding:4px 8px;border-radius:4px;" : "";
-                return `<span style="${style}">${value}</span>`;
-            },
-        },
-    ];
+	const columns = [
+		{ name: "#", width: 1 }, // 👈 Serial Number Column
+		{
+			name: "Job Opening",
+			format: (value, row, col, rowIndex) => {
+				const name = data[rowIndex]?.name || "";
+				return `<a href="/app/dkp_job_opening/${value}" target="_blank" style="color:#2490ef;font-weight:600;">${
+					value || "-"
+				}</a>`;
+			},
+		},
+		{ name: "Company" },
+		{ name: "Designation" },
+		{ name: "Department" },
+		{ name: "Recruiters" },
+		{ name: "Status" },
+		{
+			name: "Priority",
+			format: (value) => {
+				const bg = priorityColors[value] || "#6c757d";
+				return `<span style="padding:4px 10px;border-radius:12px;color:#fff;font-weight:600;background:${bg};">${
+					value || "-"
+				}</span>`;
+			},
+		},
+		{ name: "Positions" },
+		{ name: "Created On" },
+		{
+			name: "Ageing",
+			format: (value) => {
+				const days = parseInt(value) || 0;
+				const style =
+					days > 45
+						? "background:#f8d7da;font-weight:600;padding:4px 8px;border-radius:4px;"
+						: "";
+				return `<span style="${style}">${value}</span>`;
+			},
+		},
+	];
 
-    // 👇 Row number add karo data mein
-    const tableData = data.map((d, index) => [
-        startIndex + index + 1,  // 👈 Correct serial number
-        d.name || "-",
-        d.company_name || "-",
-        d.designation || "-",
-        d.department || "-",
-        d.recruiters || "-",
-        d.status || "-",
-        d.priority || "-",
-        d.number_of_positions || "-",
-        d.creation ? moment(d.creation).format("DD-MM-YYYY hh:mm A") : "-",
-        get_ageing_days(d.creation),
-    ]);
-    function renderJobsTable(){
-        if (jobsDataTable) {
-            jobsDataTable.destroy();
-    }
-    jobsDataTable = new frappe.DataTable($container[0], {
-        columns,
-        data: tableData,
-        inlineFilters: true,
-        noDataMessage: "No jobs found",
-        layout: getTableLayout(),
-        serialNoColumn: false
-    });
-}
-    renderJobsTable();
-    let resizeTimeout;
-    window.addEventListener("resize", () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            renderJobsTable();
-        }, 300);
-    });
-    // 👇 ADD THIS AT END
-    setTimeout(() => {
-        restore_jobs_filters();
-        attach_jobs_filter_listeners();
-    }, 100);
+	// 👇 Row number add karo data mein
+	const tableData = data.map((d, index) => [
+		startIndex + index + 1, // 👈 Correct serial number
+		d.name || "-",
+		d.company_name || "-",
+		d.designation || "-",
+		d.department || "-",
+		d.recruiters || "-",
+		d.status || "-",
+		d.priority || "-",
+		d.number_of_positions || "-",
+		d.creation ? moment(d.creation).format("DD-MM-YYYY hh:mm A") : "-",
+		get_ageing_days(d.creation),
+	]);
+	function renderJobsTable() {
+		if (jobsDataTable) {
+			jobsDataTable.destroy();
+		}
+		jobsDataTable = new frappe.DataTable($container[0], {
+			columns,
+			data: tableData,
+			inlineFilters: true,
+			noDataMessage: "No jobs found",
+			layout: getTableLayout(),
+			serialNoColumn: false,
+		});
+	}
+	renderJobsTable();
+	let resizeTimeout;
+	window.addEventListener("resize", () => {
+		clearTimeout(resizeTimeout);
+		resizeTimeout = setTimeout(() => {
+			renderJobsTable();
+		}, 300);
+	});
+	// 👇 ADD THIS AT END
+	setTimeout(() => {
+		restore_jobs_filters();
+		attach_jobs_filter_listeners();
+	}, 100);
 }
 // ============ INLINE FILTER HANDLING ============
-const jobsColumns = ["#", "Job Opening", "Company", "Designation", "Department", 
-                     "Recruiters", "Status", "Priority", "Positions", "Created On", "Ageing"];
+const jobsColumns = [
+	"#",
+	"Job Opening",
+	"Company",
+	"Designation",
+	"Department",
+	"Recruiters",
+	"Status",
+	"Priority",
+	"Positions",
+	"Created On",
+	"Ageing",
+];
 
 function restore_jobs_filters() {
-    if (Object.keys(jobsInlineFilters).length === 0) return;
-    
-    $("#jobs-table .dt-filter").each(function(index) {
-        const colName = jobsColumns[index];
-        if (jobsInlineFilters[colName]) {
-            $(this).val(jobsInlineFilters[colName]);
-        }
-    });
+	if (Object.keys(jobsInlineFilters).length === 0) return;
+
+	$("#jobs-table .dt-filter").each(function (index) {
+		const colName = jobsColumns[index];
+		if (jobsInlineFilters[colName]) {
+			$(this).val(jobsInlineFilters[colName]);
+		}
+	});
 }
 
 function attach_jobs_filter_listeners() {
-    $("#jobs-table .dt-filter").off("input.backend").on("input.backend", function() {
-        
-        clearTimeout(jobsFilterTimeout);
-        
-        jobsFilterTimeout = setTimeout(() => {
-            const filters = {};
-            
-            $("#jobs-table .dt-filter").each(function(index) {
-                const value = $(this).val()?.trim();
-                const colName = jobsColumns[index];
-                if (value && colName !== "#") {
-                    filters[colName] = value;
-                }
-            });
-            
-            console.log("Jobs inline filters:", filters);
-            
-            jobsPage = 1;
-            jobsInlineFilters = filters;
-            load_jobs_table();
-            
-        }, 500);
-    });
+	$("#jobs-table .dt-filter")
+		.off("input.backend")
+		.on("input.backend", function () {
+			clearTimeout(jobsFilterTimeout);
+
+			jobsFilterTimeout = setTimeout(() => {
+				const filters = {};
+
+				$("#jobs-table .dt-filter").each(function (index) {
+					const value = $(this).val()?.trim();
+					const colName = jobsColumns[index];
+					if (value && colName !== "#") {
+						filters[colName] = value;
+					}
+				});
+
+				console.log("Jobs inline filters:", filters);
+
+				jobsPage = 1;
+				jobsInlineFilters = filters;
+				load_jobs_table();
+			}, 500);
+		});
 }
 
 function load_job_kpis() {
@@ -814,7 +846,6 @@ function render_job_status_cards(statusCards) {
 	$row.empty();
 
 	statusCards.forEach((item) => {
-
 		const link = `/app/dkp_job_opening?status=${encodeURIComponent(item.status)}`;
 
 		$(`<a href="${link}" class="status-card">
@@ -842,10 +873,8 @@ function render_job_charts(chart) {
 		data: { labels, datasets: [{ values }] },
 		type: "donut",
 		height: 250,
-        
 	});
 }
-
 
 // ============================================
 // COMPANY TAB - COMPLETE WITH PAGINATION + INLINE FILTERS
@@ -858,263 +887,287 @@ let company_from_control, company_to_control;
 let companyPage = 1;
 const companyLimit = 20;
 let companyTotal = 0;
-let companyInlineFilters = {};  // 👈 Store inline filters
+let companyInlineFilters = {}; // 👈 Store inline filters
 let companyFilterTimeout = null;
 
 // ============ INIT FUNCTION ============
 function init_company_tab() {
-    // Date controls
-    company_from_control = frappe.ui.form.make_control({
-        parent: $(".company-from-date"),
-        df: {
-            fieldtype: "Date",
-            label: "From Date",
-            change: () => {
-                companyPage = 1;  // Reset page
-                load_company_table();
-                load_company_kpis();
-            },
-        },
-        render_input: true,
-    });
+	// Date controls
+	company_from_control = frappe.ui.form.make_control({
+		parent: $(".company-from-date"),
+		df: {
+			fieldtype: "Date",
+			label: "From Date",
+			change: () => {
+				companyPage = 1; // Reset page
+				load_company_table();
+				load_company_kpis();
+			},
+		},
+		render_input: true,
+	});
 
-    company_to_control = frappe.ui.form.make_control({
-        parent: $(".company-to-date"),
-        df: {
-            fieldtype: "Date",
-            label: "To Date",
-            change: () => {
-                companyPage = 1;  // Reset page
-                load_company_table();
-                load_company_kpis();
-            },
-        },
-        render_input: true,
-    });
+	company_to_control = frappe.ui.form.make_control({
+		parent: $(".company-to-date"),
+		df: {
+			fieldtype: "Date",
+			label: "To Date",
+			change: () => {
+				companyPage = 1; // Reset page
+				load_company_table();
+				load_company_kpis();
+			},
+		},
+		render_input: true,
+	});
 
-    // Download button
-    $("#download-company-excel").off("click").on("click", function() {
-        download_company_excel();
-    });
+	// Download button
+	$("#download-company-excel")
+		.off("click")
+		.on("click", function () {
+			download_company_excel();
+		});
 
-    // Load initial data
-    load_company_table();
+	// Load initial data
+	load_company_table();
 }
 
 // ============ LOAD TABLE ============
 function load_company_table() {
-    const offset = (companyPage - 1) * companyLimit;
-    
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
-        args: { 
-            from_date: company_from_control?.get_value() || null,
-            to_date: company_to_control?.get_value() || null,
-            limit: companyLimit,
-            offset: offset,
-            filters: JSON.stringify(companyInlineFilters)  // 👈 Send inline filters
-        },
-        callback: function(r) {
-            companyTotal = r.message?.total || 0;
-            render_company_table(r.message?.data || []);
-            update_company_pagination();
-        }
-    });
+	const offset = (companyPage - 1) * companyLimit;
+
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
+		args: {
+			from_date: company_from_control?.get_value() || null,
+			to_date: company_to_control?.get_value() || null,
+			limit: companyLimit,
+			offset: offset,
+			filters: JSON.stringify(companyInlineFilters), // 👈 Send inline filters
+		},
+		callback: function (r) {
+			companyTotal = r.message?.total || 0;
+			render_company_table(r.message?.data || []);
+			update_company_pagination();
+		},
+	});
 }
 
 // ============ RENDER TABLE ============
 function render_company_table(data) {
-    const $container = $("#company-table");
-    $container.empty();
+	const $container = $("#company-table");
+	$container.empty();
 
-    const startIndex = (companyPage - 1) * companyLimit;
+	const startIndex = (companyPage - 1) * companyLimit;
 
-    const columns = [
-        { name: "#", width: 50 },
-        {
-            name: "Company",
-            format: (value, row, col, rowIndex) => {
-                const name = data[rowIndex]?.name || "";
-                return `<a href="/app/customer/${name}" target="_blank" style="color:#2490ef;font-weight:600;">${value || "-"}</a>`;
-            },
-        },
-        { name: "Client Type" },
-        { name: "Industry" },
-        { name: "Location" },
-        { name: "Billing Email" },
-        { name: "Billing Phone" },
-        { name: "Status" },
-        { name: "Fee Value" },
-        { name: "Replacement" },
-    ];
+	const columns = [
+		{ name: "#", width: 50 },
+		{
+			name: "Company",
+			format: (value, row, col, rowIndex) => {
+				const name = data[rowIndex]?.name || "";
+				return `<a href="/app/customer/${name}" target="_blank" style="color:#2490ef;font-weight:600;">${
+					value || "-"
+				}</a>`;
+			},
+		},
+		{ name: "Client Type" },
+		{ name: "Industry" },
+		{ name: "Location" },
+		{ name: "Billing Email" },
+		{ name: "Billing Phone" },
+		{ name: "Status" },
+		{ name: "Fee Value" },
+		{ name: "Replacement" },
+	];
 
-    const tableData = data.map((d, index) => [
-        startIndex + index + 1,
-        d.company_name || d.name || "-",
-        d.client_type || "-",
-        d.industry || "-",
-        `${d.city || "-"}, ${d.state || "-"}`,
-        d.billing_mail || "-",
-        d.billing_number || "-",
-        d.client_status || "-",
-        `${d.standard_fee_value || "0"}%`,
-        d.replacement_policy_days || "-",
-    ]);
+	const tableData = data.map((d, index) => [
+		startIndex + index + 1,
+		d.company_name || d.name || "-",
+		d.client_type || "-",
+		d.industry || "-",
+		`${d.city || "-"}, ${d.state || "-"}`,
+		d.billing_mail || "-",
+		d.billing_number || "-",
+		d.client_status || "-",
+		`${d.standard_fee_value || "0"}%`,
+		d.replacement_policy_days || "-",
+	]);
 
-    function renderCompanyTable() {
-        if (companyDataTable) {
-            companyDataTable.destroy();
-        }
+	function renderCompanyTable() {
+		if (companyDataTable) {
+			companyDataTable.destroy();
+		}
 
-        companyDataTable = new frappe.DataTable($container[0], {
-            columns,
-            data: tableData,
-            inlineFilters: true,
-            layout: getTableLayout(),
-            serialNoColumn: false,
-        });
-    }
+		companyDataTable = new frappe.DataTable($container[0], {
+			columns,
+			data: tableData,
+			inlineFilters: true,
+			layout: getTableLayout(),
+			serialNoColumn: false,
+		});
+	}
 
-    // initial render
-    renderCompanyTable();
+	// initial render
+	renderCompanyTable();
 
-    // on resize (debounced)
-    let resizeTimeout;
-    window.addEventListener("resize", () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            renderCompanyTable();
-        }, 300);
-    });
+	// on resize (debounced)
+	let resizeTimeout;
+	window.addEventListener("resize", () => {
+		clearTimeout(resizeTimeout);
+		resizeTimeout = setTimeout(() => {
+			renderCompanyTable();
+		}, 300);
+	});
 
-    // 👇 Attach filter listeners after render
-    setTimeout(() => {
-        restore_company_filters();
-        attach_company_filter_listeners();
-    }, 100);
+	// 👇 Attach filter listeners after render
+	setTimeout(() => {
+		restore_company_filters();
+		attach_company_filter_listeners();
+	}, 100);
 }
 
 // ============ INLINE FILTER HANDLING ============
-const companyColumns = ["#", "Company", "Client Type", "Industry", "Location", 
-                        "Billing Email", "Billing Phone", "Status", "Fee Value", "Replacement"];
+const companyColumns = [
+	"#",
+	"Company",
+	"Client Type",
+	"Industry",
+	"Location",
+	"Billing Email",
+	"Billing Phone",
+	"Status",
+	"Fee Value",
+	"Replacement",
+];
 
 function restore_company_filters() {
-    if (Object.keys(companyInlineFilters).length === 0) return;
-    
-    $("#company-table .dt-filter").each(function(index) {
-        const colName = companyColumns[index];
-        if (companyInlineFilters[colName]) {
-            $(this).val(companyInlineFilters[colName]);
-        }
-    });
+	if (Object.keys(companyInlineFilters).length === 0) return;
+
+	$("#company-table .dt-filter").each(function (index) {
+		const colName = companyColumns[index];
+		if (companyInlineFilters[colName]) {
+			$(this).val(companyInlineFilters[colName]);
+		}
+	});
 }
 
 function attach_company_filter_listeners() {
-    $("#company-table .dt-filter").off("input.backend").on("input.backend", function() {
-        
-        clearTimeout(companyFilterTimeout);
-        
-        companyFilterTimeout = setTimeout(() => {
-            const filters = {};
-            
-            $("#company-table .dt-filter").each(function(index) {
-                const value = $(this).val()?.trim();
-                const colName = companyColumns[index];
-                if (value && colName !== "#") {
-                    filters[colName] = value;
-                }
-            });
-            
-            console.log("Company inline filters:", filters);
-            
-            companyPage = 1;
-            companyInlineFilters = filters;
-            load_company_table();
-            
-        }, 500);  // 500ms debounce
-    });
+	$("#company-table .dt-filter")
+		.off("input.backend")
+		.on("input.backend", function () {
+			clearTimeout(companyFilterTimeout);
+
+			companyFilterTimeout = setTimeout(() => {
+				const filters = {};
+
+				$("#company-table .dt-filter").each(function (index) {
+					const value = $(this).val()?.trim();
+					const colName = companyColumns[index];
+					if (value && colName !== "#") {
+						filters[colName] = value;
+					}
+				});
+
+				console.log("Company inline filters:", filters);
+
+				companyPage = 1;
+				companyInlineFilters = filters;
+				load_company_table();
+			}, 500); // 500ms debounce
+		});
 }
 
 // ============ PAGINATION UI ============
 function update_company_pagination() {
-    const totalPages = Math.ceil(companyTotal / companyLimit) || 1;
-    const start = companyTotal ? ((companyPage - 1) * companyLimit) + 1 : 0;
-    const end = Math.min(companyPage * companyLimit, companyTotal);
-    
-    $("#company-showing-text").text(`Showing ${start}-${end} of ${companyTotal}`);
-    $("#company-current-page").text(companyPage);
-    $("#company-total-pages").text(totalPages);
-    
-    $("#company-prev-btn").prop("disabled", companyPage <= 1);
-    $("#company-next-btn").prop("disabled", companyPage >= totalPages);
+	const totalPages = Math.ceil(companyTotal / companyLimit) || 1;
+	const start = companyTotal ? (companyPage - 1) * companyLimit + 1 : 0;
+	const end = Math.min(companyPage * companyLimit, companyTotal);
+
+	$("#company-showing-text").text(`Showing ${start}-${end} of ${companyTotal}`);
+	$("#company-current-page").text(companyPage);
+	$("#company-total-pages").text(totalPages);
+
+	$("#company-prev-btn").prop("disabled", companyPage <= 1);
+	$("#company-next-btn").prop("disabled", companyPage >= totalPages);
 }
 
 // ============ PAGINATION EVENTS ============
-$(document).on("click", "#company-prev-btn", function() { 
-    if (companyPage > 1) { 
-        companyPage--; 
-        load_company_table(); 
-    }
+$(document).on("click", "#company-prev-btn", function () {
+	if (companyPage > 1) {
+		companyPage--;
+		load_company_table();
+	}
 });
 
-$(document).on("click", "#company-next-btn", function() { 
-    const totalPages = Math.ceil(companyTotal / companyLimit);
-    if (companyPage < totalPages) { 
-        companyPage++; 
-        load_company_table(); 
-    }
+$(document).on("click", "#company-next-btn", function () {
+	const totalPages = Math.ceil(companyTotal / companyLimit);
+	if (companyPage < totalPages) {
+		companyPage++;
+		load_company_table();
+	}
 });
 
-$(document).on("click", "#company-clear-dates", function() {
-    company_from_control?.set_value("");
-    company_to_control?.set_value("");
-    companyPage = 1;
-    companyInlineFilters = {};  // 👈 Clear inline filters too
-    load_company_table();
-    load_company_kpis();
+$(document).on("click", "#company-clear-dates", function () {
+	company_from_control?.set_value("");
+	company_to_control?.set_value("");
+	companyPage = 1;
+	companyInlineFilters = {}; // 👈 Clear inline filters too
+	load_company_table();
+	load_company_kpis();
 });
 
 // ============ DOWNLOAD EXCEL ============
 function download_company_excel() {
-    frappe.call({
-        method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
-        args: {
-            from_date: company_from_control?.get_value() || null,
-            to_date: company_to_control?.get_value() || null,
-            limit: 0,  // 👈 0 = no limit, get all
-            offset: 0,
-            filters: JSON.stringify(companyInlineFilters)
-        },
-        callback(r) {
-            if (!r.message?.data?.length) {
-                frappe.msgprint(__("No data to download."));
-                return;
-            }
+	frappe.call({
+		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_companies",
+		args: {
+			from_date: company_from_control?.get_value() || null,
+			to_date: company_to_control?.get_value() || null,
+			limit: 0, // 👈 0 = no limit, get all
+			offset: 0,
+			filters: JSON.stringify(companyInlineFilters),
+		},
+		callback(r) {
+			if (!r.message?.data?.length) {
+				frappe.msgprint(__("No data to download."));
+				return;
+			}
 
-            const headers = ["#", "Company", "Client Type", "Industry", "Location", 
-                            "Billing Email", "Billing Phone", "Status", "Fee Value", "Replacement"];
+			const headers = [
+				"#",
+				"Company",
+				"Client Type",
+				"Industry",
+				"Location",
+				"Billing Email",
+				"Billing Phone",
+				"Status",
+				"Fee Value",
+				"Replacement",
+			];
 
-            const rows = r.message.data.map((d, index) => [
-                index + 1,
-                d.company_name || d.name || "-",
-                d.client_type || "-",
-                d.industry || "-",
-                `${d.city || "-"}, ${d.state || "-"}`,
-                d.billing_mail || "-",
-                d.billing_number || "-",
-                d.client_status || "-",
-                `${d.standard_fee_value || "0"}%`,
-                d.replacement_policy_days || "-",
-            ]);
+			const rows = r.message.data.map((d, index) => [
+				index + 1,
+				d.company_name || d.name || "-",
+				d.client_type || "-",
+				d.industry || "-",
+				`${d.city || "-"}, ${d.state || "-"}`,
+				d.billing_mail || "-",
+				d.billing_number || "-",
+				d.client_status || "-",
+				`${d.standard_fee_value || "0"}%`,
+				d.replacement_policy_days || "-",
+			]);
 
-            download_excel_from_rows("companies_filtered.xls", headers, rows);
+			download_excel_from_rows("companies_filtered.xls", headers, rows);
 
-            frappe.show_alert({
-                message: `Downloaded ${rows.length} companies`,
-                indicator: "green",
-            });
-        },
-    });
+			frappe.show_alert({
+				message: `Downloaded ${rows.length} companies`,
+				indicator: "green",
+			});
+		},
+	});
 }
 
 function load_company_kpis() {
