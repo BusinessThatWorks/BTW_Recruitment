@@ -76,7 +76,7 @@ jobs:
           bench get-app erpnext --branch version-15
           bench get-app hrms --branch version-15
           bench get-app https://github.com/The-Commit-Company/commit.git --branch main
-          bench get-app raven --branch version-15
+          bench get-app https://github.com/The-Commit-Company/raven.git --branch main
           bench get-app wiki --branch version-15
           bench get-app drive --branch version-15
           bench get-app btw_recruitment $GITHUB_WORKSPACE
