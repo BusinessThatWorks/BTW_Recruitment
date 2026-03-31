@@ -21,6 +21,7 @@
   "max_ctc",
   "variableincentive",
   "shift",
+  "hold_reminder_sent",
   "column_break_ttxn",
   "job_description",
   "priority",
@@ -312,6 +313,12 @@
    "fieldname": "last_join_date",
    "fieldtype": "Date",
    "label": "Last Join Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "hold_reminder_sent",
+   "fieldtype": "Check",
+   "label": "Hold Reminder Sent"
   }
  ],
  "grid_page_length": 50,
@@ -322,7 +329,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-03-09 16:07:16.469340",
+ "modified": "2026-03-30 14:59:38.470757",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

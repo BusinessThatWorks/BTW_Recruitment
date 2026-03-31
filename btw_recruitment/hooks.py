@@ -152,7 +152,10 @@ scheduler_events = {
 	# "all": [
 	# 	"btw_recruitment.tasks.all"
 	# ],
-	"daily": ["btw_recruitment.btw_recruitment.api.company_rules.mark_inactive_companies"],
+	"daily": [
+        "btw_recruitment.btw_recruitment.api.company_rules.mark_inactive_companies",
+        # "btw_recruitment.btw_recruitment.tasks.send_on_hold_job_reminders"  
+    ],
 	# "hourly": [
 	# 	"btw_recruitment.tasks.hourly"
 	# ],

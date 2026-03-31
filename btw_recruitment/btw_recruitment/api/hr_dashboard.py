@@ -415,7 +415,7 @@ def get_jobs_table(
 		values.append(priority)
 
 	if ageing not in (None, "", "null"):
-		conditions.append("DATEDIFF(CURDATE(), jo.creation) >= %s")
+		conditions.append("DATEDIFF(NOW(), jo.creation) >= %s")
 		values.append(cint(ageing))
 
 	# ---------------- Recruiter Filter (Multi-Select) ----------------
