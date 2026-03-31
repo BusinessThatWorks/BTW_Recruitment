@@ -535,67 +535,73 @@ function init_jobs_tab() {
 		});
 
 	// ✅ UPDATED: Backend filtered download
+	// $("#download-jobs-excel")
+	// 	.off("click")
+	// 	.on("click", function () {
+	// 		const from_date = jobs_from_control?.get_value() || null;
+	// 		const to_date = jobs_to_control?.get_value() || null;
+	// 		const inline_filters = get_datatable_filters(jobsDataTable);
+
+	// 		console.log("Jobs Download - Filters:", inline_filters);
+
+	// 		frappe.call({
+	// 			method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
+	// 			args: {
+	// 				from_date: from_date,
+	// 				to_date: to_date,
+	// 				limit: 0, // 👈 CHANGE: 0 means get all
+	// 				offset: 0,
+	// 				filters: JSON.stringify(jobsInlineFilters), // 👈 Send inline filters
+	// 			},
+	// 			callback(r) {
+	// 				console.log("Jobs Response:", r.message?.data?.length, "records");
+
+	// 				if (!r.message?.data?.length) {
+	// 					frappe.msgprint(__("No data to download."));
+	// 					return;
+	// 				}
+
+	// 				const headers = [
+	// 					"Job Opening",
+	// 					"Company",
+	// 					"Designation",
+	// 					"Department",
+	// 					"Recruiters",
+	// 					"Status",
+	// 					"Priority",
+	// 					"Positions",
+	// 					"Created On",
+	// 					"Ageing",
+	// 				];
+
+	// 				const rows = r.message.data.map((d) => [
+	// 					d.name || "-",
+	// 					d.company_name || "-",
+	// 					d.designation || "-",
+	// 					d.department || "-",
+	// 					d.recruiters || "-",
+	// 					d.status || "-",
+	// 					d.priority || "-",
+	// 					d.number_of_positions || "-",
+	// 					d.creation ? moment(d.creation).format("DD-MM-YYYY hh:mm A") : "-",
+	// 					get_ageing_days(d.creation),
+	// 				]);
+
+	// 				download_excel_from_rows("jobs_filtered.xls", headers, rows);
+
+	// 				frappe.show_alert({
+	// 					message: `Downloaded ${rows.length} jobs`,
+	// 					indicator: "green",
+	// 				});
+	// 			},
+	// 		});
+	// 	});
+	// ✅ Route to Report with filters
 	$("#download-jobs-excel")
-		.off("click")
-		.on("click", function () {
-			const from_date = jobs_from_control?.get_value() || null;
-			const to_date = jobs_to_control?.get_value() || null;
-			const inline_filters = get_datatable_filters(jobsDataTable);
-
-			console.log("Jobs Download - Filters:", inline_filters);
-
-			frappe.call({
-				method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
-				args: {
-					from_date: from_date,
-					to_date: to_date,
-					limit: 0, // 👈 CHANGE: 0 means get all
-					offset: 0,
-					filters: JSON.stringify(jobsInlineFilters), // 👈 Send inline filters
-				},
-				callback(r) {
-					console.log("Jobs Response:", r.message?.data?.length, "records");
-
-					if (!r.message?.data?.length) {
-						frappe.msgprint(__("No data to download."));
-						return;
-					}
-
-					const headers = [
-						"Job Opening",
-						"Company",
-						"Designation",
-						"Department",
-						"Recruiters",
-						"Status",
-						"Priority",
-						"Positions",
-						"Created On",
-						"Ageing",
-					];
-
-					const rows = r.message.data.map((d) => [
-						d.name || "-",
-						d.company_name || "-",
-						d.designation || "-",
-						d.department || "-",
-						d.recruiters || "-",
-						d.status || "-",
-						d.priority || "-",
-						d.number_of_positions || "-",
-						d.creation ? moment(d.creation).format("DD-MM-YYYY hh:mm A") : "-",
-						get_ageing_days(d.creation),
-					]);
-
-					download_excel_from_rows("jobs_filtered.xls", headers, rows);
-
-					frappe.show_alert({
-						message: `Downloaded ${rows.length} jobs`,
-						indicator: "green",
-					});
-				},
-			});
-		});
+    .off("click")
+    .on("click", function () {
+        frappe.set_route("query-report", "Job Opening");
+    });
 
 	load_jobs_table();
 	load_job_kpis();

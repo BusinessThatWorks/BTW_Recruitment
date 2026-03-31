@@ -18,25 +18,25 @@ def get_columns():
             "fieldname": "name",
             "fieldtype": "Link",
             "options": "DKP_Job_Opening",
-            "width": 200
+            "width": 180
         },
         {
             "label": "Company",
             "fieldname": "company_name",
             "fieldtype": "Data",
-            "width": 200
+            "width": 180
         },
         {
             "label": "Designation",
             "fieldname": "designation",
             "fieldtype": "Data",
-            "width": 200
+            "width": 180
         },
         {
             "label": "Department",
             "fieldname": "department",
             "fieldtype": "Data",
-            "width": 200
+            "width": 180
         },
         {
             "label": "Recruiters",
@@ -48,31 +48,34 @@ def get_columns():
             "label": "Status",
             "fieldname": "status",
             "fieldtype": "Data",
-            "width": 200
+            "width": 180
         },
         {
             "label": "Priority",
             "fieldname": "priority",
             "fieldtype": "Data",
-            "width": 200
+            "width": 180
         },
         {
             "label": "Positions",
             "fieldname": "number_of_positions",
             "fieldtype": "Int",
-            "width": 200
+                        "width": 180
+
         },
         {
             "label": "Created On",
             "fieldname": "creation",
             "fieldtype": "Date",
-            "width": 200
+                        "width": 180
+
         },
         {
             "label": "Ageing (Days)",
             "fieldname": "ageing",
             "fieldtype": "Int",
-            "width": 200
+                        "width": 180
+
         },
     ]
 
@@ -93,7 +96,7 @@ def get_data(filters):
         conditions.append("jo.creation <= %(to_date)s")
         values["to_date"] = str(filters.get("to_date")) + " 23:59:59"
 
-    # ---------------- Other Filters ----------------
+    # ---------------- Other Filters (if uncommented in JS) ----------------
     if filters.get("company_name"):
         conditions.append("jo.company_name LIKE %(company_name)s")
         values["company_name"] = f"%{filters.get('company_name')}%"
