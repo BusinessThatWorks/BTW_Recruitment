@@ -40,7 +40,8 @@ function get_datatable_filters(dataTable) {
 			if (value && value.trim() !== "") {
 				// Get column index and name
 				const colIndex = $input.closest(".dt-cell").data("col-index");
-				const colName = dataTable.datamanager.columns[colIndex]?.name || colIndex;
+				const colName =
+					dataTable.datamanager.columns[colIndex]?.name || colIndex;
 				filters[colName] = value.trim();
 			}
 		});
@@ -84,7 +85,9 @@ function download_excel_from_rows(filename, headers, rows) {
 	});
 	html += "</tbody></table>";
 
-	const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+	const blob = new Blob([html], {
+		type: "application/vnd.ms-excel;charset=utf-8;",
+	});
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement("a");
 	a.href = url;
@@ -99,7 +102,9 @@ function get_ageing_days(creation) {
 	if (!creation) return "-";
 	const created_on = frappe.datetime.str_to_obj(creation);
 	const today_obj = frappe.datetime.str_to_obj(frappe.datetime.now_date());
-	const diff_days = Math.floor((today_obj - created_on) / (1000 * 60 * 60 * 24));
+	const diff_days = Math.floor(
+		(today_obj - created_on) / (1000 * 60 * 60 * 24),
+	);
 	return diff_days >= 0 ? diff_days : 0;
 }
 
@@ -178,13 +183,21 @@ function load_candidates_tab() {
 function init_candidate_tab() {
 	candidate_from_control = frappe.ui.form.make_control({
 		parent: $(".candidate-from-date"),
-		df: { fieldtype: "Date", label: "From Date", change: () => load_candidate_table() },
+		df: {
+			fieldtype: "Date",
+			label: "From Date",
+			change: () => load_candidate_table(),
+		},
 		render_input: true,
 	});
 
 	candidate_to_control = frappe.ui.form.make_control({
 		parent: $(".candidate-to-date"),
-		df: { fieldtype: "Date", label: "To Date", change: () => load_candidate_table() },
+		df: {
+			fieldtype: "Date",
+			label: "To Date",
+			change: () => load_candidate_table(),
+		},
 		render_input: true,
 	});
 
@@ -217,7 +230,11 @@ function init_candidate_tab() {
 					filters: JSON.stringify(candidatesInlineFilters), // 👈 CHANGE
 				},
 				callback(r) {
-					console.log("Candidates Response:", r.message?.data?.length, "records");
+					console.log(
+						"Candidates Response:",
+						r.message?.data?.length,
+						"records",
+					);
 
 					if (!r.message?.data?.length) {
 						frappe.msgprint(__("No data to download."));
@@ -241,10 +258,16 @@ function init_candidate_tab() {
 						d.total_experience_years ?? "-",
 						d.skills_tags || "-",
 						d.key_certifications || "-",
-						d.creation ? frappe.datetime.str_to_user(d.creation) : "-",
+						d.creation
+							? frappe.datetime.str_to_user(d.creation)
+							: "-",
 					]);
 
-					download_excel_from_rows("candidates_filtered.xls", headers, rows);
+					download_excel_from_rows(
+						"candidates_filtered.xls",
+						headers,
+						rows,
+					);
 
 					frappe.show_alert({
 						message: `Downloaded ${rows.length} candidates`,
@@ -288,10 +311,14 @@ function load_candidate_table() {
 // ============ UPDATE PAGINATION UI ============
 function update_candidates_pagination() {
 	const totalPages = Math.ceil(candidatesTotal / candidatesLimit) || 1;
-	const start = candidatesTotal ? (candidatesPage - 1) * candidatesLimit + 1 : 0;
+	const start = candidatesTotal
+		? (candidatesPage - 1) * candidatesLimit + 1
+		: 0;
 	const end = Math.min(candidatesPage * candidatesLimit, candidatesTotal);
 
-	$("#candidates-showing-text").text(`Showing ${start}-${end} of ${candidatesTotal}`);
+	$("#candidates-showing-text").text(
+		`Showing ${start}-${end} of ${candidatesTotal}`,
+	);
 	$("#candidates-current-page").text(candidatesPage);
 	$("#candidates-total-pages").text(totalPages);
 
@@ -328,7 +355,9 @@ function render_candidate_table(data) {
 	$container.empty();
 
 	if (!data.length) {
-		$container.html('<p class="text-muted text-center">No candidates found</p>');
+		$container.html(
+			'<p class="text-muted text-center">No candidates found</p>',
+		);
 		candidateDataTable = null;
 		return;
 	}
@@ -461,7 +490,10 @@ function load_kpis() {
 
 	frappe.call({
 		method: "frappe.desk.query_report.run",
-		args: { report_name: "HR Recruitment KPIs", filters: { from_date, to_date } },
+		args: {
+			report_name: "HR Recruitment KPIs",
+			filters: { from_date, to_date },
+		},
 		callback: function (r) {
 			if (r.message?.result) render_kpi_cards(r.message.result[0]);
 		},
@@ -470,7 +502,11 @@ function load_kpis() {
 
 function render_kpi_cards(data) {
 	const cards = [
-		{ label: "Total Candidates", value: data.total_candidates, link: "/app/dkp_candidate" },
+		{
+			label: "Total Candidates",
+			value: data.total_candidates,
+			link: "/app/dkp_candidate",
+		},
 		{
 			label: "Blacklisted Candidates",
 			value: data.blacklisted_candidates,
@@ -598,10 +634,10 @@ function init_jobs_tab() {
 	// 	});
 	// ✅ Route to Report with filters
 	$("#download-jobs-excel")
-    .off("click")
-    .on("click", function () {
-        frappe.set_route("query-report", "Job Opening");
-    });
+		.off("click")
+		.on("click", function () {
+			frappe.set_route("query-report", "Job Opening");
+		});
 
 	load_jobs_table();
 	load_job_kpis();
@@ -818,7 +854,10 @@ function load_job_kpis() {
 
 	frappe.call({
 		method: "frappe.desk.query_report.run",
-		args: { report_name: "HR Recruitment – Jobs KPIs", filters: { from_date, to_date } },
+		args: {
+			report_name: "HR Recruitment – Jobs KPIs",
+			filters: { from_date, to_date },
+		},
 		callback(r) {
 			if (r.message) {
 				const result = r.message.result[0];
@@ -832,8 +871,16 @@ function load_job_kpis() {
 
 function render_job_kpi_cards(data) {
 	const cards = [
-		{ label: "Total Job Openings", value: data.total_jobs, link: "/app/dkp_job_opening" },
-		{ label: "Total Positions", value: data.total_positions, link: "/app/dkp_job_opening" },
+		{
+			label: "Total Job Openings",
+			value: data.total_jobs,
+			link: "/app/dkp_job_opening",
+		},
+		{
+			label: "Total Positions",
+			value: data.total_positions,
+			link: "/app/dkp_job_opening",
+		},
 	];
 
 	const $container = $("#job-kpi-cards");
@@ -1090,7 +1137,9 @@ function update_company_pagination() {
 	const start = companyTotal ? (companyPage - 1) * companyLimit + 1 : 0;
 	const end = Math.min(companyPage * companyLimit, companyTotal);
 
-	$("#company-showing-text").text(`Showing ${start}-${end} of ${companyTotal}`);
+	$("#company-showing-text").text(
+		`Showing ${start}-${end} of ${companyTotal}`,
+	);
 	$("#company-current-page").text(companyPage);
 	$("#company-total-pages").text(totalPages);
 

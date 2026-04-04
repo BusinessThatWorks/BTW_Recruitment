@@ -100,15 +100,18 @@ frappe.pages["hr-recruitment-compa"].on_page_load = function (wrapper) {
 		"change",
 		"#filter-client-type, #filter-industry, #filter-client-status",
 		function () {
-			company_table_filters.client_type = $("#filter-client-type").val() || null;
-			company_table_filters.industry = $("#filter-industry").val() || null;
-			company_table_filters.client_status = $("#filter-client-status").val() || null;
+			company_table_filters.client_type =
+				$("#filter-client-type").val() || null;
+			company_table_filters.industry =
+				$("#filter-industry").val() || null;
+			company_table_filters.client_status =
+				$("#filter-client-status").val() || null;
 
 			// Reset pagination
 			company_table_state.offset = 0;
 
 			load_company_table();
-		}
+		},
 	);
 	$(document).on("click", "#clear-company-filters", function () {
 		// Reset UI selects
@@ -246,7 +249,7 @@ if (!$("#company-kpi-cards").length) {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.12);
 }
-					`
+					`,
 		)
 		.appendTo("head");
 }
@@ -381,7 +384,8 @@ function render_company_table(data, total) {
 	// ---------------- Pagination (INSIDE TABLE CONTAINER) ----------------
 	const total_pages = Math.ceil(total / company_table_state.limit);
 
-	const current_page = Math.floor(company_table_state.offset / company_table_state.limit) + 1;
+	const current_page =
+		Math.floor(company_table_state.offset / company_table_state.limit) + 1;
 
 	const pagination = $(`
         <div class="mt-2">
@@ -417,7 +421,9 @@ function load_industry_filter_options() {
 			$industry.append(`<option value="">All</option>`);
 
 			(r.message || []).forEach((ind) => {
-				$industry.append(`<option value="${ind}">${ind.toUpperCase()}</option>`);
+				$industry.append(
+					`<option value="${ind}">${ind.toUpperCase()}</option>`,
+				);
 			});
 		},
 	});

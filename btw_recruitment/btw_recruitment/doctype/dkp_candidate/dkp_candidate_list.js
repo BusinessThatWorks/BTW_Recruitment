@@ -2,16 +2,19 @@ frappe.listview_settings["DKP_Candidate"] = {
 	hide_name_column: true,
 	hide_name_filter: true,
 	onload(listview) {
-		const mark_btn = listview.page.add_inner_button(__("Add to openings"), () => {
-			const selected = listview.get_checked_items();
+		const mark_btn = listview.page.add_inner_button(
+			__("Add to openings"),
+			() => {
+				const selected = listview.get_checked_items();
 
-			if (!selected.length) {
-				frappe.msgprint(__("Please select at least one record"));
-				return;
-			}
+				if (!selected.length) {
+					frappe.msgprint(__("Please select at least one record"));
+					return;
+				}
 
-			open_job_opening_dialog(selected);
-		});
+				open_job_opening_dialog(selected);
+			},
+		);
 	},
 };
 
@@ -110,7 +113,9 @@ function open_job_opening_dialog(selected_candidates) {
 			if (!selected_opening) {
 				frappe.msgprint({
 					title: __("No Selection"),
-					message: __("Please select a job opening to add candidates."),
+					message: __(
+						"Please select a job opening to add candidates.",
+					),
 					indicator: "orange",
 				});
 				return;
@@ -141,7 +146,7 @@ function open_job_opening_dialog(selected_candidates) {
 
 	dialog.$wrapper
 		.find(
-			"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-company"
+			"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-company",
 		)
 		.on("change", function () {
 			const id = $(this).attr("id");
@@ -159,7 +164,9 @@ function open_job_opening_dialog(selected_candidates) {
 	dialog.$wrapper.find("#candidate-dialog-company").on("input", function () {
 		const val = this.value;
 
-		const option = dialog.$wrapper.find(`#candidate-company-list option[value="${val}"]`);
+		const option = dialog.$wrapper.find(
+			`#candidate-company-list option[value="${val}"]`,
+		);
 
 		filter_state.company = option.length ? option.data("id") : null;
 
@@ -173,7 +180,7 @@ function open_job_opening_dialog(selected_candidates) {
 		// 1️⃣ Clear UI fields
 		dialog.$wrapper
 			.find(
-				"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-search"
+				"#candidate-dialog-status, #candidate-dialog-priority, #candidate-dialog-department, #candidate-dialog-search",
 			)
 			.val("");
 
@@ -206,10 +213,16 @@ function open_job_opening_dialog(selected_candidates) {
 			},
 			callback(r) {
 				if (r.message) {
-					const depts = r.message.filter((d) => d.department).map((d) => d.department);
-					const $deptSelect = d.$wrapper.find("#candidate-dialog-department");
+					const depts = r.message
+						.filter((d) => d.department)
+						.map((d) => d.department);
+					const $deptSelect = d.$wrapper.find(
+						"#candidate-dialog-department",
+					);
 					depts.forEach((dept) => {
-						$deptSelect.append(`<option value="${dept}">${dept}</option>`);
+						$deptSelect.append(
+							`<option value="${dept}">${dept}</option>`,
+						);
 					});
 				}
 			},
@@ -225,7 +238,9 @@ function open_job_opening_dialog(selected_candidates) {
 			},
 			callback(r) {
 				if (r.message) {
-					const $datalist = d.$wrapper.find("#candidate-company-list");
+					const $datalist = d.$wrapper.find(
+						"#candidate-company-list",
+					);
 					$datalist.empty();
 
 					r.message.forEach((comp) => {
@@ -276,21 +291,23 @@ function open_job_opening_dialog(selected_candidates) {
 
 		// Apply other filters
 		if (filter_state.status) {
-			filtered_openings = filtered_openings.filter((o) => o.status === filter_state.status);
+			filtered_openings = filtered_openings.filter(
+				(o) => o.status === filter_state.status,
+			);
 		}
 		if (filter_state.priority) {
 			filtered_openings = filtered_openings.filter(
-				(o) => o.priority === filter_state.priority
+				(o) => o.priority === filter_state.priority,
 			);
 		}
 		if (filter_state.department) {
 			filtered_openings = filtered_openings.filter(
-				(o) => o.department === filter_state.department
+				(o) => o.department === filter_state.department,
 			);
 		}
 		if (filter_state.company) {
 			filtered_openings = filtered_openings.filter(
-				(o) => o.company_name === filter_state.company
+				(o) => o.company_name === filter_state.company,
 			);
 		}
 
@@ -302,7 +319,9 @@ function open_job_opening_dialog(selected_candidates) {
 		$list.empty();
 
 		if (filtered_openings.length === 0) {
-			$list.html(`<div class="text-center text-muted p-4">No job openings found</div>`);
+			$list.html(
+				`<div class="text-center text-muted p-4">No job openings found</div>`,
+			);
 			d.$wrapper.find("#candidate-openings-pagination").empty();
 			return;
 		}
@@ -358,7 +377,8 @@ function open_job_opening_dialog(selected_candidates) {
 									opening.priority
 										? `
 									<span class="badge" style="background: ${
-										priorityColors[opening.priority] || "#6c757d"
+										priorityColors[opening.priority] ||
+										"#6c757d"
 									}; color: white;">
 										${opening.priority}
 									</span>
@@ -377,7 +397,8 @@ function open_job_opening_dialog(selected_candidates) {
 										: ""
 								}
 								${
-									opening.min_experience_years || opening.max_experience_years
+									opening.min_experience_years ||
+									opening.max_experience_years
 										? `
 									<div><strong>Experience:</strong>
 										${opening.min_experience_years || 0} - ${opening.max_experience_years || "∞"} years
@@ -425,14 +446,18 @@ function open_job_opening_dialog(selected_candidates) {
 			}
 			const opening_name = $(this).data("opening");
 			selected_opening = opening_name;
-			d.$wrapper.find(`input[type='radio'][value='${opening_name}']`).prop("checked", true);
+			d.$wrapper
+				.find(`input[type='radio'][value='${opening_name}']`)
+				.prop("checked", true);
 			render_openings(d);
 		});
 
-		d.$wrapper.find('input[type="radio"][name="opening-selection"]').on("change", function () {
-			selected_opening = $(this).val();
-			render_openings(d);
-		});
+		d.$wrapper
+			.find('input[type="radio"][name="opening-selection"]')
+			.on("change", function () {
+				selected_opening = $(this).val();
+				render_openings(d);
+			});
 
 		// Render pagination
 		const $pagination = d.$wrapper.find("#candidate-openings-pagination");
@@ -487,7 +512,7 @@ function add_candidates_to_opening(job_opening, selected_candidates) {
 
 			selected_candidates.forEach((row) => {
 				const exists = (doc.candidates_table || []).some(
-					(d) => d.candidate_name === row.name
+					(d) => d.candidate_name === row.name,
 				);
 
 				if (exists) {
@@ -505,7 +530,9 @@ function add_candidates_to_opening(job_opening, selected_candidates) {
 				method: "frappe.client.save",
 				args: { doc },
 				callback() {
-					let message = __("Candidates added to Job Opening successfully");
+					let message = __(
+						"Candidates added to Job Opening successfully",
+					);
 
 					if (already_existing.length) {
 						const existing_list = already_existing.join(", ");

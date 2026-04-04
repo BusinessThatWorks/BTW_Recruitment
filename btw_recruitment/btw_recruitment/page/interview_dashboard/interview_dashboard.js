@@ -59,7 +59,9 @@ frappe.pages["interview-dashboard"].on_page_load = function (wrapper) {
 	// Excel download – Summary uses server export; Details uses filtered DataTable rows
 	$(document).off("click.interview", "#download-excel-btn");
 	$(document).on("click.interview", "#download-excel-btn", function () {
-		const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
+		const activeTab = $("#interviewTabs .nav-link.active").attr(
+			"data-bs-target",
+		);
 		const tab = activeTab === "#details-pane" ? "details" : "summary";
 
 		// Details tab: export exactly the filtered rows visible in the DataTable
@@ -79,7 +81,7 @@ frappe.pages["interview-dashboard"].on_page_load = function (wrapper) {
 		open_url_post(
 			"/api/method/btw_recruitment.btw_recruitment.api.interview_dashboard.download_interview_dashboard",
 			payload,
-			false
+			false,
 		);
 	});
 
@@ -111,23 +113,32 @@ function init_interview_tabs() {
 
 // ==================== GLOBAL DATE FILTERS ====================
 function bind_global_filters() {
-	$(document).off("change.interview", "#interview-from-date, #interview-to-date");
+	$(document).off(
+		"change.interview",
+		"#interview-from-date, #interview-to-date",
+	);
 	$(document).off("click.interview", "#interview-clear-dates");
 
-	$(document).on("change.interview", "#interview-from-date, #interview-to-date", function () {
-		clearTimeout(filter_debounce_timer);
-		filter_debounce_timer = setTimeout(() => {
-			interview_dashboard_filters.from_date = $("#interview-from-date").val() || null;
-			interview_dashboard_filters.to_date = $("#interview-to-date").val() || null;
+	$(document).on(
+		"change.interview",
+		"#interview-from-date, #interview-to-date",
+		function () {
+			clearTimeout(filter_debounce_timer);
+			filter_debounce_timer = setTimeout(() => {
+				interview_dashboard_filters.from_date =
+					$("#interview-from-date").val() || null;
+				interview_dashboard_filters.to_date =
+					$("#interview-to-date").val() || null;
 
-			// Reset pagination
-			job_openings_table_state.offset = 0;
-			interview_details_table_state.offset = 0;
+				// Reset pagination
+				job_openings_table_state.offset = 0;
+				interview_details_table_state.offset = 0;
 
-			load_interview_dashboard_data();
-			load_interview_details_datatable();
-		}, 300);
-	});
+				load_interview_dashboard_data();
+				load_interview_details_datatable();
+			}, 300);
+		},
+	);
 
 	$(document).on("click.interview", "#interview-clear-dates", function () {
 		$("#interview-from-date").val("");
@@ -151,7 +162,9 @@ function bind_summary_search() {
 	$(document).on("input.interview", "#summary-search", function () {
 		clearTimeout(summary_search_timer);
 		summary_search_timer = setTimeout(() => {
-			summary_table_filters.search = ($("#summary-search").val() || "").trim();
+			summary_table_filters.search = (
+				$("#summary-search").val() || ""
+			).trim();
 			job_openings_table_state.offset = 0;
 			load_interview_dashboard_data();
 		}, 300);
@@ -168,7 +181,7 @@ function bind_summary_search() {
 function load_interview_dashboard_data() {
 	const $container = $("#interview-dashboard-table");
 	$container.html(
-		'<div class="loading-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div>'
+		'<div class="loading-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div>',
 	);
 
 	frappe.call({
@@ -183,13 +196,20 @@ function load_interview_dashboard_data() {
 		callback: function (r) {
 			if (r.message) {
 				job_openings_table_state.total = r.message.total || 0;
-				render_interview_dashboard_table(r.message.data, r.message.total);
+				render_interview_dashboard_table(
+					r.message.data,
+					r.message.total,
+				);
 			} else {
-				$container.html('<div class="empty-state">Unable to load data</div>');
+				$container.html(
+					'<div class="empty-state">Unable to load data</div>',
+				);
 			}
 		},
 		error: function () {
-			$container.html('<div class="empty-state">Error loading data</div>');
+			$container.html(
+				'<div class="empty-state">Error loading data</div>',
+			);
 		},
 	});
 }
@@ -199,7 +219,9 @@ function render_interview_dashboard_table(data, total) {
 	$container.empty();
 
 	if (!data || data.length === 0) {
-		$container.html('<div class="empty-state">No job openings data available</div>');
+		$container.html(
+			'<div class="empty-state">No job openings data available</div>',
+		);
 		return;
 	}
 
@@ -299,11 +321,15 @@ function load_interview_details_datatable() {
 			if (r.message && r.message.data) {
 				render_details_datatable(r.message.data);
 			} else {
-				$container.html('<div class="empty-state">No data available</div>');
+				$container.html(
+					'<div class="empty-state">No data available</div>',
+				);
 			}
 		},
 		error: function () {
-			$container.html('<div class="empty-state">Error loading data</div>');
+			$container.html(
+				'<div class="empty-state">Error loading data</div>',
+			);
 		},
 	});
 }
@@ -362,7 +388,9 @@ function render_details_datatable(data) {
 	$container.empty();
 
 	if (!data || data.length === 0) {
-		$container.html('<div class="empty-state">No interview details available</div>');
+		$container.html(
+			'<div class="empty-state">No interview details available</div>',
+		);
 		return;
 	}
 
@@ -372,7 +400,9 @@ function render_details_datatable(data) {
 		row.job_application_stage || "-",
 		row.interview_stage_main || "-",
 		row.interview_stage || "-",
-		row.interview_date ? frappe.datetime.str_to_user(row.interview_date) : "-",
+		row.interview_date
+			? frappe.datetime.str_to_user(row.interview_date)
+			: "-",
 		row.interview_time_range || "-",
 	]);
 
@@ -408,7 +438,9 @@ function render_details_datatable(data) {
 			clearTimeout(detailsResizeTimeout);
 
 			detailsResizeTimeout = setTimeout(() => {
-				const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
+				const activeTab = $("#interviewTabs .nav-link.active").attr(
+					"data-bs-target",
+				);
 
 				if (activeTab === "#details-pane") {
 					load_interview_details_datatable();
@@ -486,7 +518,9 @@ function bind_details_clear_filters() {
 function bind_excel_download() {
 	$(document).off("click.interview", "#download-excel-btn");
 	$(document).on("click.interview", "#download-excel-btn", function () {
-		const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
+		const activeTab = $("#interviewTabs .nav-link.active").attr(
+			"data-bs-target",
+		);
 
 		if (activeTab === "#details-pane") {
 			download_details_excel();
@@ -505,7 +539,7 @@ function download_summary_excel() {
 			to_date: interview_dashboard_filters.to_date || null,
 			search: summary_table_filters.search || null,
 		},
-		false
+		false,
 	);
 }
 function download_details_excel() {
@@ -537,14 +571,16 @@ function download_details_excel() {
 		"/api/method/btw_recruitment.btw_recruitment.api.interview_dashboard.download_filtered_excel",
 		{
 			data: JSON.stringify(filtered_data),
-		}
+		},
 	);
 }
 
 // Update Excel button handler
 $(document).off("click.interview", "#download-excel-btn");
 $(document).on("click.interview", "#download-excel-btn", function () {
-	const activeTab = $("#interviewTabs .nav-link.active").attr("data-bs-target");
+	const activeTab = $("#interviewTabs .nav-link.active").attr(
+		"data-bs-target",
+	);
 
 	if (activeTab === "#details-pane") {
 		download_details_excel();
@@ -557,7 +593,7 @@ $(document).on("click.interview", "#download-excel-btn", function () {
 				from_date: interview_dashboard_filters.from_date || null,
 				to_date: interview_dashboard_filters.to_date || null,
 				search: summary_table_filters.search || null,
-			}
+			},
 		);
 	}
 });
@@ -605,7 +641,7 @@ function export_details_to_excel_client(data) {
 			message: `Exported ${data.length} filtered records`,
 			indicator: "green",
 		},
-		3
+		3,
 	);
 }
 

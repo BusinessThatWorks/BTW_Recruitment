@@ -13,7 +13,8 @@ frappe.ui.form.on("DKP_Candidate", {
 						const parseResult = r.message || {};
 
 						// backend returned current docname
-						const currentDocname = parseResult.docname || frm.doc.name;
+						const currentDocname =
+							parseResult.docname || frm.doc.name;
 
 						// Now call the separate renamer
 						frappe
@@ -25,13 +26,20 @@ frappe.ui.form.on("DKP_Candidate", {
 								const payload = res.message || {};
 								if (payload.renamed && payload.new_name) {
 									// Navigate to the renamed document so UI shows parsed fields
-									frappe.set_route("Form", "DKP_Candidate", payload.new_name);
+									frappe.set_route(
+										"Form",
+										"DKP_Candidate",
+										payload.new_name,
+									);
 								} else {
 									// Either not renamed or rename failed - reload current
 									frm.reload_doc();
 									// Optionally show reason
 									if (payload.reason) {
-										console.log("Rename skipped:", payload.reason);
+										console.log(
+											"Rename skipped:",
+											payload.reason,
+										);
 									}
 								}
 							})
@@ -40,12 +48,13 @@ frappe.ui.form.on("DKP_Candidate", {
 								console.error("Rename API error", err);
 								frm.reload_doc();
 							});
-						const confidence = parseResult.confidence_score ?? "N/A";
+						const confidence =
+							parseResult.confidence_score ?? "N/A";
 						const lowConfidenceNote = parseResult.low_confidence
 							? "<br><br><b>Note:</b> Confidence is low, please verify populated values."
 							: "";
 						frappe.msgprint(
-							`Resume processed successfully. Confidence: ${confidence}%.${lowConfidenceNote}`
+							`Resume processed successfully. Confidence: ${confidence}%.${lowConfidenceNote}`,
 						);
 					})
 					.catch((err) => {
@@ -94,7 +103,11 @@ frappe.ui.form.on("DKP_Candidate", {
 			const field = frm.get_field(fieldname);
 			const value = frm.doc[fieldname];
 
-			const isEmpty = value === null || value === undefined || value === "" || value === 0;
+			const isEmpty =
+				value === null ||
+				value === undefined ||
+				value === "" ||
+				value === 0;
 
 			if (field && isEmpty) {
 				// field input
@@ -135,7 +148,11 @@ frappe.ui.form.on("DKP_Candidate", {
 				.then((res) => {
 					const payload = res.message || {};
 					if (payload.renamed && payload.new_name) {
-						frappe.set_route("Form", "DKP_Candidate", payload.new_name);
+						frappe.set_route(
+							"Form",
+							"DKP_Candidate",
+							payload.new_name,
+						);
 					}
 				});
 		}

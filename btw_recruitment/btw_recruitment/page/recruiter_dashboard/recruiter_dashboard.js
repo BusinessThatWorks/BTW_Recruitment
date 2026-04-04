@@ -17,7 +17,9 @@ function download_excel_from_rows(filename, headers, rows) {
 	});
 	html += "</tbody></table>";
 
-	const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+	const blob = new Blob([html], {
+		type: "application/vnd.ms-excel;charset=utf-8;",
+	});
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement("a");
 	a.href = url;
@@ -295,14 +297,26 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				color: "#8b5cf6",
 				isFirst: true,
 			},
-			{ name: "No Response", value: data.no_response || 0, color: "#6b7280" },
+			{
+				name: "No Response",
+				value: data.no_response || 0,
+				color: "#6b7280",
+			},
 			{
 				name: "Submitted To Client",
 				value: data.submitted_to_client || 0,
 				color: "#ec4899",
 			},
-			{ name: "Client Rejected", value: data.client_rejected || 0, color: "#ef4444" },
-			{ name: "Schedule Interview", value: data.schedule_interview || 0, color: "#3b82f6" },
+			{
+				name: "Client Rejected",
+				value: data.client_rejected || 0,
+				color: "#ef4444",
+			},
+			{
+				name: "Schedule Interview",
+				value: data.schedule_interview || 0,
+				color: "#3b82f6",
+			},
 		];
 
 		// ✅ Sort and separate: active stages first, then zero stages
@@ -319,14 +333,38 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				color: "#8b5cf6",
 				isFirst: true,
 			},
-			{ name: "No Show", value: data.interview_no_show || 0, color: "#f97316" },
-			{ name: "Selected", value: data.selected_for_offer || 0, color: "#22c55e" },
-			{ name: "Rejected", value: data.rejected_by_client || 0, color: "#ef4444" },
+			{
+				name: "No Show",
+				value: data.interview_no_show || 0,
+				color: "#f97316",
+			},
+			{
+				name: "Selected",
+				value: data.selected_for_offer || 0,
+				color: "#22c55e",
+			},
+			{
+				name: "Rejected",
+				value: data.rejected_by_client || 0,
+				color: "#ef4444",
+			},
 			{ name: "Offered", value: data.offered || 0, color: "#eab308" },
-			{ name: "Accepted", value: data.offer_accepted || 0, color: "#a855f7" },
-			{ name: "Declined", value: data.offer_declined || 0, color: "#f43f5e" },
+			{
+				name: "Accepted",
+				value: data.offer_accepted || 0,
+				color: "#a855f7",
+			},
+			{
+				name: "Declined",
+				value: data.offer_declined || 0,
+				color: "#f43f5e",
+			},
 			{ name: "Joined", value: data.joined || 0, color: "#10b981" },
-			{ name: "Left", value: data.joined_and_left || 0, color: "#f59e0b" },
+			{
+				name: "Left",
+				value: data.joined_and_left || 0,
+				color: "#f59e0b",
+			},
 		];
 
 		// ✅ Sort and separate: active stages first, then zero stages
@@ -373,7 +411,9 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		}
 
 		// ✅ Max value for width calculation (only from non-zero stages)
-		const nonZeroValues = stages.filter((s) => s.value > 0).map((s) => s.value);
+		const nonZeroValues = stages
+			.filter((s) => s.value > 0)
+			.map((s) => s.value);
 		const maxValue = Math.max(...nonZeroValues, 1);
 
 		stages.forEach((stage) => {
@@ -391,13 +431,13 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 			const $bar = $(`
             <div class="h-bar-row ${zeroClass}">
                 <div class="h-bar-label" style="${isZero ? "color: #9ca3af;" : ""}">${
-				stage.name
-			}</div>
+					stage.name
+				}</div>
                 <div class="h-bar-track">
                     <div class="h-bar ${zeroClass}" style="width: ${width}%; background: ${bgColor};">
                         <span class="h-bar-value" style="color: ${textColor};">${
-				stage.value
-			}</span>
+							stage.value
+						}</span>
                     </div>
                 </div>
                 <div class="h-bar-percent" style="${
@@ -468,7 +508,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 
 		if (!rows.length) {
 			$openings_container.html(
-				'<p class="text-muted text-center mb-0">No openings found</p>'
+				'<p class="text-muted text-center mb-0">No openings found</p>',
 			);
 			openingsDataTable = null;
 			return;
@@ -500,11 +540,14 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 					const status = value || "";
 					let status_class = "";
 					if (status === "Open") status_class = "badge badge-success";
-					else if (status === "Closed – Hired") status_class = "badge badge-info";
-					else if (status === "On Hold") status_class = "badge badge-warning";
-					else if (status === "Closed – Cancelled") status_class = "badge badge-danger";
+					else if (status === "Closed – Hired")
+						status_class = "badge badge-info";
+					else if (status === "On Hold")
+						status_class = "badge badge-warning";
+					else if (status === "Closed – Cancelled")
+						status_class = "badge badge-danger";
 					return `<span class="${status_class}">${frappe.utils.escape_html(
-						status
+						status,
 					)}</span>`;
 				},
 			},
@@ -518,14 +561,17 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				focusable: false,
 				format: (value, row, column, data) => {
 					const rowIndex = row?.meta?.rowIndex ?? row?.[0]?.rowIndex;
-					const joinedList = rowsRef[rowIndex]?.joined_candidate_list || [];
+					const joinedList =
+						rowsRef[rowIndex]?.joined_candidate_list || [];
 
 					if (!Array.isArray(joinedList) || !joinedList.length) {
 						return "-";
 					}
 
 					// ✅ Simple comma separated names
-					const names = joinedList.map((c) => c.candidate_name || c.name || "Unknown");
+					const names = joinedList.map(
+						(c) => c.candidate_name || c.name || "Unknown",
+					);
 					return names.join(", ");
 				},
 			},
@@ -600,13 +646,15 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				openingsFilterTimeout = setTimeout(() => {
 					const filters = {};
 
-					$("#recruiter-openings-table .dt-filter").each(function (index) {
-						const value = $(this).val()?.trim();
-						const colName = openingsColumns[index];
-						if (value && colName !== "#") {
-							filters[colName] = value;
-						}
-					});
+					$("#recruiter-openings-table .dt-filter").each(
+						function (index) {
+							const value = $(this).val()?.trim();
+							const colName = openingsColumns[index];
+							if (value && colName !== "#") {
+								filters[colName] = value;
+							}
+						},
+					);
 
 					console.log("Recruiter openings inline filters:", filters);
 
@@ -621,7 +669,10 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// PAGINATION TEXT
 	// =============================
 	function update_pagination(total_count) {
-		const max_page = Math.max(1, Math.ceil(total_count / state.page_length));
+		const max_page = Math.max(
+			1,
+			Math.ceil(total_count / state.page_length),
+		);
 
 		if (!total_count) {
 			$page_info.text("Showing 0 of 0 openings");
@@ -703,7 +754,11 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 					];
 				});
 
-				download_excel_from_rows("recruiter_openings.xls", headers, data_rows);
+				download_excel_from_rows(
+					"recruiter_openings.xls",
+					headers,
+					data_rows,
+				);
 
 				frappe.show_alert({
 					message: __("Downloaded {0} openings", [data_rows.length]),

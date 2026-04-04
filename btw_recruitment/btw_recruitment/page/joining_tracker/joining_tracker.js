@@ -17,7 +17,9 @@ function download_excel_from_rows(filename, headers, rows) {
 	});
 	html += "</tbody></table>";
 
-	const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+	const blob = new Blob([html], {
+		type: "application/vnd.ms-excel;charset=utf-8;",
+	});
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement("a");
 	a.href = url;
@@ -168,7 +170,12 @@ frappe.pages["joining-tracker"].on_page_load = function (wrapper) {
 		return Number(val || 0).toLocaleString("en-IN");
 	}
 	function fmtCurr(val) {
-		return "₹ " + Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+		return (
+			"₹ " +
+			Number(val || 0).toLocaleString("en-IN", {
+				minimumFractionDigits: 2,
+			})
+		);
 	}
 
 	function render_summary(s) {
@@ -186,7 +193,7 @@ frappe.pages["joining-tracker"].on_page_load = function (wrapper) {
 
 		if (!rows || !rows.length) {
 			$table_container.html(
-				'<p class="text-muted text-center mb-0">No joining records found</p>'
+				'<p class="text-muted text-center mb-0">No joining records found</p>',
 			);
 			jtDataTable = null;
 			return;
@@ -275,7 +282,8 @@ frappe.pages["joining-tracker"].on_page_load = function (wrapper) {
 
 	function restore_inline_filters() {
 		if (!jtDataTable) return;
-		if (!jtInlineFilters || Object.keys(jtInlineFilters).length === 0) return;
+		if (!jtInlineFilters || Object.keys(jtInlineFilters).length === 0)
+			return;
 
 		$("#jt-table .dt-filter").each(function (index) {
 			const colName = jtColumns[index];
@@ -310,7 +318,10 @@ frappe.pages["joining-tracker"].on_page_load = function (wrapper) {
 	}
 
 	function update_pagination(total_count) {
-		const max_page = Math.max(1, Math.ceil((total_count || 0) / state.page_length));
+		const max_page = Math.max(
+			1,
+			Math.ceil((total_count || 0) / state.page_length),
+		);
 
 		if (!total_count) {
 			$page_info.text("Showing 0 of 0 entries");
@@ -386,10 +397,16 @@ frappe.pages["joining-tracker"].on_page_load = function (wrapper) {
 					r.accountant_remarks || "-",
 				]);
 
-				download_excel_from_rows("joining_tracker.xls", headers, data_rows);
+				download_excel_from_rows(
+					"joining_tracker.xls",
+					headers,
+					data_rows,
+				);
 
 				frappe.show_alert({
-					message: __("Downloaded {0} joining records", [data_rows.length]),
+					message: __("Downloaded {0} joining records", [
+						data_rows.length,
+					]),
 					indicator: "green",
 				});
 			},

@@ -601,7 +601,7 @@ class DKP_Interview(Document):
 
 		invoice.insert(ignore_permissions=True)
 		self.db_set("invoice_ref", invoice.name)
-		frappe.msgprint(f"✅ Invoice Created: {invoice.name}")
+		frappe.msgprint(f"✅ Joining Tracker Created: {invoice.name}")
 
 	def update_existing_invoice(self, invoice_name):
 		job_opening = frappe.get_doc("DKP_Job_Opening", self.job_opening)

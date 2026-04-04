@@ -67,7 +67,9 @@ function fuzzyMatchWords(query, words) {
 		console.log(`  📍 Checking word: "${word}"`);
 
 		if (word.length < query.length) {
-			console.log(`    ❌ Word too short (${word.length} < ${query.length})`);
+			console.log(
+				`    ❌ Word too short (${word.length} < ${query.length})`,
+			);
 			return false;
 		}
 
@@ -82,7 +84,7 @@ function fuzzyMatchWords(query, words) {
 
 		const matched = qi === query.length;
 		console.log(
-			`    ${matched ? "✅ MATCH" : "❌ NO MATCH"} (matched ${qi}/${query.length} chars)`
+			`    ${matched ? "✅ MATCH" : "❌ NO MATCH"} (matched ${qi}/${query.length} chars)`,
 		);
 		return matched;
 	});

@@ -29,7 +29,11 @@ function check_joining_tracker_freeze(frm) {
 				frm.disable_form();
 				frm.disable_save();
 
-				frm.dashboard.add_comment("🔒 " + r.message.message, "red", true);
+				frm.dashboard.add_comment(
+					"🔒 " + r.message.message,
+					"red",
+					true,
+				);
 			}
 		},
 	});
@@ -58,7 +62,7 @@ function add_sales_invoice_button(frm) {
 				message: `✅ Sales Invoice created for: ${frm.doc.company_name}`,
 				indicator: "green",
 			},
-			3
+			3,
 		);
 	});
 

@@ -39,22 +39,30 @@
 // });
 frappe.ui.form.on("DKP_Job_Opening", {
 	refresh(frm) {
-		frm.set_query("assign_recruiter", "candidates_table", function (doc, cdt, cdn) {
-			// Get already assigned recruiters
-			let assigned = (frm.doc.candidates_table || [])
-				.map((row) => row.assign_recruiter)
-				.filter((r) => r);
+		frm.set_query(
+			"assign_recruiter",
+			"candidates_table",
+			function (doc, cdt, cdn) {
+				// Get already assigned recruiters
+				let assigned = (frm.doc.candidates_table || [])
+					.map((row) => row.assign_recruiter)
+					.filter((r) => r);
 
-			return {
-				filters: {
-					role_profile_name: [
-						"in",
-						["DKP Recruiter", "DKP Recruiter - Exclusive", "Admin"],
-					],
-					name: ["not in", assigned],
-				},
-			};
-		});
+				return {
+					filters: {
+						role_profile_name: [
+							"in",
+							[
+								"DKP Recruiter",
+								"DKP Recruiter - Exclusive",
+								"Admin",
+							],
+						],
+						name: ["not in", assigned],
+					},
+				};
+			},
+		);
 	},
 
 	// Button on Job Opening: Suggest Candidates
@@ -80,7 +88,8 @@ function show_opening_candidate_suggestions(frm) {
 	if (frm.is_new()) {
 		frappe.msgprint({
 			title: "Save Required",
-			message: "Please save the Job Opening before suggesting candidates.",
+			message:
+				"Please save the Job Opening before suggesting candidates.",
 			indicator: "orange",
 		});
 		return;
@@ -107,7 +116,9 @@ function show_opening_candidate_suggestions(frm) {
 			if (!r.message || !r.message.success) {
 				frappe.msgprint({
 					title: "Error",
-					message: r.message?.message || "Failed to get candidate suggestions",
+					message:
+						r.message?.message ||
+						"Failed to get candidate suggestions",
 					indicator: "red",
 				});
 				return;
@@ -119,7 +130,8 @@ function show_opening_candidate_suggestions(frm) {
 			if (candidates.length === 0) {
 				frappe.msgprint({
 					title: "No Matches Found",
-					message: "No candidates found matching the job opening criteria.",
+					message:
+						"No candidates found matching the job opening criteria.",
 					indicator: "orange",
 				});
 				return;
@@ -130,7 +142,11 @@ function show_opening_candidate_suggestions(frm) {
 		},
 	});
 }
-function update_previous_openings_button_count($button, candidate_name, current_job_opening) {
+function update_previous_openings_button_count(
+	$button,
+	candidate_name,
+	current_job_opening,
+) {
 	frappe.call({
 		method: "btw_recruitment.btw_recruitment.doctype.dkp_job_opening.dkp_job_opening.get_candidate_previous_openings_count",
 		args: {
@@ -162,36 +178,49 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 	// Build matching criteria summary (show all categories used in scoring) in a row layout
 	const criteria_parts = [];
 	if (criteria.designation) {
-		criteria_parts.push(`<strong>Designation:</strong> ${criteria.designation}`);
+		criteria_parts.push(
+			`<strong>Designation:</strong> ${criteria.designation}`,
+		);
 	}
 	if (criteria.min_experience || criteria.max_experience) {
 		const minExp = criteria.min_experience || 0;
 		const maxExp = criteria.max_experience || "∞";
-		criteria_parts.push(`<strong>Experience:</strong> ${minExp}-${maxExp} years`);
+		criteria_parts.push(
+			`<strong>Experience:</strong> ${minExp}-${maxExp} years`,
+		);
 	}
 	if (criteria.must_have_skills) {
-		criteria_parts.push(`<strong>Must-have Skills:</strong> ${criteria.must_have_skills}`);
+		criteria_parts.push(
+			`<strong>Must-have Skills:</strong> ${criteria.must_have_skills}`,
+		);
 	}
 	if (criteria.good_to_have_skills) {
 		criteria_parts.push(
-			`<strong>Good-to-have Skills:</strong> ${criteria.good_to_have_skills}`
+			`<strong>Good-to-have Skills:</strong> ${criteria.good_to_have_skills}`,
 		);
 	}
 	if (criteria.required_certifications) {
 		criteria_parts.push(
-			`<strong>Certifications:</strong> ${criteria.required_certifications}`
+			`<strong>Certifications:</strong> ${criteria.required_certifications}`,
 		);
 	}
 	if (criteria.location) {
 		criteria_parts.push(`<strong>Location:</strong> ${criteria.location}`);
 	}
-	if (criteria.gender_preference && !["NA", "Any"].includes(criteria.gender_preference)) {
-		criteria_parts.push(`<strong>Gender Preference:</strong> ${criteria.gender_preference}`);
+	if (
+		criteria.gender_preference &&
+		!["NA", "Any"].includes(criteria.gender_preference)
+	) {
+		criteria_parts.push(
+			`<strong>Gender Preference:</strong> ${criteria.gender_preference}`,
+		);
 	}
 	if (criteria.min_ctc || criteria.max_ctc) {
 		const minCtc = criteria.min_ctc || "NA";
 		const maxCtc = criteria.max_ctc || "NA";
-		criteria_parts.push(`<strong>CTC Range:</strong> ${minCtc} – ${maxCtc}</strong>`);
+		criteria_parts.push(
+			`<strong>CTC Range:</strong> ${minCtc} – ${maxCtc}</strong>`,
+		);
 	}
 
 	const criteria_html =
@@ -200,7 +229,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                     ${criteria_parts
 						.map(
 							(part) =>
-								`<div class="col-sm-4 mb-1" style="font-size:0.85em; color:#495057;">${part}</div>`
+								`<div class="col-sm-4 mb-1" style="font-size:0.85em; color:#495057;">${part}</div>`,
 						)
 						.join("")}
                </div>`
@@ -344,7 +373,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 				() => {
 					// After dialog is closed, add candidates to Job Opening's candidates_table
 					add_candidates_to_opening(frm, selected_candidates);
-				}
+				},
 			);
 			d.hide();
 		},
@@ -370,19 +399,37 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 	function updateSelectedCount() {
 		const count = Object.keys(selected_map).length;
 		ensureSelectedCountFooter();
-		d.$wrapper.find("#opening-selected-count").text(`Selected: ${count} candidate(s)`);
+		d.$wrapper
+			.find("#opening-selected-count")
+			.text(`Selected: ${count} candidate(s)`);
 	}
 
 	// ---- Filtering & Pagination Helpers ----
 	function applyFilters() {
-		const search = d.$wrapper.find("#opening-filter-search").val()?.toLowerCase() || "";
-		const minMatch = parseFloat(d.$wrapper.find("#opening-filter-min-match").val()) || 0;
-		const hideNoPoach = d.$wrapper.find("#opening-filter-hide-nopoach").is(":checked");
-		const genderFilter = d.$wrapper.find("#opening-filter-gender").val() || "";
-		const minAge = parseInt(d.$wrapper.find("#opening-filter-min-age").val() || "", 10);
-		const maxAge = parseInt(d.$wrapper.find("#opening-filter-max-age").val() || "", 10);
-		const minCtcFilter = parseFloat(d.$wrapper.find("#opening-filter-min-ctc").val() || "");
-		const maxCtcFilter = parseFloat(d.$wrapper.find("#opening-filter-max-ctc").val() || "");
+		const search =
+			d.$wrapper.find("#opening-filter-search").val()?.toLowerCase() ||
+			"";
+		const minMatch =
+			parseFloat(d.$wrapper.find("#opening-filter-min-match").val()) || 0;
+		const hideNoPoach = d.$wrapper
+			.find("#opening-filter-hide-nopoach")
+			.is(":checked");
+		const genderFilter =
+			d.$wrapper.find("#opening-filter-gender").val() || "";
+		const minAge = parseInt(
+			d.$wrapper.find("#opening-filter-min-age").val() || "",
+			10,
+		);
+		const maxAge = parseInt(
+			d.$wrapper.find("#opening-filter-max-age").val() || "",
+			10,
+		);
+		const minCtcFilter = parseFloat(
+			d.$wrapper.find("#opening-filter-min-ctc").val() || "",
+		);
+		const maxCtcFilter = parseFloat(
+			d.$wrapper.find("#opening-filter-max-ctc").val() || "",
+		);
 
 		filtered_candidates = candidates.filter((c) => {
 			if (hideNoPoach && c.is_no_poach) return false;
@@ -405,10 +452,14 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 
 			// CTC filter (uses expected_ctc if available, else current_ctc)
 			if (!Number.isNaN(minCtcFilter) || !Number.isNaN(maxCtcFilter)) {
-				const candCtc = parseFloat(c.expected_ctc || c.current_ctc || "");
+				const candCtc = parseFloat(
+					c.expected_ctc || c.current_ctc || "",
+				);
 				if (!Number.isNaN(candCtc)) {
-					if (!Number.isNaN(minCtcFilter) && candCtc < minCtcFilter) return false;
-					if (!Number.isNaN(maxCtcFilter) && candCtc > maxCtcFilter) return false;
+					if (!Number.isNaN(minCtcFilter) && candCtc < minCtcFilter)
+						return false;
+					if (!Number.isNaN(maxCtcFilter) && candCtc > maxCtcFilter)
+						return false;
 				}
 			}
 
@@ -446,7 +497,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 
 		if (!pageItems.length) {
 			$list.html(
-				'<div class="text-muted text-center py-3">No candidates match the current filters.</div>'
+				'<div class="text-muted text-center py-3">No candidates match the current filters.</div>',
 			);
 		} else {
 			pageItems.forEach((candidate, index) => {
@@ -455,8 +506,8 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 					matchPercentage >= 70
 						? "#28a745"
 						: matchPercentage >= 50
-						? "#ffc107"
-						: "#17a2b8";
+							? "#ffc107"
+							: "#17a2b8";
 				const is_no_poach = candidate.is_no_poach || false;
 				const cardBorderColor = is_no_poach ? "#ffc107" : "#dee2e6";
 				const cardBgColor = is_no_poach ? "#fffbf0" : "#fff";
@@ -474,10 +525,13 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                            >
                                     <label for="opening-candidate-${globalIndex}"
                                            style="margin: 0; cursor: ${
-												is_no_poach ? "not-allowed" : "pointer"
+												is_no_poach
+													? "not-allowed"
+													: "pointer"
 											};">
                                         <strong>${
-											candidate.candidate_name || candidate.name
+											candidate.candidate_name ||
+											candidate.name
 										}</strong>
                                     </label>
                                     ${
@@ -503,7 +557,9 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 										candidate.current_location || "-"
 									}</div>
                                     <div><strong>Skills:</strong> ${
-										candidate.skills_tags || candidate.primary_skill_set || "-"
+										candidate.skills_tags ||
+										candidate.primary_skill_set ||
+										"-"
 									}</div>
                                     ${
 										candidate.key_certifications
@@ -521,17 +577,18 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                     <div class="mb-1">
                                         <small style="color: #6c757d;">
                                             <strong>Match Reasons:</strong> ${candidate.match_reasons.join(
-												", "
+												", ",
 											)}
                                         </small>
                                     </div>
                                     ${
-										candidate.matched_skills && candidate.matched_skills.length
+										candidate.matched_skills &&
+										candidate.matched_skills.length
 											? `
                                     <div class="mb-1">
                                         <small style="color: #6c757d;">
                                             <strong>Matched Skills:</strong> <span class="text-primary">${candidate.matched_skills.join(
-												", "
+												", ",
 											)}</span>
                                         </small>
                                     </div>
@@ -545,7 +602,8 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
                                             <small style="color: #856404;">
                                                 <strong>⚠️ No-Poach:</strong> Currently employed at
                                                 <b>${
-													candidate.no_poach_company || "Unknown Company"
+													candidate.no_poach_company ||
+													"Unknown Company"
 												}</b>
                                             </small>
                                         </div>
@@ -616,7 +674,11 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 				const $last_card = $list.children().last();
 				const $prev_btn = $last_card.find(".previous-openings-btn");
 
-				update_previous_openings_button_count($prev_btn, candidate.name, frm.doc.name);
+				update_previous_openings_button_count(
+					$prev_btn,
+					candidate.name,
+					frm.doc.name,
+				);
 			});
 		}
 
@@ -645,7 +707,9 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 		const $pager = d.$wrapper.find("#opening-candidates-pagination");
 		$pager.empty();
 		if (total_pages <= 1) {
-			$pager.html(`<small class="text-muted">Showing ${total} candidate(s)</small>`);
+			$pager.html(
+				`<small class="text-muted">Showing ${total} candidate(s)</small>`,
+			);
 			return;
 		}
 
@@ -671,7 +735,7 @@ function show_opening_candidates_dialog(frm, candidates, criteria) {
 			`<div class="d-flex justify-content-between align-items-center w-100">
                 <div>${infoHtml}</div>
                 ${controlsHtml}
-            </div>`
+            </div>`,
 		);
 
 		// Bind pagination buttons
@@ -737,7 +801,12 @@ function add_candidates_to_opening(frm, candidate_names) {
 
 	candidate_names.forEach((candidate_name) => {
 		let row = frm.add_child("candidates_table");
-		frappe.model.set_value(row.doctype, row.name, "candidate_name", candidate_name);
+		frappe.model.set_value(
+			row.doctype,
+			row.name,
+			"candidate_name",
+			candidate_name,
+		);
 	});
 
 	frm.refresh_field("candidates_table");
@@ -747,7 +816,7 @@ function add_candidates_to_opening(frm, candidate_names) {
 			message: `${candidate_names.length} candidate(s) added successfully`,
 			indicator: "green",
 		},
-		3
+		3,
 	);
 }
 
@@ -760,7 +829,7 @@ function show_previous_openings_dialog(candidate_name, current_job_opening) {
 			message: "Loading previous openings...",
 			indicator: "blue",
 		},
-		2
+		2,
 	);
 
 	// Fetch previous openings from backend
@@ -774,7 +843,9 @@ function show_previous_openings_dialog(candidate_name, current_job_opening) {
 			if (!r.message || !r.message.success) {
 				frappe.msgprint({
 					title: "Error",
-					message: r.message?.message || "Failed to fetch previous openings",
+					message:
+						r.message?.message ||
+						"Failed to fetch previous openings",
 					indicator: "red",
 				});
 				return;
@@ -801,9 +872,9 @@ function show_previous_openings_dialog(candidate_name, current_job_opening) {
 							const formattedDate = opening.opening_created
 								? frappe.datetime.str_to_user(
 										frappe.datetime.get_datetime_as_string(
-											opening.opening_created
-										)
-								  )
+											opening.opening_created,
+										),
+									)
 								: "-";
 
 							return `
@@ -910,7 +981,7 @@ function show_multiple_candidates_previous_openings(
 	candidate_names,
 	candidate_display_names,
 	current_job_opening,
-	callback
+	callback,
 ) {
 	if (!candidate_names || candidate_names.length === 0) {
 		if (callback) callback();
@@ -923,7 +994,7 @@ function show_multiple_candidates_previous_openings(
 			message: "Loading previous openings for selected candidates...",
 			indicator: "blue",
 		},
-		2
+		2,
 	);
 
 	// Fetch previous openings for all candidates
@@ -965,7 +1036,8 @@ function show_multiple_candidates_previous_openings(
 
 			candidate_names.forEach((candidate_name) => {
 				const openings = candidate_openings_map[candidate_name] || [];
-				const display_name = candidate_display_names[candidate_name] || candidate_name;
+				const display_name =
+					candidate_display_names[candidate_name] || candidate_name;
 
 				openings_html += `
                 <div class="candidate-section mb-4" style="border-bottom: 2px solid #dee2e6; padding-bottom: 15px;">
@@ -986,8 +1058,10 @@ function show_multiple_candidates_previous_openings(
 						const stageColor = getStageColor(stage);
 						const formattedDate = opening.opening_created
 							? frappe.datetime.str_to_user(
-									frappe.datetime.get_datetime_as_string(opening.opening_created)
-							  )
+									frappe.datetime.get_datetime_as_string(
+										opening.opening_created,
+									),
+								)
 							: "-";
 
 						openings_html += `
@@ -1089,7 +1163,8 @@ function show_multiple_candidates_previous_openings(
 		.catch((error) => {
 			frappe.msgprint({
 				title: "Error",
-				message: "Failed to fetch previous openings for some candidates.",
+				message:
+					"Failed to fetch previous openings for some candidates.",
 				indicator: "red",
 			});
 			// Still proceed with adding candidates even if there's an error
@@ -1114,7 +1189,7 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 					job_opening: frm.doc.name,
 					candidate_name: row.candidate_name,
 				},
-				"name"
+				"name",
 			)
 			.then((r) => {
 				if (r.message && r.message.name) {
@@ -1143,7 +1218,10 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 		let duplicate = false;
 
 		(frm.doc.candidates_table || []).forEach((r) => {
-			if (r.name !== row.name && r.candidate_name === row.candidate_name) {
+			if (
+				r.name !== row.name &&
+				r.candidate_name === row.candidate_name
+			) {
 				duplicate = true;
 			}
 		});
@@ -1152,7 +1230,7 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 			frappe.msgprint({
 				title: __("Duplicate Candidate"),
 				message: __(
-					`Candidate <b>${row.candidate_name}</b> is already added in this job opening.`
+					`Candidate <b>${row.candidate_name}</b> is already added in this job opening.`,
 				),
 				indicator: "red",
 			});
@@ -1177,7 +1255,7 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 					frappe.msgprint({
 						title: __("Blacklisted Candidate"),
 						message: __(
-							`Candidate <b>${row.candidate_name}</b> is blacklisted and cannot be added to this job opening.`
+							`Candidate <b>${row.candidate_name}</b> is blacklisted and cannot be added to this job opening.`,
 						),
 						indicator: "red",
 					});
@@ -1188,10 +1266,11 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 				// Check if candidate's current company (Customer) has no-poach - allow but warn
 				if (candidate.current_company_master) {
 					frappe.db
-						.get_value("Customer", candidate.current_company_master, [
-							"custom_no_poach_flag",
-							"customer_name",
-						])
+						.get_value(
+							"Customer",
+							candidate.current_company_master,
+							["custom_no_poach_flag", "customer_name"],
+						)
 						.then((company_r) => {
 							if (
 								company_r.message &&
@@ -1203,7 +1282,7 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 								frappe.msgprint({
 									title: __("No-Poach Warning"),
 									message: __(
-										`Candidate <b>${row.candidate_name}</b> is currently employed at <b>${company_label}</b> which has a No-Poach policy.`
+										`Candidate <b>${row.candidate_name}</b> is currently employed at <b>${company_label}</b> which has a No-Poach policy.`,
 									),
 									indicator: "orange",
 								});

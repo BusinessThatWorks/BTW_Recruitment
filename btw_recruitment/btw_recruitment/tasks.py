@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 
 import frappe
 from frappe.utils import formatdate, now_datetime, today
+
 # from datetime import datetime, timedelta
 
 # import frappe
 # from frappe.utils import add_days, date_diff, formatdate, now_datetime, today
+
 
 def send_interview_reminders():
 	"""
@@ -204,6 +206,7 @@ def process_single_interview(interview, window_start, window_end):
 # 		frappe.sendmail(recipients=recipients, subject=subject, message=message, now=True)
 # 		return True
 
+
 # 	except Exception as e:
 # 		frappe.log_error(f"Failed to send interview reminder: {e!s}", "Interview Reminder Error")
 # 		return False
@@ -300,10 +303,11 @@ def send_reminder_email(
 	try:
 		frappe.sendmail(
 			recipients=recipients,
-			cc=cc_list, 
+			cc=cc_list,
 			subject=subject,
 			message=message,
-			now=True
+			now=True,
+			expose_recipients="header",
 		)
 		return True
 
@@ -312,17 +316,17 @@ def send_reminder_email(
 		return False
 
 
-# Code for job opening on hold reminder for 30 days to companies. 
-# Scheduler runs daily and checks for job openings which are on hold for more than 30 days and 
+# Code for job opening on hold reminder for 30 days to companies.
+# Scheduler runs daily and checks for job openings which are on hold for more than 30 days and
 # sends reminder email to the company and assigned recruiters.
 # def send_on_hold_job_reminders():
 #     """
 #     Scheduler job: Runs daily
 #     Sends reminder to companies whose job openings are On Hold for 30+ days
 #     """
-    
+
 #     thirty_days_ago = add_days(today(), -30)
-    
+
 #     # Get On Hold jobs older than 30 days where reminder not sent
 #     jobs = frappe.get_all(
 #         "DKP_Job_Opening",
@@ -344,7 +348,7 @@ def send_reminder_email(
 #             "creation"
 #         ]
 #     )
-    
+
 #     for job in jobs:
 #         try:
 #             success = send_hold_reminder_email(job)
@@ -353,60 +357,60 @@ def send_reminder_email(
 #                 frappe.db.commit()
 #         except Exception as e:
 #             frappe.log_error(
-#                 f"Error sending hold reminder for {job.name}: {str(e)}", 
+#                 f"Error sending hold reminder for {job.name}: {str(e)}",
 #                 "Hold Reminder Error"
 #             )
 
 
 # def send_hold_reminder_email(job):
 #     """Send reminder email to company and assigned recruiters"""
-    
+
 #     # Get customer email
 #     customer_email = get_customer_email(job.company_name)
-    
+
 #     # Get assigned recruiters emails
 #     recruiter_emails = get_assigned_recruiters(job.name)
-    
+
 #     # Build recipients list
 #     recipients = []
 #     cc_list = []
-    
+
 #     # Customer email - TO me
 #     if customer_email:
 #         recipients.append(customer_email)
-    
+
 #     # Recruiters - CC me
 #     if recruiter_emails:
 #         cc_list.extend(recruiter_emails)
-    
+
 #     # Remove duplicates
 #     recipients = list(set([r for r in recipients if r and str(r).strip()]))
 #     cc_list = list(set([c for c in cc_list if c and str(c).strip()]))
-    
+
 #     # CC se TO wale remove karo
 #     cc_list = [c for c in cc_list if c not in recipients]
-    
+
 #     if not recipients:
 #         frappe.log_error(
-#             f"No email found for customer: {job.company_name}", 
+#             f"No email found for customer: {job.company_name}",
 #             "Hold Reminder - No Email"
 #         )
 #         return False
-    
+
 #     # Calculate age
 #     age_days = date_diff(today(), job.creation)
-    
+
 #     subject = f"Action Required: Job Opening On Hold - {job.designation} | {job.company_name}"
-    
+
 #     message = f"""
 #     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
 #         <p>Dear Hiring Team,</p>
-        
-#         <p>We noticed that the following job opening has been <strong>On Hold</strong> on our platform 
+
+#         <p>We noticed that the following job opening has been <strong>On Hold</strong> on our platform
 #         for <strong>{age_days} days</strong> without any updates from your end.</p>
-        
+
 #         <h3 style="color: #2c3e50;">Job Opening Details:</h3>
-        
+
 #         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
 #             <tr style="background-color: #f8f9fa;">
 #                 <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; width: 40%;">Position</td>
@@ -437,20 +441,20 @@ def send_reminder_email(
 #                 <td style="padding: 12px; border: 1px solid #dee2e6;">{formatdate(job.creation)}</td>
 #             </tr>
 #         </table>
-        
+
 #         <p><strong>Please let us know:</strong></p>
 #         <ul>
 #             <li>Would you like to <strong>reopen</strong> this position?</li>
 #             <li>Should we <strong>close</strong> this opening?</li>
 #             <li>Any other updates regarding this requirement?</li>
 #         </ul>
-        
+
 #         <p>Your response will help us serve you better.</p>
-        
+
 #         <p>Best Regards,<br><strong>Recruitment Team</strong></p>
 #     </div>
 #     """
-    
+
 #     try:
 #         frappe.sendmail(
 #             recipients=recipients,
@@ -467,59 +471,59 @@ def send_reminder_email(
 
 # def get_customer_email(customer_name):
 #     """Get email from Customer, Contact, or Address"""
-    
+
 #     if not customer_name:
 #         return None
-    
+
 #     # Method 1: From linked Contact
 #     contact_email = frappe.db.sql("""
 #         SELECT c.email_id
 #         FROM `tabContact` c
 #         INNER JOIN `tabDynamic Link` dl ON dl.parent = c.name
-#         WHERE dl.link_doctype = 'Customer' 
+#         WHERE dl.link_doctype = 'Customer'
 #         AND dl.link_name = %s
 #         AND c.email_id IS NOT NULL
 #         AND c.email_id != ''
 #         ORDER BY c.is_primary_contact DESC
 #         LIMIT 1
 #     """, customer_name)
-    
+
 #     if contact_email and contact_email[0][0]:
 #         return contact_email[0][0]
-    
+
 #     # Method 2: From linked Address
 #     address_email = frappe.db.sql("""
 #         SELECT a.email_id
 #         FROM `tabAddress` a
 #         INNER JOIN `tabDynamic Link` dl ON dl.parent = a.name
-#         WHERE dl.link_doctype = 'Customer' 
+#         WHERE dl.link_doctype = 'Customer'
 #         AND dl.link_name = %s
 #         AND a.email_id IS NOT NULL
 #         AND a.email_id != ''
 #         ORDER BY a.is_primary_address DESC
 #         LIMIT 1
 #     """, customer_name)
-    
+
 #     if address_email and address_email[0][0]:
 #         return address_email[0][0]
-    
+
 #     return None
 
 
 # def get_assigned_recruiters(job_name):
 #     """Get emails of assigned recruiters from child table"""
-    
+
 #     recruiters = frappe.get_all(
 #         "DKP_JobOpeningRecruiter_Child",
 #         filters={"parent": job_name},
 #         fields=["recruiter_name"]
 #     )
-    
+
 #     emails = []
 #     for r in recruiters:
 #         if r.recruiter_name:
 #             email = frappe.db.get_value("User", r.recruiter_name, "email")
 #             if email:
 #                 emails.append(email)
-    
+
 #     return emails

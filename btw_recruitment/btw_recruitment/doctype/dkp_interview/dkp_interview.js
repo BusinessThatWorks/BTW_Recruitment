@@ -22,9 +22,11 @@ frappe.ui.form.on("DKP_Interview", {
 	after_save: function (frm) {
 		// Sync Job Opening after save
 		if (frm.doc.job_opening) {
-			frappe.db.get_doc("DKP_Job_Opening", frm.doc.job_opening).then((doc) => {
-				frappe.model.sync(doc);
-			});
+			frappe.db
+				.get_doc("DKP_Job_Opening", frm.doc.job_opening)
+				.then((doc) => {
+					frappe.model.sync(doc);
+				});
 		}
 	},
 });
@@ -73,7 +75,7 @@ function apply_freeze(frm, freeze_info) {
 		frm.dashboard.add_comment(
 			'🔒 Bill Sent: Only "Joined And Left" stage change is allowed.',
 			"yellow",
-			true
+			true,
 		);
 
 		// Freeze child table
@@ -81,8 +83,10 @@ function apply_freeze(frm, freeze_info) {
 			frm.fields_dict["interview_child_table"] &&
 			frm.fields_dict["interview_child_table"].grid
 		) {
-			frm.fields_dict["interview_child_table"].grid.cannot_add_rows = true;
-			frm.fields_dict["interview_child_table"].grid.cannot_delete_rows = true;
+			frm.fields_dict["interview_child_table"].grid.cannot_add_rows =
+				true;
+			frm.fields_dict["interview_child_table"].grid.cannot_delete_rows =
+				true;
 			frm.set_df_property("interview_child_table", "read_only", 1);
 		}
 	} else if (freeze_info.freeze_type === "replacement_policy") {

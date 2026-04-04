@@ -103,9 +103,11 @@ frappe.pages["hr-recruitment-jobs"].on_page_load = function (wrapper) {
 		"change",
 		"#filter-department, #filter-priority, #filter-sla-status",
 		function () {
-			job_health_filters.department = $("#filter-department").val() || null;
+			job_health_filters.department =
+				$("#filter-department").val() || null;
 			job_health_filters.priority = $("#filter-priority").val() || null;
-			job_health_filters.sla_status = $("#filter-sla-status").val() || null;
+			job_health_filters.sla_status =
+				$("#filter-sla-status").val() || null;
 
 			// Reset pagination
 			job_health_offset = 0;
@@ -132,7 +134,7 @@ frappe.pages["hr-recruitment-jobs"].on_page_load = function (wrapper) {
 				// Reload table
 				load_job_health();
 			});
-		}
+		},
 	);
 
 	load_department_filter_options();
@@ -263,7 +265,7 @@ function render_job_kpi_cards(data) {
                     font-size: 13px;
                     color: #6c7680;
                 }
-            `
+            `,
 			)
 			.appendTo("head");
 	}
@@ -279,7 +281,8 @@ function normalize_status(status) {
 
 	if (s === "closed – hired" || s === "closed - hired") return "closed_hired";
 
-	if (s === "closed – cancelled" || s === "closed - cancelled") return "closed_cancelled";
+	if (s === "closed – cancelled" || s === "closed - cancelled")
+		return "closed_cancelled";
 
 	return "other";
 }
@@ -401,8 +404,8 @@ function render_job_health_table(data, total) {
 		$(`
             <tr>
                 <td><a href="/app/dkp_job_opening/${d.job_opening}">${
-			d.job_opening || "-"
-		}</a></td>
+					d.job_opening || "-"
+				}</a></td>
                 <td>${d.department || "-"}</td>
 				<td>${d.designation || "-"}</td>
                 <td>${d.positions}</td>
@@ -463,7 +466,9 @@ function load_department_filter_options() {
 				r.message.forEach((d) => {
 					if (d.department && !seen.has(d.department)) {
 						seen.add(d.department);
-						$dept.append(`<option value="${d.department}">${d.department}</option>`);
+						$dept.append(
+							`<option value="${d.department}">${d.department}</option>`,
+						);
 					}
 				});
 			}
