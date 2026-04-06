@@ -24,7 +24,7 @@ def get_job_openings_for_candidate_dialog(
 	if search:
 		search_term = f"%{search}%"
 		conditions.append("""
-            (name LIKE %s OR designation LIKE %s OR company_name LIKE %s OR department LIKE %s OR location LIKE)
+            (name LIKE %s OR designation LIKE %s OR company_name LIKE %s OR department LIKE %s OR location LIKE %s)
         """)
 		values.extend([search_term, search_term, search_term, search_term, search_term])
 

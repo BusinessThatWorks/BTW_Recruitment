@@ -33,5 +33,5 @@ class DKP_Company(Document):
 
 	def validate(self):
 		# Check duplicate company name
-		if frappe.db.exists("DKP Company", {"company_name": self.company_name, "name": ["!=", self.name]}):
+		if frappe.db.exists("DKP_Company", {"company_name": self.company_name, "name": ["!=", self.name]}):
 			frappe.throw(f"Company '{self.company_name}' already exists.", frappe.DuplicateEntryError)
