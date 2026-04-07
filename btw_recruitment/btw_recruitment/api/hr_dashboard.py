@@ -362,7 +362,7 @@ JOBS_SORT_FIELDS = {
 def get_jobs_table(
 	from_date=None,
 	to_date=None,
-	limit=20,
+	limit=0,
 	offset=0,
 	company_name=None,
 	designation=None,
