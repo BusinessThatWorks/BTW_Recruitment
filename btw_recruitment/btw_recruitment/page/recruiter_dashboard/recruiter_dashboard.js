@@ -29,7 +29,29 @@ function download_excel_from_rows(filename, headers, rows) {
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
 }
+function getCellValue(cell) {
+	if (cell == null) return "-";
 
+	if (typeof cell === "string" || typeof cell === "number") {
+		return stripHTML(String(cell)) || "-";
+	}
+
+	if (typeof cell === "object") {
+		const value =
+			cell.content || cell.value || cell.text || cell.data || "";
+		return stripHTML(String(value)) || "-";
+	}
+
+	return "-";
+}
+
+function stripHTML(value) {
+	if (value == null || value === "") return "";
+	const str = String(value);
+	const tmp = document.createElement("div");
+	tmp.innerHTML = str;
+	return tmp.textContent || tmp.innerText || str;
+}
 frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
@@ -42,14 +64,20 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// =============================
 	// STATE VARIABLES
 	// =============================
+	// let state = {
+	// 	recruiter: null,
+	// 	from_date: null,
+	// 	to_date: null,
+	// 	status: null,
+	// 	page: 1,
+	// 	page_length: 20,
+	// 	total: 0,
+	// };
 	let state = {
 		recruiter: null,
 		from_date: null,
 		to_date: null,
 		status: null,
-		page: 1,
-		page_length: 20,
-		total: 0,
 	};
 
 	// =============================
@@ -57,27 +85,27 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// =============================
 	const $body = $(page.body);
 	const $openings_container = $body.find("#recruiter-openings-table");
-	const $page_info = $body.find(".recruiter-page-info");
-	const $btn_prev = $body.find(".recruiter-prev");
-	const $btn_next = $body.find(".recruiter-next");
+	// const $page_info = $body.find(".recruiter-page-info");
+	// const $btn_prev = $body.find(".recruiter-prev");
+	// const $btn_next = $body.find(".recruiter-next");
 
 	// DataTable state
 	let openingsDataTable = null;
-	let openingsInlineFilters = {};
-	let openingsFilterTimeout = null;
-	const openingsColumns = [
-		"#",
-		"Job Opening",
-		"Company",
-		"Designation",
-		"Status",
-		"Positions",
-		"Candidates Mapped",
-		"Joined",
-		"Replacements",
-		"Stable Join",
-		"Joined Candidates",
-	];
+	// let openingsInlineFilters = {};
+	// let openingsFilterTimeout = null;
+	// const openingsColumns = [
+	// 	"#",
+	// 	"Job Opening",
+	// 	"Company",
+	// 	"Designation",
+	// 	"Status",
+	// 	"Positions",
+	// 	"Candidates Mapped",
+	// 	"Joined",
+	// 	"Replacements",
+	// 	"Stable Join",
+	// 	"Joined Candidates",
+	// ];
 
 	// KPI elements
 	const $kpi_openings = $body.find(".kpi-openings");
@@ -98,14 +126,9 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	function debounced_refresh() {
 		clearTimeout(debounce_timer);
 		debounce_timer = setTimeout(() => {
-			state.page = 1;
 			refresh_dashboard();
 		}, 300);
 	}
-
-	// =============================
-	// MAIN REFRESH FUNCTION
-	// =============================
 	// =============================
 	// MAIN REFRESH FUNCTION
 	// =============================
@@ -193,7 +216,10 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		},
 		render_input: true,
 	});
-
+	setTimeout(() => {
+		from_date_control.set_value(frappe.datetime.get_today());
+		to_date_control.set_value(frappe.datetime.get_today());
+	}, 100);
 	// =============================
 	// CLEAR BUTTON
 	// =============================
@@ -208,15 +234,8 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 			from_date: null,
 			to_date: null,
 			status: null,
-			page: 1,
-			page_length: 10,
-			total: 0,
 		};
 
-		// render_rows([]);
-		// update_pagination(0);
-		// reset_kpis();
-		// reset_funnels();
 		refresh_dashboard();
 		frappe.show_alert({
 			message: "Filters cleared",
@@ -453,68 +472,85 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// =============================
 	// PAGINATION BUTTONS
 	// =============================
-	$btn_prev.on("click", function () {
-		if (state.page > 1) {
-			state.page--;
-			load_data();
-		}
-	});
+	// $btn_prev.on("click", function () {
+	// 	if (state.page > 1) {
+	// 		state.page--;
+	// 		load_data();
+	// 	}
+	// });
 
-	$btn_next.on("click", function () {
-		const max_page = Math.ceil(state.total / state.page_length) || 1;
-		if (state.page < max_page) {
-			state.page++;
-			load_data();
-		}
-	});
+	// $btn_next.on("click", function () {
+	// 	const max_page = Math.ceil(state.total / state.page_length) || 1;
+	// 	if (state.page < max_page) {
+	// 		state.page++;
+	// 		load_data();
+	// 	}
+	// });
 
 	// =============================
 	// MAIN DATA LOADER
 	// =============================
+	// function load_data() {
+	// 	// ✅ REMOVED recruiter check
+
+	// 	const offset = (state.page - 1) * state.page_length;
+
+	// 	frappe.call({
+	// 		method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiter_openings",
+	// 		args: {
+	// 			recruiter: state.recruiter || "", // ✅ Empty string if no recruiter
+	// 			from_date: state.from_date,
+	// 			to_date: state.to_date,
+	// 			status: state.status,
+	// 			limit: state.page_length,
+	// 			offset: offset,
+	// 			filters: JSON.stringify(openingsInlineFilters || {}),
+	// 		},
+	// 		freeze: true,
+	// 		freeze_message: __("Loading data..."),
+	// 		callback(r) {
+	// 			const resp = r.message || {};
+	// 			const rows = resp.data || [];
+	// 			state.total = resp.total || 0;
+
+	// 			render_openings_table(rows);
+	// 			update_pagination(state.total);
+	// 		},
+	// 	});
+	// }
 	function load_data() {
-		// ✅ REMOVED recruiter check
-
-		const offset = (state.page - 1) * state.page_length;
-
 		frappe.call({
 			method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiter_openings",
 			args: {
-				recruiter: state.recruiter || "", // ✅ Empty string if no recruiter
+				recruiter: state.recruiter || "",
 				from_date: state.from_date,
 				to_date: state.to_date,
 				status: state.status,
-				limit: state.page_length,
-				offset: offset,
-				filters: JSON.stringify(openingsInlineFilters || {}),
+				limit: 0,
+				offset: 0,
 			},
 			freeze: true,
 			freeze_message: __("Loading data..."),
 			callback(r) {
 				const resp = r.message || {};
 				const rows = resp.data || [];
-				state.total = resp.total || 0;
-
 				render_openings_table(rows);
-				update_pagination(state.total);
 			},
 		});
 	}
-
 	// =============================
 	// DATATABLE RENDER
 	// =============================
 	function render_openings_table(rows) {
 		$openings_container.empty();
 
-		if (!rows.length) {
-			$openings_container.html(
-				'<p class="text-muted text-center mb-0">No openings found</p>',
-			);
-			openingsDataTable = null;
-			return;
-		}
-
-		const startIndex = (state.page - 1) * state.page_length;
+		// if (!rows.length) {
+		// 	$openings_container.html(
+		// 		'<p class="text-muted text-center mb-0">No openings found</p>',
+		// 	);
+		// 	openingsDataTable = null;
+		// 	return;
+		// }
 
 		// ✅ Store rows reference for format function to access
 		const rowsRef = rows;
@@ -578,7 +614,7 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		];
 
 		const tableData = rows.map((row, index) => [
-			startIndex + index + 1,
+			index + 1,
 			row.job_opening || "",
 			row.company_name || "",
 			row.designation || "",
@@ -617,73 +653,6 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 				renderOpeningsTable();
 			}, 300);
 		});
-		setTimeout(() => {
-			restore_openings_filters();
-			attach_openings_filter_listeners();
-		}, 100);
-	}
-	// =============================
-	// INLINE FILTER HANDLING
-	// =============================
-	function restore_openings_filters() {
-		if (!openingsDataTable) return;
-		if (Object.keys(openingsInlineFilters || {}).length === 0) return;
-
-		$("#recruiter-openings-table .dt-filter").each(function (index) {
-			const colName = openingsColumns[index];
-			if (openingsInlineFilters[colName]) {
-				$(this).val(openingsInlineFilters[colName]);
-			}
-		});
-	}
-
-	function attach_openings_filter_listeners() {
-		$("#recruiter-openings-table .dt-filter")
-			.off("input.backend")
-			.on("input.backend", function () {
-				clearTimeout(openingsFilterTimeout);
-
-				openingsFilterTimeout = setTimeout(() => {
-					const filters = {};
-
-					$("#recruiter-openings-table .dt-filter").each(
-						function (index) {
-							const value = $(this).val()?.trim();
-							const colName = openingsColumns[index];
-							if (value && colName !== "#") {
-								filters[colName] = value;
-							}
-						},
-					);
-
-					console.log("Recruiter openings inline filters:", filters);
-
-					state.page = 1;
-					openingsInlineFilters = filters;
-					load_data();
-				}, 500);
-			});
-	}
-
-	// =============================
-	// PAGINATION TEXT
-	// =============================
-	function update_pagination(total_count) {
-		const max_page = Math.max(
-			1,
-			Math.ceil(total_count / state.page_length),
-		);
-
-		if (!total_count) {
-			$page_info.text("Showing 0 of 0 openings");
-		} else {
-			const start = (state.page - 1) * state.page_length + 1;
-			const end = Math.min(state.page * state.page_length, total_count);
-			$page_info.text(`Showing ${start}–${end} of ${total_count}`);
-		}
-
-		$btn_prev.prop("disabled", state.page <= 1);
-		$btn_next.prop("disabled", state.page >= max_page);
 	}
 
 	// =============================
@@ -697,74 +666,93 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 	// EXCEL DOWNLOAD (single button)
 	// =============================
 	function download_openings_excel() {
-		const filters_payload = openingsInlineFilters || {};
+		if (!openingsDataTable) {
+			frappe.msgprint(__("No data available to download."));
+			return;
+		}
 
-		frappe.call({
-			method: "btw_recruitment.btw_recruitment.api.recruiter_dashboard.get_recruiter_openings",
-			args: {
-				recruiter: state.recruiter || "",
-				from_date: state.from_date,
-				to_date: state.to_date,
-				status: state.status,
-				limit: 0, // 0 => get all for export
-				offset: 0,
-				filters: JSON.stringify(filters_payload),
-			},
-			callback(r) {
-				const resp = r.message || {};
-				const rows = resp.data || [];
+		let rowsToExport = [];
 
-				if (!rows.length) {
-					frappe.msgprint(__("No data to download."));
-					return;
-				}
+		try {
+			const dm = openingsDataTable.datamanager;
+			const allRows = dm.getRows();
+			const totalRows = allRows.length;
 
-				const headers = [
-					"#",
-					"Job Opening",
-					"Company",
-					"Designation",
-					"Status",
-					"Positions",
-					"Candidates Mapped",
-					"Joined",
-					"Replacements",
-					// "Stable Join",
-					"Joined Candidates",
-				];
+			const rowViewOrder = dm.rowViewOrder || [];
+			const filteredIndices = dm.getFilteredRowIndices() || [];
 
-				const data_rows = rows.map((row, index) => {
-					const joinedList = row.joined_candidate_list || [];
-					const joinedNames = joinedList
-						.map((c) => c.candidate_name || c.name || "Unknown")
-						.join(", ");
+			let finalIndices = [];
 
-					return [
-						index + 1,
-						row.job_opening || "",
-						row.company_name || "",
-						row.designation || "",
-						row.status || "",
-						row.number_of_positions || 0,
-						row.total_candidates || 0,
-						row.joined_candidates || 0,
-						row.replacements || 0,
-						row.stable_join || 0,
-						joinedNames || "-",
-					];
-				});
+			const isSorted =
+				rowViewOrder.length > 0 &&
+				!rowViewOrder.every((val, idx) => val === idx);
 
-				download_excel_from_rows(
-					"recruiter_openings.xls",
-					headers,
-					data_rows,
-				);
+			const isFiltered =
+				filteredIndices.length > 0 &&
+				filteredIndices.length < totalRows;
 
-				frappe.show_alert({
-					message: __("Downloaded {0} openings", [data_rows.length]),
-					indicator: "green",
-				});
-			},
+			console.log("isSorted:", isSorted, "isFiltered:", isFiltered);
+
+			if (isSorted && isFiltered) {
+				const filterSet = new Set(filteredIndices);
+				finalIndices = rowViewOrder.filter((idx) => filterSet.has(idx));
+				console.log("Using: Sorted + Filtered:", finalIndices.length);
+			} else if (isSorted) {
+				finalIndices = rowViewOrder;
+				console.log("Using: Only Sorted:", finalIndices.length);
+			} else if (isFiltered) {
+				finalIndices = filteredIndices;
+				console.log("Using: Only Filtered:", finalIndices.length);
+			} else {
+				finalIndices = allRows.map((_, i) => i);
+				console.log("Using: All rows:", finalIndices.length);
+			}
+
+			rowsToExport = finalIndices.map((i) => allRows[i]);
+		} catch (e) {
+			console.log("Error getting rows:", e);
+			frappe.msgprint(__("Error getting data."));
+			return;
+		}
+
+		if (!rowsToExport || rowsToExport.length === 0) {
+			frappe.msgprint(__("No data to download."));
+			return;
+		}
+
+		const headers = [
+			"#",
+			"Job Opening",
+			"Company",
+			"Designation",
+			"Status",
+			"Positions",
+			"Candidates Mapped",
+			"Joined",
+			"Replacements",
+			"Joined Candidates",
+		];
+
+		const excelRows = rowsToExport.map((row) => {
+			return [
+				getCellValue(row[0]),
+				getCellValue(row[1]),
+				getCellValue(row[2]),
+				getCellValue(row[3]),
+				getCellValue(row[4]),
+				getCellValue(row[5]),
+				getCellValue(row[6]),
+				getCellValue(row[7]),
+				getCellValue(row[8]),
+				getCellValue(row[9]),
+			];
+		});
+
+		download_excel_from_rows("recruiter_openings.xls", headers, excelRows);
+
+		frappe.show_alert({
+			message: __("Downloaded {0} openings", [excelRows.length]),
+			indicator: "green",
 		});
 	}
 

@@ -449,17 +449,16 @@ def get_recruiter_openings(
 	cand_conditions = ""
 	cand_params = {"openings": tuple(opening_names)}
 
-	# ✅ Only filter by recruiter if provided
-	# if recruiter:
-	#     cand_conditions += " AND jac.added_by = %(recruiter)s"
-	#     cand_params["recruiter"] = recruiter
+	# Build candidate conditions
+	cand_conditions = ""
+	cand_params = {"openings": tuple(opening_names)}
 
 	if from_date:
-		cand_conditions += " AND creation >= %(from_date)s"
+		cand_conditions += " AND jac.creation >= %(from_date)s"  # ✅ Added jac.
 		cand_params["from_date"] = from_date
 
 	if to_date:
-		cand_conditions += " AND creation <= %(to_date)s"
+		cand_conditions += " AND jac.creation <= %(to_date)s"  # ✅ Added jac.
 		cand_params["to_date"] = to_date
 
 	# ✅ FIXED: COUNT(*) for total mappings
