@@ -110,15 +110,17 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	let companyRawData = [];
 	let recruiterRawData = [];
 
-	// KPI elements
+	// KPI elements - ALL Jobs
+	const $kpi_joined = $body.find(".kpi-joined");
+	const $kpi_joined_left = $body.find(".kpi-joined-left");
+	const $kpi_conversion = $body.find(".kpi-conversion");
+
+	// KPI elements - OPEN Jobs
 	const $kpi_open_jobs = $body.find(".kpi-open-jobs");
 	const $kpi_submitted = $body.find(".kpi-submitted");
 	const $kpi_rejected = $body.find(".kpi-rejected");
 	const $kpi_interview = $body.find(".kpi-interview");
-	const $kpi_joined = $body.find(".kpi-joined");
-	const $kpi_replaced = $body.find(".kpi-replaced");
 	const $kpi_ageing_critical = $body.find(".kpi-ageing-critical");
-	const $kpi_conversion = $body.find(".kpi-conversion");
 
 	// Ageing buckets
 	const $ageing_0_15 = $body.find(".ageing-0-15");
@@ -140,10 +142,25 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			refresh_dashboard();
 		}, 300);
 	}
+	// filter controls
+	// ═══════════════════════════════════════════════════════════════════════
+	// FILTER CONTROLS - Production Level
+	// ═══════════════════════════════════════════════════════════════════════
 
-	// ═══════════════════════════════════════════════════════════════════════
-	// FILTER CONTROLS
-	// ═══════════════════════════════════════════════════════════════════════
+	// Track if refresh is already queued
+	let refresh_queued = false;
+
+	// Smart refresh - prevents duplicate calls
+	function smart_refresh() {
+		if (refresh_queued) return;
+
+		refresh_queued = true;
+		debounced_refresh();
+
+		setTimeout(() => {
+			refresh_queued = false;
+		}, 400);
+	}
 
 	const from_date_control = frappe.ui.form.make_control({
 		parent: $body.find(".from-date-slot"),
@@ -151,7 +168,11 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			fieldtype: "Date",
 			placeholder: "From Date",
 			change: function () {
-				state.from_date = from_date_control.get_value() || null;
+				const newValue = from_date_control.get_value() || null;
+				if (state.from_date !== newValue) {
+					state.from_date = newValue;
+					smart_refresh();
+				}
 			},
 		},
 		render_input: true,
@@ -163,7 +184,11 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			fieldtype: "Date",
 			placeholder: "To Date",
 			change: function () {
-				state.to_date = to_date_control.get_value() || null;
+				const newValue = to_date_control.get_value() || null;
+				if (state.to_date !== newValue) {
+					state.to_date = newValue;
+					smart_refresh();
+				}
 			},
 		},
 		render_input: true,
@@ -176,7 +201,11 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			options: "Customer",
 			placeholder: "All Companies",
 			change: function () {
-				state.company = company_control.get_value() || null;
+				const newValue = company_control.get_value() || null;
+				if (state.company !== newValue) {
+					state.company = newValue;
+					smart_refresh();
+				}
 			},
 		},
 		render_input: true,
@@ -198,7 +227,11 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				},
 			}),
 			change: function () {
-				state.recruiter = recruiter_control.get_value() || null;
+				const newValue = recruiter_control.get_value() || null;
+				if (state.recruiter !== newValue) {
+					state.recruiter = newValue;
+					smart_refresh();
+				}
 			},
 		},
 		render_input: true,
@@ -211,11 +244,108 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			options: "\nOpen\nOn Hold\nClosed – Hired\nClosed – Cancelled",
 			placeholder: "All Status",
 			change: function () {
-				state.status = status_control.get_value() || null;
+				const newValue = status_control.get_value() || null;
+				if (state.status !== newValue) {
+					state.status = newValue;
+					smart_refresh();
+				}
 			},
 		},
 		render_input: true,
 	});
+	// const from_date_control = frappe.ui.form.make_control({
+	// 	parent: $body.find(".from-date-slot"),
+	// 	df: {
+	// 		fieldtype: "Date",
+	// 		placeholder: "From Date",
+	// 		change: function () {
+	// 			state.from_date = from_date_control.get_value() || null;
+	// 			debounced_refresh();  // ✅ ADD THIS
+	// 		},
+	// 	},
+	// 	render_input: true,
+	// });
+
+	// const to_date_control = frappe.ui.form.make_control({
+	// 	parent: $body.find(".to-date-slot"),
+	// 	df: {
+	// 		fieldtype: "Date",
+	// 		placeholder: "To Date",
+	// 		change: function () {
+	// 			state.to_date = to_date_control.get_value() || null;
+	// 			debounced_refresh();  // ✅ ADD THIS
+	// 		},
+	// 	},
+	// 	render_input: true,
+	// });
+
+	// const company_control = frappe.ui.form.make_control({
+	// 	parent: $body.find(".company-slot"),
+	// 	df: {
+	// 		fieldtype: "Link",
+	// 		options: "Customer",
+	// 		placeholder: "All Companies",
+	// 		change: function () {
+	// 			state.company = company_control.get_value() || null;
+	// 			debounced_refresh();  // ✅ ADD THIS
+	// 		},
+	// 	},
+	// 	render_input: true,
+	// });
+
+	// const recruiter_control = frappe.ui.form.make_control({
+	// 	parent: $body.find(".recruiter-slot"),
+	// 	df: {
+	// 		fieldtype: "Link",
+	// 		options: "User",
+	// 		placeholder: "All Recruiters",
+	// 		get_query: () => ({
+	// 			filters: {
+	// 				role_profile_name: [
+	// 					"in",
+	// 					["DKP Recruiter", "DKP Recruiter - Exclusive", "Admin"],
+	// 				],
+	// 				enabled: 1,
+	// 			},
+	// 		}),
+	// 		change: function () {
+	// 			state.recruiter = recruiter_control.get_value() || null;
+	// 			debounced_refresh();  // ✅ ADD THIS
+	// 		},
+	// 	},
+	// 	render_input: true,
+	// });
+
+	// const status_control = frappe.ui.form.make_control({
+	// 	parent: $body.find(".status-slot"),
+	// 	df: {
+	// 		fieldtype: "Select",
+	// 		options: "\nOpen\nOn Hold\nClosed – Hired\nClosed – Cancelled",
+	// 		placeholder: "All Status",
+	// 		change: function () {
+	// 			state.status = status_control.get_value() || null;
+	// 			debounced_refresh();  // ✅ ADD THIS
+	// 		},
+	// 	},
+	// 	render_input: true,
+	// });
+	// setTimeout(() => {
+	// 	// Company field
+	// 	$body.find(".company-slot input").on("input", function() {
+	// 		if (!$(this).val()) {
+	// 			state.company = null;
+	// 			debounced_refresh();
+	// 		}
+	// 	});
+
+	// 	// Recruiter field
+	// 	$body.find(".recruiter-slot input").on("input", function() {
+	// 		if (!$(this).val()) {
+	// 			state.recruiter = null;
+	// 			debounced_refresh();
+	// 		}
+	// 	});
+	// }, 200);
 	$body.find(".master-nav-tabs a").on("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -249,6 +379,64 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					break;
 			}
 		}, 10);
+	});
+	// ═══════════════════════════════════════════════════════════════════════
+	// KPI CARD CLICK HANDLERS
+	// ═══════════════════════════════════════════════════════════════════════
+
+	$body.find(".kpi-clickable").on("click", function (e) {
+		// Don't trigger if clicking on info icon
+		if ($(e.target).closest(".kpi-info").length) return;
+
+		const route = $(this).data("route");
+
+		switch (route) {
+			case "joined":
+				frappe.set_route("List", "DKP_Interview", {
+					stage: "Joined",
+				});
+				break;
+
+			case "joined-left":
+				frappe.set_route("List", "DKP_Interview", {
+					stage: "Joined And Left",
+				});
+				break;
+
+			case "open-jobs":
+				frappe.set_route("List", "DKP_Job_Opening", {
+					status: "Open",
+				});
+				break;
+
+			case "submitted":
+				// Route to Job Openings with Open status (candidates are in child table)
+				frappe.set_route("List", "DKP_Job_Opening", {
+					status: "Open",
+				});
+				break;
+
+			case "rejected":
+				frappe.set_route("List", "DKP_Interview", {
+					stage: ["in", ["Rejected By Client"]],
+				});
+				break;
+
+			case "interview-pipeline":
+				frappe.set_route("List", "DKP_Interview", {
+					stage: [
+						"in",
+						["Selected For Offer", "Offered", "Offer Accepted"],
+					],
+				});
+				break;
+
+			case "ageing-critical":
+				frappe.set_route("List", "DKP_Job_Opening", {
+					status: "Open",
+				});
+				break;
+		}
 	});
 	// ═══════════════════════════════════════════════════════════════════════
 	// QUICK DATE BUTTONS
@@ -291,62 +479,6 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	});
 
 	// ═══════════════════════════════════════════════════════════════════════
-	// REFRESH BUTTON
-	// ═══════════════════════════════════════════════════════════════════════
-
-	$body.find(".master-refresh").on("click", function () {
-		// Validate dates
-		if (state.from_date && state.to_date) {
-			if (state.from_date > state.to_date) {
-				frappe.show_alert({
-					message: "From Date cannot be greater than To Date",
-					indicator: "red",
-				});
-				return;
-			}
-		}
-		refresh_dashboard();
-	});
-
-	// ═══════════════════════════════════════════════════════════════════════
-	// CLEAR BUTTON
-	// ═══════════════════════════════════════════════════════════════════════
-
-	$body.find(".master-clear").on("click", function () {
-		from_date_control.set_value("");
-		to_date_control.set_value("");
-		company_control.set_value("");
-		recruiter_control.set_value("");
-		status_control.set_value("");
-
-		$body.find(".quick-date-btn").removeClass("active");
-		$body.find('.quick-date-btn[data-range="month"]').addClass("active");
-
-		state = {
-			from_date: null,
-			to_date: null,
-			company: null,
-			recruiter: null,
-			status: null,
-		};
-
-		// Set default month
-		const today = frappe.datetime.get_today();
-		const from_date = frappe.datetime.add_months(today, -1);
-		from_date_control.set_value(from_date);
-		to_date_control.set_value(today);
-		state.from_date = from_date;
-		state.to_date = today;
-
-		refresh_dashboard();
-
-		frappe.show_alert({
-			message: "Filters cleared",
-			indicator: "blue",
-		});
-	});
-
-	// ═══════════════════════════════════════════════════════════════════════
 	// MAIN REFRESH FUNCTION
 	// ═══════════════════════════════════════════════════════════════════════
 
@@ -375,14 +507,17 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			callback(r) {
 				const k = r.message || {};
 
+				// ALL Jobs KPIs
+				$kpi_joined.text(k.total_joined || 0);
+				$kpi_joined_left.text(k.total_joined_left || 0);
+				$kpi_conversion.text((k.conversion_rate || 0) + "%");
+
+				// OPEN Jobs KPIs
 				$kpi_open_jobs.text(k.open_jobs || 0);
 				$kpi_submitted.text(k.total_submitted || 0);
 				$kpi_rejected.text(k.total_rejected || 0);
 				$kpi_interview.text(k.interview_pipeline || 0);
-				$kpi_joined.text(k.total_joined || 0);
-				$kpi_replaced.text(k.total_replaced || 0);
 				$kpi_ageing_critical.text(k.ageing_critical || 0);
-				$kpi_conversion.text((k.conversion_rate || 0) + "%");
 			},
 		});
 	}

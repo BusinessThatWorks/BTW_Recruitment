@@ -53,6 +53,7 @@
     flex-wrap: wrap;
     gap: 12px;
     flex: 1;
+    align-items: flex-end;
 }
 
 .filter-item {
@@ -81,38 +82,82 @@
 .filter-actions {
     display: flex;
     gap: 8px;
-    align-items: flex-end;
-    padding-bottom: 2px;
+    align-items: center;
+    padding-bottom: 0;
+    margin-left: auto;
 }
 
 .filter-actions .btn {
+    height: 32px;
     white-space: nowrap;
+    margin-bottom: 18px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    KPI CARDS
    ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   KPI CLICKABLE CARDS
+   ═══════════════════════════════════════════════════════════════════════ */
 
+.kpi-clickable {
+    cursor: pointer;
+}
+
+.kpi-clickable:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.kpi-clickable .kpi-value {
+    text-decoration: underline;
+    /* text-decoration-style: dotted; */
+    text-underline-offset: 3px;
+}
 .master-kpi-section {
     margin-bottom: 15px;
 }
 
+.kpi-row-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    margin-top: 12px;
+    padding-left: 4px;
+}
+
+.kpi-row-header:first-child {
+    margin-top: 0;
+}
+
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
+    margin-bottom: 8px;
+}
+
+.kpi-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.kpi-grid-5 {
+    grid-template-columns: repeat(5, 1fr);
 }
 
 .kpi-card {
     background: #ffffff;
     border-radius: 8px;
-    padding: 15px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     border-left: 4px solid #e5e7eb;
     transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
 }
 
 .kpi-card:hover {
@@ -120,66 +165,152 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.kpi-icon {
-    font-size: 24px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    background: #f3f4f6;
-}
-
 .kpi-content {
     flex: 1;
 }
 
 .kpi-value {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 700;
     line-height: 1.2;
     color: #1f2937;
 }
 
 .kpi-label {
-    font-size: 11px;
+    font-size: 12px;
     color: #6b7280;
-    margin-top: 2px;
+    margin-top: 4px;
+    font-weight: 500;
 }
 
 /* KPI Colors */
 .kpi-blue { border-left-color: #3b82f6; }
-.kpi-blue .kpi-icon { background: #dbeafe; }
 .kpi-blue .kpi-value { color: #1d4ed8; }
 
 .kpi-purple { border-left-color: #8b5cf6; }
-.kpi-purple .kpi-icon { background: #ede9fe; }
 .kpi-purple .kpi-value { color: #6d28d9; }
 
 .kpi-red { border-left-color: #ef4444; }
-.kpi-red .kpi-icon { background: #fee2e2; }
 .kpi-red .kpi-value { color: #dc2626; }
 
 .kpi-orange { border-left-color: #f97316; }
-.kpi-orange .kpi-icon { background: #ffedd5; }
 .kpi-orange .kpi-value { color: #ea580c; }
 
 .kpi-green { border-left-color: #22c55e; }
-.kpi-green .kpi-icon { background: #dcfce7; }
 .kpi-green .kpi-value { color: #16a34a; }
 
 .kpi-yellow { border-left-color: #eab308; }
-.kpi-yellow .kpi-icon { background: #fef9c3; }
 .kpi-yellow .kpi-value { color: #ca8a04; }
 
 .kpi-critical { border-left-color: #dc2626; }
-.kpi-critical .kpi-icon { background: #fee2e2; }
 .kpi-critical .kpi-value { color: #dc2626; }
 
 .kpi-teal { border-left-color: #14b8a6; }
-.kpi-teal .kpi-icon { background: #ccfbf1; }
 .kpi-teal .kpi-value { color: #0d9488; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KPI INFO BUTTON & TOOLTIP
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.kpi-info {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.kpi-info:hover {
+    opacity: 1;
+}
+
+.kpi-info i {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* .kpi-info[data-tooltip] {
+    position: relative;
+} */
+
+/* .kpi-info[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #1f2937;
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.6;
+    border-radius: 6px;
+    white-space: pre-line;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 280px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.kpi-info[data-tooltip]:hover::before {
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 8px;
+    margin-top: 2px;
+    border: 6px solid transparent;
+    border-bottom-color: #1f2937;
+    z-index: 1001;
+} */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KPI RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+    .kpi-grid-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .kpi-grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .kpi-grid-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .kpi-grid-3,
+    .kpi-grid-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .kpi-card {
+        padding: 12px 16px;
+    }
+
+    .kpi-value {
+        font-size: 20px;
+    }
+
+    .kpi-label {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-grid-3,
+    .kpi-grid-5 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    TABS SECTION

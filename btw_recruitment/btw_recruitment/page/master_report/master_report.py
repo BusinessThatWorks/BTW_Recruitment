@@ -4,7 +4,92 @@ import frappe
 from frappe import _
 from frappe.utils import cint, date_diff, flt, getdate, nowdate
 
+# @frappe.whitelist()
+# def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=None, status=None):
+# 	"""Get KPI summary for dashboard"""
 
+# 	filters = build_job_filters(from_date, to_date, company, recruiter, status)
+
+# 	# Get all job openings with filters
+# 	jobs = get_filtered_jobs(filters)
+# 	job_names = [j.name for j in jobs]
+
+# 	if not job_names:
+# 		return {
+# 			"open_jobs": 0,
+# 			"total_submitted": 0,
+# 			"total_rejected": 0,
+# 			"interview_pipeline": 0,
+# 			"total_joined": 0,
+# 			"total_replaced": 0,
+# 			"ageing_critical": 0,
+# 			"conversion_rate": 0,
+# 		}
+
+# 	# Open jobs count
+# 	open_jobs = len([j for j in jobs if j.status == "Open"])
+
+# 	# Get candidate stats from child table
+# 	submitted_data = frappe.db.sql(
+# 		"""
+#         SELECT
+#             COUNT(*) as total_submitted,
+#             SUM(CASE WHEN stage = 'Client Screening Rejected' THEN 1 ELSE 0 END) as child_rejected,
+#             SUM(CASE WHEN stage = 'Schedule Interview' THEN 1 ELSE 0 END) as scheduled_interview
+#         FROM `tabDKP_JobApplication_Child`
+#         WHERE parent IN %(job_names)s
+#     """,
+# 		{"job_names": job_names},
+# 		as_dict=True,
+# 	)[0]
+
+# 	# Get interview stats
+# 	interview_data = frappe.db.sql(
+# 		"""
+#         SELECT
+#             SUM(CASE WHEN stage = 'Rejected By Client' THEN 1 ELSE 0 END) as interview_rejected,
+#             SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as interview_pipeline,
+#             SUM(CASE WHEN stage = 'Joined' THEN 1 ELSE 0 END) as joined,
+#             SUM(CASE WHEN stage = 'Joined And Left' THEN 1 ELSE 0 END) as replaced
+#         FROM `tabDKP_Interview`
+#         WHERE job_opening IN %(job_names)s
+#     """,
+# 		{"job_names": job_names},
+# 		as_dict=True,
+# 	)[0]
+
+# 	total_submitted = cint(submitted_data.get("total_submitted", 0))
+# 	total_rejected = cint(submitted_data.get("child_rejected", 0)) + cint(
+# 		interview_data.get("interview_rejected", 0)
+# 	)
+# 	interview_pipeline = cint(interview_data.get("interview_pipeline", 0))
+# 	total_joined = cint(interview_data.get("joined", 0))
+# 	total_replaced = cint(interview_data.get("replaced", 0))
+
+# 	# Ageing critical (Open jobs > 30 days)
+# 	ageing_critical = 0
+# 	for job in jobs:
+# 		if job.status == "Open":
+# 			days = date_diff(nowdate(), job.creation)
+# 			if days > 30:
+# 				ageing_critical += 1
+
+# 	# Conversion rate
+# 	conversion_rate = 0
+# 	if total_submitted > 0:
+# 		conversion_rate = round((total_joined / total_submitted) * 100, 1)
+
+
+# 	return {
+# 		"open_jobs": open_jobs,
+# 		"total_submitted": total_submitted,
+# 		"total_rejected": total_rejected,
+# 		"interview_pipeline": interview_pipeline,
+# 		"total_joined": total_joined,
+# 		"total_replaced": total_replaced,
+# 		"ageing_critical": ageing_critical,
+# 		"conversion_rate": conversion_rate,
+# 	}
 @frappe.whitelist()
 def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=None, status=None):
 	"""Get KPI summary for dashboard"""
@@ -13,82 +98,123 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 
 	# Get all job openings with filters
 	jobs = get_filtered_jobs(filters)
-	job_names = [j.name for j in jobs]
+	all_job_names = [j.name for j in jobs]
 
-	if not job_names:
+	# Filter only OPEN jobs
+	open_jobs_list = [j for j in jobs if j.status == "Open"]
+	open_job_names = [j.name for j in open_jobs_list]
+
+	if not all_job_names:
 		return {
+			# ALL Jobs KPIs
+			"total_joined": 0,
+			"total_joined_left": 0,
+			"conversion_rate": 0,
+			# OPEN Jobs KPIs
 			"open_jobs": 0,
 			"total_submitted": 0,
 			"total_rejected": 0,
 			"interview_pipeline": 0,
-			"total_joined": 0,
-			"total_replaced": 0,
 			"ageing_critical": 0,
-			"conversion_rate": 0,
 		}
 
-	# Open jobs count
-	open_jobs = len([j for j in jobs if j.status == "Open"])
+	# ═══════════════════════════════════════════════════════════════
+	# ALL JOBS KPIs (Historical Data)
+	# ═══════════════════════════════════════════════════════════════
 
-	# Get candidate stats from child table
-	submitted_data = frappe.db.sql(
+	all_interview_data = frappe.db.sql(
 		"""
         SELECT
-            COUNT(*) as total_submitted,
-            SUM(CASE WHEN stage = 'Client Screening Rejected' THEN 1 ELSE 0 END) as child_rejected,
-            SUM(CASE WHEN stage = 'Schedule Interview' THEN 1 ELSE 0 END) as scheduled_interview
-        FROM `tabDKP_JobApplication_Child`
-        WHERE parent IN %(job_names)s
-    """,
-		{"job_names": job_names},
-		as_dict=True,
-	)[0]
-
-	# Get interview stats
-	interview_data = frappe.db.sql(
-		"""
-        SELECT
-            SUM(CASE WHEN stage = 'Rejected By Client' THEN 1 ELSE 0 END) as interview_rejected,
-            SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as interview_pipeline,
             SUM(CASE WHEN stage = 'Joined' THEN 1 ELSE 0 END) as joined,
-            SUM(CASE WHEN stage = 'Joined And Left' THEN 1 ELSE 0 END) as replaced
+            SUM(CASE WHEN stage = 'Joined And Left' THEN 1 ELSE 0 END) as joined_left
         FROM `tabDKP_Interview`
         WHERE job_opening IN %(job_names)s
-    """,
-		{"job_names": job_names},
+        """,
+		{"job_names": all_job_names},
 		as_dict=True,
 	)[0]
 
-	total_submitted = cint(submitted_data.get("total_submitted", 0))
-	total_rejected = cint(submitted_data.get("child_rejected", 0)) + cint(
-		interview_data.get("interview_rejected", 0)
-	)
-	interview_pipeline = cint(interview_data.get("interview_pipeline", 0))
-	total_joined = cint(interview_data.get("joined", 0))
-	total_replaced = cint(interview_data.get("replaced", 0))
+	all_submitted_data = frappe.db.sql(
+		"""
+        SELECT COUNT(*) as total
+        FROM `tabDKP_JobApplication_Child`
+        WHERE parent IN %(job_names)s
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)[0]
 
-	# Ageing critical (Open jobs > 30 days)
+	total_joined = cint(all_interview_data.get("joined", 0))
+	total_joined_left = cint(all_interview_data.get("joined_left", 0))
+	all_submitted = cint(all_submitted_data.get("total", 0))
+
+	# Conversion rate
+	conversion_rate = 0
+	if all_submitted > 0:
+		conversion_rate = round((total_joined / all_submitted) * 100, 1)
+
+	# ═══════════════════════════════════════════════════════════════
+	# OPEN JOBS KPIs
+	# ═══════════════════════════════════════════════════════════════
+
+	open_jobs = len(open_jobs_list)
+
+	# Default values if no open jobs
+	total_submitted = 0
+	total_rejected = 0
+	interview_pipeline = 0
 	ageing_critical = 0
-	for job in jobs:
-		if job.status == "Open":
+
+	if open_job_names:
+		# Get candidate stats for OPEN jobs only
+		submitted_data = frappe.db.sql(
+			"""
+            SELECT
+                COUNT(*) as total_submitted,
+                SUM(CASE WHEN stage = 'Client Screening Rejected' THEN 1 ELSE 0 END) as child_rejected
+            FROM `tabDKP_JobApplication_Child`
+            WHERE parent IN %(job_names)s
+            """,
+			{"job_names": open_job_names},
+			as_dict=True,
+		)[0]
+
+		# Get interview stats for OPEN jobs only
+		interview_data = frappe.db.sql(
+			"""
+            SELECT
+                SUM(CASE WHEN stage = 'Rejected By Client' THEN 1 ELSE 0 END) as interview_rejected,
+                SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as interview_pipeline
+            FROM `tabDKP_Interview`
+            WHERE job_opening IN %(job_names)s
+            """,
+			{"job_names": open_job_names},
+			as_dict=True,
+		)[0]
+
+		total_submitted = cint(submitted_data.get("total_submitted", 0))
+		total_rejected = cint(submitted_data.get("child_rejected", 0)) + cint(
+			interview_data.get("interview_rejected", 0)
+		)
+		interview_pipeline = cint(interview_data.get("interview_pipeline", 0))
+
+		# Ageing critical (Open jobs > 30 days)
+		for job in open_jobs_list:
 			days = date_diff(nowdate(), job.creation)
 			if days > 30:
 				ageing_critical += 1
 
-	# Conversion rate
-	conversion_rate = 0
-	if total_submitted > 0:
-		conversion_rate = round((total_joined / total_submitted) * 100, 1)
-
 	return {
+		# ALL Jobs KPIs
+		"total_joined": total_joined,
+		"total_joined_left": total_joined_left,
+		"conversion_rate": conversion_rate,
+		# OPEN Jobs KPIs
 		"open_jobs": open_jobs,
 		"total_submitted": total_submitted,
 		"total_rejected": total_rejected,
 		"interview_pipeline": interview_pipeline,
-		"total_joined": total_joined,
-		"total_replaced": total_replaced,
 		"ageing_critical": ageing_critical,
-		"conversion_rate": conversion_rate,
 	}
 
 
