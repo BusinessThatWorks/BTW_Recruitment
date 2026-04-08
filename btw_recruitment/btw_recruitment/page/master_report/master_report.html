@@ -1,0 +1,210 @@
+<div class="master-dashboard-wrapper">
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- FILTERS SECTION -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="master-filters-section">
+        <div class="filters-row">
+            <!-- Quick Date Buttons -->
+            <div class="quick-dates">
+                <button class="btn btn-xs btn-default quick-date-btn" data-range="today">Today</button>
+                <button class="btn btn-xs btn-default quick-date-btn" data-range="week">This Week</button>
+                <button class="btn btn-xs btn-default quick-date-btn active" data-range="month">This Month</button>
+                <button class="btn btn-xs btn-default quick-date-btn" data-range="quarter">This Quarter</button>
+                <button class="btn btn-xs btn-default quick-date-btn" data-range="all">All Time</button>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <div class="filter-item">
+                    <label>From Date</label>
+                    <div class="from-date-slot"></div>
+                </div>
+                <div class="filter-item">
+                    <label>To Date</label>
+                    <div class="to-date-slot"></div>
+                </div>
+                <div class="filter-item">
+                    <label>Company</label>
+                    <div class="company-slot"></div>
+                </div>
+                <div class="filter-item">
+                    <label>Recruiter</label>
+                    <div class="recruiter-slot"></div>
+                </div>
+                <div class="filter-item">
+                    <label>Status</label>
+                    <div class="status-slot"></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="filter-actions">
+                <button class="btn btn-primary btn-sm master-refresh">
+                    <i class="fa fa-refresh"></i> Refresh
+                </button>
+                <button class="btn btn-default btn-sm master-clear">
+                    <i class="fa fa-times"></i> Clear
+                </button>
+                <button class="btn btn-success btn-sm" id="download-master-excel">
+                    <i class="fa fa-download"></i> Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- KPI CARDS SECTION -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="master-kpi-section">
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon">📋</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-open-jobs">0</div>
+                    <div class="kpi-label">Open Jobs</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-icon">👥</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-submitted">0</div>
+                    <div class="kpi-label">Candidates Submitted</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-red">
+                <div class="kpi-icon">❌</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-rejected">0</div>
+                    <div class="kpi-label">Rejected</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-orange">
+                <div class="kpi-icon">🎯</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-interview">0</div>
+                    <div class="kpi-label">Interview Pipeline</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-green">
+                <div class="kpi-icon">✅</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-joined">0</div>
+                    <div class="kpi-label">Joined</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-yellow">
+                <div class="kpi-icon">🔄</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-replaced">0</div>
+                    <div class="kpi-label">Joined & Left</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-critical">
+                <div class="kpi-icon">⚠️</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-ageing-critical">0</div>
+                    <div class="kpi-label">Ageing &gt;30 Days</div>
+                </div>
+            </div>
+            <div class="kpi-card kpi-teal">
+                <div class="kpi-icon">📊</div>
+                <div class="kpi-content">
+                    <div class="kpi-value kpi-conversion">0%</div>
+                    <div class="kpi-label">Conversion Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- TABS SECTION -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="master-tabs-section">
+        <ul class="nav nav-tabs master-nav-tabs">
+            <li class="active">
+                <a data-toggle="tab" href="#tab-master-report">
+                    <i class="fa fa-table"></i> Master Report
+                </a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#tab-company-summary">
+                    <i class="fa fa-building"></i> Company Summary
+                </a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#tab-recruiter-performance">
+                    <i class="fa fa-user"></i> Recruiter Performance
+                </a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#tab-ageing-analysis">
+                    <i class="fa fa-clock-o"></i> Ageing Analysis
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content master-tab-content">
+
+            <!-- TAB 1: Master Report -->
+            <div id="tab-master-report" class="tab-pane fade in active">
+                <div class="table-header">
+                    <div class="table-info">
+                        <span class="record-count">Showing <strong class="master-record-count">0</strong> records</span>
+                    </div>
+                </div>
+                <div class="master-table-wrapper">
+                    <div id="master-report-table"></div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Company Summary -->
+            <div id="tab-company-summary" class="tab-pane fade">
+                <div class="table-header">
+                    <span class="record-count">Showing <strong class="company-record-count">0</strong> companies</span>
+                </div>
+                <div class="master-table-wrapper">
+                    <div id="company-summary-table"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Recruiter Performance -->
+            <div id="tab-recruiter-performance" class="tab-pane fade">
+                <div class="table-header">
+                    <span class="record-count">Showing <strong class="recruiter-record-count">0</strong> recruiters</span>
+                </div>
+                <div class="master-table-wrapper">
+                    <div id="recruiter-performance-table"></div>
+                </div>
+            </div>
+
+            <!-- TAB 4: Ageing Analysis -->
+            <div id="tab-ageing-analysis" class="tab-pane fade">
+                <div class="ageing-summary">
+                    <div class="ageing-bucket ageing-green">
+                        <div class="bucket-label">🟢 0-15 Days</div>
+                        <div class="bucket-value ageing-0-15">0</div>
+                        <div class="bucket-sublabel">Jobs</div>
+                    </div>
+                    <div class="ageing-bucket ageing-yellow">
+                        <div class="bucket-label">🟡 16-30 Days</div>
+                        <div class="bucket-value ageing-16-30">0</div>
+                        <div class="bucket-sublabel">Jobs</div>
+                    </div>
+                    <div class="ageing-bucket ageing-red">
+                        <div class="bucket-label">🔴 &gt;30 Days</div>
+                        <div class="bucket-value ageing-30-plus">0</div>
+                        <div class="bucket-sublabel">Jobs</div>
+                    </div>
+                </div>
+                <div class="ageing-table-section">
+                    <h4>Critical Jobs (Open &gt; 30 Days)</h4>
+                    <div class="master-table-wrapper">
+                        <div id="ageing-critical-table"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

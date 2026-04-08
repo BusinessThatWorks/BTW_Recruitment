@@ -1,0 +1,38 @@
+{
+ "content": null,
+ "creation": "2026-04-08 11:35:55.886480",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-04-08 11:35:55.886480",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "master-report",
+ "owner": "Administrator",
+ "page_name": "master-report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "DKP Recruiter"
+  },
+  {
+   "role": "DKP Recruiter - Exclusive"
+  },
+  {
+   "role": "Admin"
+  },
+  {
+   "role": "Director"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 1,
+ "title": "Master Report"
+}
