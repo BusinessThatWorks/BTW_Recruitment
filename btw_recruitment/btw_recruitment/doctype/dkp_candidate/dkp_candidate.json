@@ -54,8 +54,7 @@
   "blacklist_reason",
   "amended_from",
   "tab_4_tab",
-  "table_gcbt",
-  "test"
+  "table_gcbt"
  ],
  "fields": [
   {
@@ -274,13 +273,13 @@
    "fieldname": "current_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Current CTC Monthly"
+   "label": "Current CTC Monthly In Hand"
   },
   {
    "fieldname": "expected_ctc_monthly",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Expected CTC Monthly"
+   "label": "Expected CTC Monthly In Hand"
   },
   {
    "fieldname": "disc_score",
@@ -331,17 +330,12 @@
    "fieldname": "table_gcbt",
    "fieldtype": "Table",
    "options": "DKP_Candidate_Openings_Child"
-  },
-  {
-   "fieldname": "test",
-   "fieldtype": "Data",
-   "label": "test"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-09 16:05:10.824600",
+ "modified": "2026-04-09 18:02:22.259499",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

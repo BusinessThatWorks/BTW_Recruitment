@@ -2,6 +2,7 @@
 # Patches added in this section will be executed before doctypes are migrated
 # Read docs to understand patches: https://frappeframework.com/docs/v14/user/en/database-migrations
 btw_recruitment.patches.v15_0.normalize_resume_parsed_column
+btw_recruitment.patches.sync_existing_candidate_openings
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
