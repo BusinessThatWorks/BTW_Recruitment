@@ -4,7 +4,6 @@ from frappe.model.document import Document
 
 class DKP_Job_Opening(Document):
 	def on_update(self):
-		frappe.msgprint("after_save triggered!")
 		self.send_change_notification_email()
 		self.sync_candidate_openings()
 
@@ -371,7 +370,7 @@ class DKP_Job_Opening(Document):
 		Sync candidates tagged in this Job Opening to their respective
 		DKP_Candidate.table_gcbt (Tagged Openings child table)
 		"""
-		frappe.msgprint(f"Syncing for opening: {self.name}")  # 👈 Add this
+		frappe.msgprint(f"Syncing for opening: {len(self.candidates_table or [])} {self.name}")  # 👈 Add this
 		frappe.msgprint(f"Candidates in table: {len(self.candidates_table or [])}")  # 👈 Add this
 
 		job_opening_name = self.name
