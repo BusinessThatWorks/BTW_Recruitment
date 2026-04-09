@@ -64,4 +64,5 @@
 # 	frappe.db.commit()
 
 
+# btw_recruitment.patches.sync_existing_candidate_openings
 # # //sarim-test
