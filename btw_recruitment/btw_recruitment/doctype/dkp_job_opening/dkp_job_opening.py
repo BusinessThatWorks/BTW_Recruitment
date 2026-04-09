@@ -4,7 +4,15 @@ from frappe.model.document import Document
 
 class DKP_Job_Opening(Document):
 	def on_update(self):
+		frappe.msgprint("after_save triggered!")
 		self.send_change_notification_email()
+		self.sync_candidate_openings()
+
+	# def after_save(self):
+	# 	self.sync_candidate_openings()
+
+	def on_trash(self):
+		self.remove_from_all_candidates()
 
 	def send_change_notification_email(self):
 		"""Send email to assigned recruiters ONLY when actual changes are made"""
@@ -358,6 +366,144 @@ class DKP_Job_Opening(Document):
 			if row.is_new() and not row.added_by:
 				row.added_by = frappe.session.user
 
+	def sync_candidate_openings(self):
+		"""
+		Sync candidates tagged in this Job Opening to their respective
+		DKP_Candidate.table_gcbt (Tagged Openings child table)
+		"""
+		frappe.msgprint(f"Syncing for opening: {self.name}")  # 👈 Add this
+		frappe.msgprint(f"Candidates in table: {len(self.candidates_table or [])}")  # 👈 Add this
+
+		job_opening_name = self.name
+
+		# Get all candidates currently tagged in this job opening
+		current_candidates = {}
+		for row in self.candidates_table or []:
+			if row.candidate_name:
+				current_candidates[row.candidate_name] = {
+					"mapping_stage": row.stage,
+					"interview_stage": row.sub_stages_interview,
+					"remarks": row.remarks,
+					"added_by": row.added_by,
+					"interview": row.interview,
+				}
+
+		current_candidate_names = list(current_candidates.keys())
+
+		# Find candidates who were previously tagged but now removed
+		previously_tagged = frappe.get_all(
+			"DKP_Candidate_Openings_Child",
+			filters={"job_opening": job_opening_name},
+			fields=["name", "parent"],
+		)
+
+		candidates_to_update = set()
+
+		# Remove entries for candidates no longer in this opening
+		for prev in previously_tagged:
+			if prev.parent not in current_candidate_names:
+				frappe.delete_doc(
+					"DKP_Candidate_Openings_Child", prev.name, ignore_permissions=True, force=True
+				)
+				candidates_to_update.add(prev.parent)
+
+		# Update/Insert for current candidates
+		for candidate_name, candidate_data in current_candidates.items():
+			# Check if candidate exists
+			if not frappe.db.exists("DKP_Candidate", candidate_name):
+				continue
+
+			existing_row = frappe.db.get_value(
+				"DKP_Candidate_Openings_Child",
+				{
+					"parent": candidate_name,
+					"parenttype": "DKP_Candidate",
+					"parentfield": "table_gcbt",
+					"job_opening": job_opening_name,
+				},
+				"name",
+			)
+
+			if existing_row:
+				# Update existing row
+				frappe.db.set_value(
+					"DKP_Candidate_Openings_Child",
+					existing_row,
+					{
+						"mapping_stage": candidate_data["mapping_stage"],
+						"interview_stage": candidate_data["interview_stage"],
+						"remarks": candidate_data["remarks"],
+						"added_by": candidate_data["added_by"],
+						"interview": candidate_data["interview"],
+						"status": self.status,
+						"company": self.company_name,
+						"designation": self.designation,
+						"location": self.location,
+					},
+					update_modified=False,
+				)
+			else:
+				# Insert new row
+				self.insert_candidate_opening_row(candidate_name, candidate_data)
+
+			candidates_to_update.add(candidate_name)
+
+		# Update modified timestamp for affected candidates
+		if candidates_to_update:
+			frappe.db.sql(
+				"""
+				UPDATE `tabDKP_Candidate`
+				SET modified = %s
+				WHERE name IN %s
+			""",
+				(frappe.utils.now(), list(candidates_to_update)),
+			)
+
+		frappe.db.commit()
+
+	def insert_candidate_opening_row(self, candidate_name, candidate_data):
+		"""Insert a new row in candidate's tagged openings table"""
+		max_idx = frappe.db.sql(
+			"""
+			SELECT COALESCE(MAX(idx), 0)
+			FROM `tabDKP_Candidate_Openings_Child`
+			WHERE parent = %s AND parentfield = 'table_gcbt'
+		""",
+			candidate_name,
+		)[0][0]
+
+		new_row = frappe.get_doc(
+			{
+				"doctype": "DKP_Candidate_Openings_Child",
+				"parent": candidate_name,
+				"parenttype": "DKP_Candidate",
+				"parentfield": "table_gcbt",
+				"idx": max_idx + 1,
+				"job_opening": self.name,
+				"company": self.company_name,
+				"designation": self.designation,
+				"location": self.location,
+				"status": self.status,
+				"mapping_stage": candidate_data["mapping_stage"],
+				"interview_stage": candidate_data["interview_stage"],
+				"remarks": candidate_data["remarks"],
+				"added_by": candidate_data["added_by"],
+				"interview": candidate_data["interview"],
+			}
+		)
+		new_row.db_insert()
+
+	def remove_from_all_candidates(self):
+		"""Remove this job opening from all candidates when deleted"""
+		frappe.db.sql(
+			"""
+			DELETE FROM `tabDKP_Candidate_Openings_Child`
+			WHERE job_opening = %s
+		""",
+			self.name,
+		)
+		frappe.db.commit()
+
 
 @frappe.whitelist()
 def get_matching_candidates(job_opening_name=None, existing_candidates=None):
@@ -461,35 +607,6 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
 		match_reasons: list[str] = []
 		matched_skill_names: list[str] = []
 
-		# 1. Designation match
-		# if criteria["designation"] and candidate.current_designation:
-		#     if (
-		#         criteria["designation"].lower() in candidate.current_designation.lower()
-		#         or candidate.current_designation.lower() in criteria["designation"].lower()
-		#     ):
-		#         category_scores.append(1.0)
-		#         category_weights.append(1.0)
-		#         match_reasons.append("Designation match")
-		#     else:
-		#         category_scores.append(0.0)
-		#         category_weights.append(1.0)
-		# if criteria["designation"]:
-		#     if candidate.current_designation:
-		#         if (
-		#             criteria["designation"].lower() in candidate.current_designation.lower()
-		#             or candidate.current_designation.lower() in criteria["designation"].lower()
-		#         ):
-		#             category_scores.append(1.0)
-		#             category_weights.append(1.0)
-		#             match_reasons.append("Designation match")
-		#         else:
-		#             category_scores.append(0.0)
-		#             category_weights.append(1.0)
-		#     else:
-		#         # candidate missing designation => penalty
-		#         category_scores.append(0.0)
-		#         category_weights.append(1.0)
-		#         match_reasons.append("Designation missing")
 		designation_matched = False
 
 		if criteria["designation"]:
@@ -510,13 +627,6 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
 				category_weights.append(1.0)
 				match_reasons.append("Designation missing")
 
-		# 3. Skills match (PRIORITY)
-		#    Matching is now based ONLY on:
-		#    - Job Opening: must_have_skills
-		#    - Candidate: skills_tags
-		#    Other skill fields (good_to_have_skills, primary_skill_set,
-		#    secondary_skill_set) are ignored for matching.
-		# Parse skills - handle comma, semicolon, or newline separated
 		def parse_skills(skills_str):
 			if not skills_str:
 				return []
@@ -609,18 +719,6 @@ def get_matching_candidates(job_opening_name=None, existing_candidates=None):
 					category_scores.append(0.0)
 					category_weights.append(1.0)
 
-		# 5. Location match
-		# if criteria["location"] and candidate.current_location:
-		#     if (
-		#         criteria["location"].lower() in candidate.current_location.lower()
-		#         or candidate.current_location.lower() in criteria["location"].lower()
-		#     ):
-		#         category_scores.append(1.0)
-		#         category_weights.append(1.0)
-		#         match_reasons.append("Location match")
-		#     else:
-		#         category_scores.append(0.0)
-		#         category_weights.append(1.0)
 		if criteria["location"]:
 			if candidate.current_location:
 				if (
@@ -842,8 +940,6 @@ def get_candidate_previous_openings_count(candidate_name, current_job_opening=No
 		conditions.append("jo.name != %s")
 		values.append(current_job_opening)
 
-	# conditions.append("jo.creation >= %s")
-	# values.append(from_date)
 	conditions.append("child.modified >= %s")
 	values.append(from_date)
 

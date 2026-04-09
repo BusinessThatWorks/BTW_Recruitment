@@ -1,15 +1,3 @@
-// frappe.pages['master-report'].on_page_load = function(wrapper) {
-// 	var page = frappe.ui.make_app_page({
-// 		parent: wrapper,
-// 		title: 'Master Report',
-// 		single_column: true
-// 	});
-// }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MASTER RECRUITMENT DASHBOARD
-// ═══════════════════════════════════════════════════════════════════════════
-
 // Excel Download Helper Functions
 function download_excel_from_rows(filename, headers, rows) {
 	let html = "<table><thead><tr>";
@@ -77,9 +65,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 
 	$(frappe.render_template("master_report", {})).appendTo(page.body);
 
-	// ═══════════════════════════════════════════════════════════════════════
 	// STATE VARIABLES
-	// ═══════════════════════════════════════════════════════════════════════
 	let state = {
 		from_date: null,
 		to_date: null,
@@ -88,9 +74,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		status: null,
 	};
 
-	// ═══════════════════════════════════════════════════════════════════════
 	// DOM REFERENCES
-	// ═══════════════════════════════════════════════════════════════════════
 	const $body = $(page.body);
 
 	// Tables
@@ -132,9 +116,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	const $company_count = $body.find(".company-record-count");
 	const $recruiter_count = $body.find(".recruiter-record-count");
 
-	// ═══════════════════════════════════════════════════════════════════════
 	// DEBOUNCE FUNCTION
-	// ═══════════════════════════════════════════════════════════════════════
 	let debounce_timer;
 	function debounced_refresh() {
 		clearTimeout(debounce_timer);
@@ -143,10 +125,6 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		}, 300);
 	}
 	// filter controls
-	// ═══════════════════════════════════════════════════════════════════════
-	// FILTER CONTROLS - Production Level
-	// ═══════════════════════════════════════════════════════════════════════
-
 	// Track if refresh is already queued
 	let refresh_queued = false;
 
@@ -253,99 +231,6 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		},
 		render_input: true,
 	});
-	// const from_date_control = frappe.ui.form.make_control({
-	// 	parent: $body.find(".from-date-slot"),
-	// 	df: {
-	// 		fieldtype: "Date",
-	// 		placeholder: "From Date",
-	// 		change: function () {
-	// 			state.from_date = from_date_control.get_value() || null;
-	// 			debounced_refresh();  // ✅ ADD THIS
-	// 		},
-	// 	},
-	// 	render_input: true,
-	// });
-
-	// const to_date_control = frappe.ui.form.make_control({
-	// 	parent: $body.find(".to-date-slot"),
-	// 	df: {
-	// 		fieldtype: "Date",
-	// 		placeholder: "To Date",
-	// 		change: function () {
-	// 			state.to_date = to_date_control.get_value() || null;
-	// 			debounced_refresh();  // ✅ ADD THIS
-	// 		},
-	// 	},
-	// 	render_input: true,
-	// });
-
-	// const company_control = frappe.ui.form.make_control({
-	// 	parent: $body.find(".company-slot"),
-	// 	df: {
-	// 		fieldtype: "Link",
-	// 		options: "Customer",
-	// 		placeholder: "All Companies",
-	// 		change: function () {
-	// 			state.company = company_control.get_value() || null;
-	// 			debounced_refresh();  // ✅ ADD THIS
-	// 		},
-	// 	},
-	// 	render_input: true,
-	// });
-
-	// const recruiter_control = frappe.ui.form.make_control({
-	// 	parent: $body.find(".recruiter-slot"),
-	// 	df: {
-	// 		fieldtype: "Link",
-	// 		options: "User",
-	// 		placeholder: "All Recruiters",
-	// 		get_query: () => ({
-	// 			filters: {
-	// 				role_profile_name: [
-	// 					"in",
-	// 					["DKP Recruiter", "DKP Recruiter - Exclusive", "Admin"],
-	// 				],
-	// 				enabled: 1,
-	// 			},
-	// 		}),
-	// 		change: function () {
-	// 			state.recruiter = recruiter_control.get_value() || null;
-	// 			debounced_refresh();  // ✅ ADD THIS
-	// 		},
-	// 	},
-	// 	render_input: true,
-	// });
-
-	// const status_control = frappe.ui.form.make_control({
-	// 	parent: $body.find(".status-slot"),
-	// 	df: {
-	// 		fieldtype: "Select",
-	// 		options: "\nOpen\nOn Hold\nClosed – Hired\nClosed – Cancelled",
-	// 		placeholder: "All Status",
-	// 		change: function () {
-	// 			state.status = status_control.get_value() || null;
-	// 			debounced_refresh();  // ✅ ADD THIS
-	// 		},
-	// 	},
-	// 	render_input: true,
-	// });
-	// setTimeout(() => {
-	// 	// Company field
-	// 	$body.find(".company-slot input").on("input", function() {
-	// 		if (!$(this).val()) {
-	// 			state.company = null;
-	// 			debounced_refresh();
-	// 		}
-	// 	});
-
-	// 	// Recruiter field
-	// 	$body.find(".recruiter-slot input").on("input", function() {
-	// 		if (!$(this).val()) {
-	// 			state.recruiter = null;
-	// 			debounced_refresh();
-	// 		}
-	// 	});
-	// }, 200);
 	$body.find(".master-nav-tabs a").on("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();

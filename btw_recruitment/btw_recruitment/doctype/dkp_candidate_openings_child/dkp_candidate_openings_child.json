@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-09 12:01:04.750650",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "job_opening",
+  "company",
+  "designation",
+  "location",
+  "status",
+  "mapping_stage",
+  "interview_stage",
+  "remarks",
+  "added_by",
+  "interview"
+ ],
+ "fields": [
+  {
+   "fieldname": "job_opening",
+   "fieldtype": "Link",
+   "label": "Job Opening",
+   "options": "DKP_Job_Opening"
+  },
+  {
+   "fetch_from": "job_opening.company_name",
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company"
+  },
+  {
+   "fetch_from": "job_opening.designation",
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation"
+  },
+  {
+   "fetch_from": "job_opening.location",
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fetch_from": "job_opening.status",
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Status"
+  },
+  {
+   "fieldname": "mapping_stage",
+   "fieldtype": "Data",
+   "label": "Mapping Stage"
+  },
+  {
+   "fieldname": "interview_stage",
+   "fieldtype": "Data",
+   "label": "Interview Stage"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Data",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "added_by",
+   "fieldtype": "Link",
+   "label": "Added By",
+   "options": "User"
+  },
+  {
+   "fieldname": "interview",
+   "fieldtype": "Link",
+   "label": "Interview",
+   "options": "DKP_Interview"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-09 12:10:47.210872",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "DKP_Candidate_Openings_Child",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

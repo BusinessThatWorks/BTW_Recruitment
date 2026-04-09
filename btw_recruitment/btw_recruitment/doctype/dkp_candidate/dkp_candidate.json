@@ -52,7 +52,9 @@
   "blacklist_tab",
   "blacklisted",
   "blacklist_reason",
-  "amended_from"
+  "amended_from",
+  "tab_4_tab",
+  "table_gcbt"
  ],
  "fields": [
   {
@@ -318,12 +320,22 @@
    "fieldname": "confidence_score",
    "fieldtype": "Data",
    "label": "Confidence Score %"
+  },
+  {
+   "fieldname": "tab_4_tab",
+   "fieldtype": "Tab Break",
+   "label": "Tagged Openings"
+  },
+  {
+   "fieldname": "table_gcbt",
+   "fieldtype": "Table",
+   "options": "DKP_Candidate_Openings_Child"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-26 11:04:05.206035",
+ "modified": "2026-04-09 12:12:03.541405",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",
