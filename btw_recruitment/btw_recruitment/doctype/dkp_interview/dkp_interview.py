@@ -500,10 +500,6 @@ class DKP_Interview(Document):
 
 		job = frappe.get_doc("DKP_Job_Opening", self.job_opening)
 
-		# if self.stage == "Joined And Left":
-		#     if job.status != "Open":
-		#         frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Open")
-		#     return
 		if self.stage == "Joined And Left":
 			company = job.company_name
 
