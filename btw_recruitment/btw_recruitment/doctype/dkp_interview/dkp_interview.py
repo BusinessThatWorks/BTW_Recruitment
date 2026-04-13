@@ -7,35 +7,6 @@ from frappe.model.document import Document
 from frappe.model.naming import make_autoname
 from frappe.utils import add_days, getdate, nowdate
 
-# ACCESS_TOKEN = "EAARiY2L9nm4BQ4Ba3cbxJ02ZBVBeplydPQlaKY7iNyZCn51Da0R5TIe7uG8QZCD6ctRi0ZBj4W7nxBqSpgZBlTtSEiGlW35vNkmZA1MvJNWE2dKsv976MOYKb04nsFm0KZCVlnV41asLcD9SlzYZA3bKF6TV2xrVKQ0ZBaDza1tGKrfZCANsDWiOzoJWGoxfeaI9Ugs78Ek8Tw2VsQIF3fnnYmKPdYYhpLGHCH0hWzzcIZD"
-# PHONE_NUMBER_ID = "929234290283533"
-
-# def send_whatsapp(phone):
-
-#     url = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
-
-#     headers = {
-#         "Authorization": f"Bearer {ACCESS_TOKEN}",
-#         "Content-Type": "application/json"
-#     }
-
-#     payload = {
-#         "messaging_product": "whatsapp",
-#         "to": phone,
-#         "type": "template",
-#         "template": {
-#             "name": "hello_world",
-#             "language": {
-#                 "code": "en_US"
-#             }
-#         }
-#     }
-
-#     response = requests.post(url, headers=headers, json=payload)
-
-#     print(response.status_code)
-#     print(response.text)
-
 
 def get_customer_billing_contact(customer_name):
 	contact_info = {"name": "", "email": "", "phone": ""}
