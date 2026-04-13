@@ -47,7 +47,11 @@
   "received_on",
   "candidates_tab",
   "suggest_candidates",
-  "candidates_table"
+  "candidates_table",
+  "replacement_section_section",
+  "pending_replacements",
+  "total_replacements",
+  "replacement_history"
  ],
  "fields": [
   {
@@ -307,6 +311,27 @@
    "fieldname": "hold_reminder_sent",
    "fieldtype": "Check",
    "label": "Hold Reminder Sent"
+  },
+  {
+   "fieldname": "replacement_section_section",
+   "fieldtype": "Section Break",
+   "label": "Replacement Section"
+  },
+  {
+   "fieldname": "pending_replacements",
+   "fieldtype": "Int",
+   "label": "Pending Replacements"
+  },
+  {
+   "fieldname": "replacement_history",
+   "fieldtype": "Table",
+   "label": "Replacement History",
+   "options": "DKP_Replacement_Log"
+  },
+  {
+   "fieldname": "total_replacements",
+   "fieldtype": "Int",
+   "label": "Total Replacements Given"
   }
  ],
  "grid_page_length": 50,
@@ -317,7 +342,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-04-10 14:02:30.275081",
+ "modified": "2026-04-10 14:41:44.996150",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

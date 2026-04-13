@@ -1,237 +1,254 @@
 <div class="master-dashboard-wrapper">
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<!-- FILTERS SECTION -->
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<div class="master-filters-section">
+		<div class="filters-row">
+			<!-- Quick Date Buttons -->
+			<div class="quick-dates">
+				<button class="btn btn-xs btn-default quick-date-btn" data-range="today">
+					Today
+				</button>
+				<button class="btn btn-xs btn-default quick-date-btn" data-range="week">
+					This Week
+				</button>
+				<button class="btn btn-xs btn-default quick-date-btn active" data-range="month">
+					This Month
+				</button>
+				<button class="btn btn-xs btn-default quick-date-btn" data-range="quarter">
+					This Quarter
+				</button>
+				<button class="btn btn-xs btn-default quick-date-btn" data-range="all">
+					All Time
+				</button>
+			</div>
 
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- FILTERS SECTION -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <div class="master-filters-section">
-        <div class="filters-row">
-            <!-- Quick Date Buttons -->
-            <div class="quick-dates">
-                <button class="btn btn-xs btn-default quick-date-btn" data-range="today">Today</button>
-                <button class="btn btn-xs btn-default quick-date-btn" data-range="week">This Week</button>
-                <button class="btn btn-xs btn-default quick-date-btn active" data-range="month">This Month</button>
-                <button class="btn btn-xs btn-default quick-date-btn" data-range="quarter">This Quarter</button>
-                <button class="btn btn-xs btn-default quick-date-btn" data-range="all">All Time</button>
-            </div>
+			<!-- Filter Controls -->
+			<div class="filter-controls">
+				<div class="filter-item">
+					<label>From Date</label>
+					<div class="from-date-slot"></div>
+				</div>
+				<div class="filter-item">
+					<label>To Date</label>
+					<div class="to-date-slot"></div>
+				</div>
+				<div class="filter-item">
+					<label>Company</label>
+					<div class="company-slot"></div>
+				</div>
+				<div class="filter-item">
+					<label>Recruiter</label>
+					<div class="recruiter-slot"></div>
+				</div>
+				<div class="filter-item">
+					<label>Status</label>
+					<div class="status-slot"></div>
+				</div>
+			</div>
 
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <div class="filter-item">
-                    <label>From Date</label>
-                    <div class="from-date-slot"></div>
-                </div>
-                <div class="filter-item">
-                    <label>To Date</label>
-                    <div class="to-date-slot"></div>
-                </div>
-                <div class="filter-item">
-                    <label>Company</label>
-                    <div class="company-slot"></div>
-                </div>
-                <div class="filter-item">
-                    <label>Recruiter</label>
-                    <div class="recruiter-slot"></div>
-                </div>
-                <div class="filter-item">
-                    <label>Status</label>
-                    <div class="status-slot"></div>
-                </div>
-            </div>
+			<!-- Action Buttons -->
+			<div class="filter-actions">
+				<button class="btn btn-success btn-sm" id="download-master-excel">
+					<i class="fa fa-download"></i> Excel
+				</button>
+			</div>
+		</div>
+	</div>
 
-            <!-- Action Buttons -->
-            <div class="filter-actions">
-                <button class="btn btn-success btn-sm" id="download-master-excel">
-                    <i class="fa fa-download"></i> Excel
-                </button>
-            </div>
-        </div>
-    </div>
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<!-- KPI CARDS SECTION -->
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<div class="master-kpi-section">
+		<!-- ROW 2: OPEN JOBS ONLY -->
+		<div class="kpi-row-header">Open Jobs Only</div>
+		<div class="kpi-grid kpi-grid-5">
+			<div class="kpi-card kpi-blue kpi-clickable" data-route="open-jobs">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-open-jobs">0</div>
+					<div class="kpi-label">Open Jobs</div>
+				</div>
+				<div class="kpi-info" title="Count of Job Openings with status Open">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- KPI CARDS SECTION -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- KPI CARDS SECTION -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="master-kpi-section">
+			<div class="kpi-card kpi-purple kpi-clickable" data-route="submitted">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-submitted">0</div>
+					<div class="kpi-label">Candidates Submitted</div>
+				</div>
+				<div class="kpi-info" title="Total candidates mapped">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 
-    <!-- ROW 1: ALL JOBS (Historical) -->
-    <div class="kpi-row-header">All Jobs (Historical)</div>
-    <div class="kpi-grid kpi-grid-3">
-        <div class="kpi-card kpi-green kpi-clickable" data-route="joined">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-joined">0</div>
-                <div class="kpi-label">Joined</div>
-            </div>
-            <div class="kpi-info" title="All filtered jobs - Candidates with stage Joined">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
+			<div class="kpi-card kpi-red kpi-clickable" data-route="rejected">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-rejected">0</div>
+					<div class="kpi-label">Rejected</div>
+				</div>
+				<div
+					class="kpi-info"
+					title="Client Screening Rejected + Rejected By Client"
+				>
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 
-        <div class="kpi-card kpi-yellow kpi-clickable" data-route="joined-left">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-joined-left">0</div>
-                <div class="kpi-label">Joined & Left</div>
-            </div>
-            <div class="kpi-info" title="All filtered jobs - Candidates with stage Joined And Left">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
+			<div class="kpi-card kpi-orange kpi-clickable" data-route="interview-pipeline">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-interview">0</div>
+					<div class="kpi-label">Interview Pipeline</div>
+				</div>
+				<div
+					class="kpi-info"
+					title="Selected For Offer, Offered, Offer Accepted"
+				>
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 
-        <div class="kpi-card kpi-teal">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-conversion">0%</div>
-                <div class="kpi-label">Conversion Rate</div>
-            </div>
-            <div class="kpi-info" title="All filtered jobs - (Joined / Total Submitted) x 100">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
-    </div>
+			<div class="kpi-card kpi-critical kpi-clickable" data-route="ageing-critical">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-ageing-critical">0</div>
+					<div class="kpi-label">Ageing &gt;30 Days</div>
+				</div>
+				<div class="kpi-info" title="Jobs older than 30 days">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+		</div>
+        <!-- ROW 1: ALL JOBS (Historical) -->
+		<div class="kpi-row-header">All Jobs (Historical)</div>
+		<div class="kpi-grid kpi-grid-3">
+			<div class="kpi-card kpi-green kpi-clickable" data-route="joined">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-joined">0</div>
+					<div class="kpi-label">Joined</div>
+				</div>
+				<div class="kpi-info" title="Candidates with stage Joined">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 
-    <!-- ROW 2: OPEN JOBS ONLY -->
-    <div class="kpi-row-header">Open Jobs Only</div>
-    <div class="kpi-grid kpi-grid-5">
-        <div class="kpi-card kpi-blue kpi-clickable" data-route="open-jobs">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-open-jobs">0</div>
-                <div class="kpi-label">Open Jobs</div>
-            </div>
-            <div class="kpi-info" title="Count of Job Openings with status Open">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
+			<div class="kpi-card kpi-yellow kpi-clickable" data-route="joined-left">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-joined-left">0</div>
+					<div class="kpi-label">Joined & Left</div>
+				</div>
+				<div
+					class="kpi-info"
+					title="Candidates with stage Joined And Left"
+				>
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 
-        <div class="kpi-card kpi-purple kpi-clickable" data-route="submitted">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-submitted">0</div>
-                <div class="kpi-label">Candidates Submitted</div>
-            </div>
-            <div class="kpi-info" title="Only OPEN jobs - Total candidates mapped">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
+			<div class="kpi-card kpi-teal">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-conversion">0%</div>
+					<div class="kpi-label">Conversion Rate</div>
+				</div>
+				<div class="kpi-info" title="Joined / Total Candidates Submitted">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+		</div>
+	</div>
 
-        <div class="kpi-card kpi-red kpi-clickable" data-route="rejected">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-rejected">0</div>
-                <div class="kpi-label">Rejected</div>
-            </div>
-            <div class="kpi-info" title="Only OPEN jobs - Client Screening Rejected + Rejected By Client">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<!-- TABS SECTION -->
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<div class="master-tabs-section">
+		<ul class="nav nav-tabs master-nav-tabs">
+			<li class="active">
+				<a data-toggle="tab" href="#tab-master-report">
+					<i class="fa fa-table"></i> Master Report
+				</a>
+			</li>
+			<li>
+				<a data-toggle="tab" href="#tab-company-summary">
+					<i class="fa fa-building"></i> Company Summary
+				</a>
+			</li>
+			<li>
+				<a data-toggle="tab" href="#tab-recruiter-performance">
+					<i class="fa fa-user"></i> Recruiter Performance
+				</a>
+			</li>
+			<li>
+				<a data-toggle="tab" href="#tab-ageing-analysis">
+					<i class="fa fa-clock-o"></i> Ageing Analysis
+				</a>
+			</li>
+		</ul>
 
-        <div class="kpi-card kpi-orange kpi-clickable" data-route="interview-pipeline">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-interview">0</div>
-                <div class="kpi-label">Interview Pipeline</div>
-            </div>
-            <div class="kpi-info" title="Only OPEN jobs - Selected For Offer, Offered, Offer Accepted">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
+		<div class="tab-content master-tab-content">
+			<!-- TAB 1: Master Report -->
+			<div id="tab-master-report" class="tab-pane fade in active">
+				<div class="table-header">
+					<div class="table-info">
+						<span class="record-count"
+							>Showing <strong class="master-record-count">0</strong> records</span
+						>
+					</div>
+				</div>
+				<div class="master-table-wrapper">
+					<div id="master-report-table"></div>
+				</div>
+			</div>
 
-        <div class="kpi-card kpi-critical kpi-clickable" data-route="ageing-critical">
-            <div class="kpi-content">
-                <div class="kpi-value kpi-ageing-critical">0</div>
-                <div class="kpi-label">Ageing &gt;30 Days</div>
-            </div>
-            <div class="kpi-info" title="Only OPEN jobs - Jobs older than 30 days">
-                <i class="fa fa-info-circle"></i>
-            </div>
-        </div>
-    </div>
-</div>
+			<!-- TAB 2: Company Summary -->
+			<div id="tab-company-summary" class="tab-pane fade">
+				<div class="table-header">
+					<span class="record-count"
+						>Showing <strong class="company-record-count">0</strong> companies</span
+					>
+				</div>
+				<div class="master-table-wrapper">
+					<div id="company-summary-table"></div>
+				</div>
+			</div>
 
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- TABS SECTION -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <div class="master-tabs-section">
-        <ul class="nav nav-tabs master-nav-tabs">
-            <li class="active">
-                <a data-toggle="tab" href="#tab-master-report">
-                    <i class="fa fa-table"></i> Master Report
-                </a>
-            </li>
-            <li>
-                <a data-toggle="tab" href="#tab-company-summary">
-                    <i class="fa fa-building"></i> Company Summary
-                </a>
-            </li>
-            <li>
-                <a data-toggle="tab" href="#tab-recruiter-performance">
-                    <i class="fa fa-user"></i> Recruiter Performance
-                </a>
-            </li>
-            <li>
-                <a data-toggle="tab" href="#tab-ageing-analysis">
-                    <i class="fa fa-clock-o"></i> Ageing Analysis
-                </a>
-            </li>
-        </ul>
+			<!-- TAB 3: Recruiter Performance -->
+			<div id="tab-recruiter-performance" class="tab-pane fade">
+				<div class="table-header">
+					<span class="record-count"
+						>Showing <strong class="recruiter-record-count">0</strong> recruiters</span
+					>
+				</div>
+				<div class="master-table-wrapper">
+					<div id="recruiter-performance-table"></div>
+				</div>
+			</div>
 
-        <div class="tab-content master-tab-content">
-
-            <!-- TAB 1: Master Report -->
-            <div id="tab-master-report" class="tab-pane fade in active">
-                <div class="table-header">
-                    <div class="table-info">
-                        <span class="record-count">Showing <strong class="master-record-count">0</strong> records</span>
-                    </div>
-                </div>
-                <div class="master-table-wrapper">
-                    <div id="master-report-table"></div>
-                </div>
-            </div>
-
-            <!-- TAB 2: Company Summary -->
-            <div id="tab-company-summary" class="tab-pane fade">
-                <div class="table-header">
-                    <span class="record-count">Showing <strong class="company-record-count">0</strong> companies</span>
-                </div>
-                <div class="master-table-wrapper">
-                    <div id="company-summary-table"></div>
-                </div>
-            </div>
-
-            <!-- TAB 3: Recruiter Performance -->
-            <div id="tab-recruiter-performance" class="tab-pane fade">
-                <div class="table-header">
-                    <span class="record-count">Showing <strong class="recruiter-record-count">0</strong> recruiters</span>
-                </div>
-                <div class="master-table-wrapper">
-                    <div id="recruiter-performance-table"></div>
-                </div>
-            </div>
-
-            <!-- TAB 4: Ageing Analysis -->
-            <div id="tab-ageing-analysis" class="tab-pane fade">
-                <div class="ageing-summary">
-                    <div class="ageing-bucket ageing-green">
-                        <div class="bucket-label">🟢 0-15 Days</div>
-                        <div class="bucket-value ageing-0-15">0</div>
-                        <div class="bucket-sublabel">Jobs</div>
-                    </div>
-                    <div class="ageing-bucket ageing-yellow">
-                        <div class="bucket-label">🟡 16-30 Days</div>
-                        <div class="bucket-value ageing-16-30">0</div>
-                        <div class="bucket-sublabel">Jobs</div>
-                    </div>
-                    <div class="ageing-bucket ageing-red">
-                        <div class="bucket-label">🔴 &gt;30 Days</div>
-                        <div class="bucket-value ageing-30-plus">0</div>
-                        <div class="bucket-sublabel">Jobs</div>
-                    </div>
-                </div>
-                <div class="ageing-table-section">
-                    <h4>Critical Jobs (Open &gt; 30 Days)</h4>
-                    <div class="master-table-wrapper">
-                        <div id="ageing-critical-table"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+			<!-- TAB 4: Ageing Analysis -->
+			<div id="tab-ageing-analysis" class="tab-pane fade">
+				<div class="ageing-summary">
+					<div class="ageing-bucket ageing-green">
+						<div class="bucket-label">🟢 0-15 Days</div>
+						<div class="bucket-value ageing-0-15">0</div>
+						<div class="bucket-sublabel">Jobs</div>
+					</div>
+					<div class="ageing-bucket ageing-yellow">
+						<div class="bucket-label">🟡 16-30 Days</div>
+						<div class="bucket-value ageing-16-30">0</div>
+						<div class="bucket-sublabel">Jobs</div>
+					</div>
+					<div class="ageing-bucket ageing-red">
+						<div class="bucket-label">🔴 &gt;30 Days</div>
+						<div class="bucket-value ageing-30-plus">0</div>
+						<div class="bucket-sublabel">Jobs</div>
+					</div>
+				</div>
+				<div class="ageing-table-section">
+					<h4>Critical Jobs (Open &gt; 30 Days)</h4>
+					<div class="master-table-wrapper">
+						<div id="ageing-critical-table"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

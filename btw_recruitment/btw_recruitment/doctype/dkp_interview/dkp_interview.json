@@ -15,6 +15,11 @@
   "offered_amount",
   "remarks_for_invoice",
   "invoice_ref",
+  "section_break_uanr",
+  "is_replacement_for",
+  "days_before_left",
+  "within_replacement_policy",
+  "replacement_policy_days",
   "section_break_biqn",
   "interview_child_table"
  ],
@@ -91,12 +96,41 @@
    "fieldtype": "Link",
    "label": "Joining Tracker Ref",
    "options": "DKP_Joining_Tracker"
+  },
+  {
+   "depends_on": "eval:doc.stage == 'Joined' || doc.stage == 'Joined And Left'",
+   "fieldname": "section_break_uanr",
+   "fieldtype": "Section Break",
+   "label": "Replacement Info"
+  },
+  {
+   "fieldname": "is_replacement_for",
+   "fieldtype": "Link",
+   "label": "Is Replacement For",
+   "options": "DKP_Interview"
+  },
+  {
+   "fieldname": "days_before_left",
+   "fieldtype": "Int",
+   "label": "Days Before Left"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.stage == 'Joined And Left'",
+   "fieldname": "within_replacement_policy",
+   "fieldtype": "Check",
+   "label": "Within Replacement Policy"
+  },
+  {
+   "fieldname": "replacement_policy_days",
+   "fieldtype": "Int",
+   "label": "Replacement Policy Days"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-09 16:44:08.912712",
+ "modified": "2026-04-10 14:29:13.297156",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Interview",

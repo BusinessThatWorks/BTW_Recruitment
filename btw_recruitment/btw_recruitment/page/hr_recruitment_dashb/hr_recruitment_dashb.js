@@ -217,8 +217,12 @@ function init_candidate_tab() {
 
 	// 👇 FIX: ONLY ONE setTimeout - no duplicate
 	setTimeout(() => {
-		candidate_from_control.set_value(frappe.datetime.get_today());
-		candidate_to_control.set_value(frappe.datetime.get_today());
+		let today = frappe.datetime.get_today(); // 2026-04-13
+		let year = today.split("-")[0]; // 2026
+
+		candidate_from_control.set_value(`${year}-01-01`);
+		candidate_to_control.set_value(today);
+
 		load_candidate_table();
 	}, 100);
 }
@@ -520,8 +524,12 @@ function init_jobs_tab() {
 
 	// 👇 FIX: setTimeout with date set THEN load
 	setTimeout(() => {
-		jobs_from_control.set_value(frappe.datetime.get_today());
-		jobs_to_control.set_value(frappe.datetime.get_today());
+		let today = frappe.datetime.get_today();
+		let year = today.split("-")[0];
+
+		jobs_from_control.set_value(`${year}-01-01`);
+		jobs_to_control.set_value(today);
+
 		load_jobs_table();
 		load_job_kpis();
 	}, 100);
@@ -856,8 +864,11 @@ function init_company_tab() {
 	});
 
 	// 👇 DEFAULT TODAY'S DATE
-	company_from_control.set_value(frappe.datetime.get_today());
-	company_to_control.set_value(frappe.datetime.get_today());
+	let today = frappe.datetime.get_today();
+	let year = today.split("-")[0];
+
+	company_from_control.set_value(`${year}-01-01`);
+	company_to_control.set_value(today);
 
 	// Clear dates button
 	$("#company-clear-dates")

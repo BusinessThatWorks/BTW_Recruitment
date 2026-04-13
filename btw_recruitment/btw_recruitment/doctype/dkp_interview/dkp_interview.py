@@ -141,6 +141,24 @@ class DKP_Interview(Document):
 
 	def validate(self):
 		self.check_freeze_status()
+		self.validate_replacement_dates()
+
+	def validate_replacement_dates(self):
+		"""Validate dates for Joined And Left stage"""
+		if self.stage == "Joined And Left":
+			if not self.joining_date:
+				frappe.throw(
+					_(
+						"Joining Date is required when stage is 'Joined And Left' to update Replacement Policies"
+					)
+				)
+			if not self.candidate_left_date:
+				frappe.throw(_("Candidate Left Date is required when stage is 'Joined And Left'"))
+			if getdate(self.candidate_left_date) < getdate(self.joining_date):
+				frappe.throw(_("Candidate Left Date cannot be before Joining Date"))
+
+		if self.stage == "Joined" and not self.joining_date:
+			frappe.msgprint(_("Please fill Joining Date"), alert=True)
 
 	def after_insert(self):
 		frappe.db.set_value(
@@ -155,6 +173,10 @@ class DKP_Interview(Document):
 		self.send_new_interview_emails()
 
 	def on_update(self):
+		# Handle replacement tracking
+		if self.stage in ("Joined", "Joined And Left"):
+			self.handle_replacement_tracking()
+
 		self.sync_stage_to_opening()
 
 		# Check for new interview rows added
@@ -478,66 +500,194 @@ class DKP_Interview(Document):
 		except Exception as e:
 			frappe.log_error(f"Error updating invoice on left: {e}")
 
+	# def sync_stage_to_opening(self):
+	# 	if not self.job_opening or not self.candidate_name:
+	# 		return
+
+	# 	update_values = {}
+	# 	if self.stage:
+	# 		update_values["sub_stages_interview"] = self.stage
+
+	# 	if update_values:
+	# 		frappe.db.set_value(
+	# 			"DKP_JobApplication_Child",
+	# 			{"parent": self.job_opening, "candidate_name": self.candidate_name},
+	# 			update_values,
+	# 		)
+	# 	self.check_and_close_job_opening()
 	def sync_stage_to_opening(self):
 		if not self.job_opening or not self.candidate_name:
 			return
 
-		update_values = {}
 		if self.stage:
-			update_values["sub_stages_interview"] = self.stage
-
-		if update_values:
 			frappe.db.set_value(
 				"DKP_JobApplication_Child",
 				{"parent": self.job_opening, "candidate_name": self.candidate_name},
-				update_values,
+				"sub_stages_interview",
+				self.stage,
 			)
-		self.check_and_close_job_opening()
 
-	def check_and_close_job_opening(self):
+		self.evaluate_job_opening_status()
+
+	def evaluate_job_opening_status(self):
+		"""Single source of truth for job opening status"""
 		if not self.job_opening:
 			return
 
 		job = frappe.get_doc("DKP_Job_Opening", self.job_opening)
 
-		if self.stage == "Joined And Left":
-			company = job.company_name
-
-			replacement_policy = frappe.db.get_value("Customer", company, "custom_replacement_policy_")
-
-			replacement_days = self.extract_days_from_policy(replacement_policy)
-
-			if self.joining_date and self.candidate_left_date and replacement_days:
-				diff = frappe.utils.date_diff(self.candidate_left_date, self.joining_date)
-
-				if diff <= replacement_days:
-					replacement_used = job.replacement_used or 0
-
-					frappe.db.set_value(
-						"DKP_Job_Opening",
-						job.name,
-						{"status": "Open", "replacement_used": replacement_used + 1},
-					)
-
-				else:
-					return
-
-			else:
-				frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Open")
-
+		# Don't touch manually set statuses
+		if job.status in ("On Hold", "Closed – Cancelled"):  # noqa: RUF001
 			return
 
 		if not job.number_of_positions:
 			return
 
 		total_positions = int(job.number_of_positions)
-		selected_count = frappe.db.count(
-			"DKP_JobApplication_Child", {"parent": job.name, "sub_stages_interview": "Joined"}
+
+		# Count CURRENTLY joined candidates (not "Joined And Left")
+		joined_count = frappe.db.count(
+			"DKP_JobApplication_Child",
+			{"parent": job.name, "sub_stages_interview": "Joined"},
 		)
 
-		if selected_count >= total_positions:
-			if job.status != "Closed – Hired":  # noqa: RUF001
-				frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Closed – Hired")  # noqa: RUF001
+		# Count pending replacements from replacement history
+		pending_count = frappe.db.count(
+			"DKP_Replacement_Log",
+			{"parent": job.name, "status": "Pending"},
+		)
+
+		# Decision logic
+		if joined_count >= total_positions and pending_count == 0:
+			# All positions filled, no pending replacements
+			if job.status != "Closed \u2013 Hired":
+				frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Closed \u2013 Hired")
+		else:
+			# Either not enough joins or pending replacements exist
+			if job.status == "Closed \u2013 Hired":
+				frappe.db.set_value("DKP_Job_Opening", job.name, "status", "Open")
+
+	def handle_replacement_tracking(self):
+		"""Handle replacement history when stage changes"""
+		if not self.job_opening:
+			return
+
+		job = frappe.get_doc("DKP_Job_Opening", self.job_opening)
+		company = job.company_name
+
+		replacement_policy = frappe.db.get_value("Customer", company, "custom_replacement_policy_")
+		replacement_days = self.extract_days_from_policy(replacement_policy)
+
+		if self.stage == "Joined And Left":
+			self._handle_candidate_left(job, replacement_days)
+
+		elif self.stage == "Joined" and self.is_replacement_for:
+			self._handle_replacement_joined(job)
+
+		# Update counts on job opening
+		self.update_replacement_counts(job.name)
+
+	def _handle_candidate_left(self, job, replacement_days):
+		"""When candidate leaves - add to replacement history"""
+
+		# Calculate days worked
+		days_worked = 0
+		within_policy = 0
+
+		if self.joining_date and self.candidate_left_date:
+			days_worked = frappe.utils.date_diff(self.candidate_left_date, self.joining_date)
+
+		if replacement_days and days_worked <= replacement_days:
+			within_policy = 1
+			status = "Pending"
+		else:
+			status = "Not Required"
+
+		# Update interview fields
+		self.db_set("days_before_left", days_worked, update_modified=False)
+		self.db_set("within_replacement_policy", within_policy, update_modified=False)
+		self.db_set("replacement_policy_days", replacement_days or 0, update_modified=False)
+
+		# Check if entry already exists in replacement history
+		existing = frappe.db.exists(
+			"DKP_Replacement_Log",
+			{"parent": job.name, "left_interview": self.name},
+		)
+
+		if existing:
+			# Update existing row
+			frappe.db.set_value(
+				"DKP_Replacement_Log",
+				existing,
+				{
+					"left_date": self.candidate_left_date,
+					"days_worked": days_worked,
+					"within_policy": within_policy,
+					"policy_days": replacement_days or 0,
+					"status": status,
+				},
+			)
+		else:
+			# Add new row to replacement history
+			job.reload()
+			job.append(
+				"replacement_history",
+				{
+					"left_candidate": self.candidate_name,
+					"left_interview": self.name,
+					"joined_date": self.joining_date,
+					"left_date": self.candidate_left_date,
+					"days_worked": days_worked,
+					"policy_days": replacement_days or 0,
+					"within_policy": within_policy,
+					"replacement_candidate": None,
+					"replacement_interview": None,
+					"status": status,
+				},
+			)
+			job.save(ignore_permissions=True)
+
+	def _handle_replacement_joined(self, job):
+		"""When replacement candidate joins - mark history as Replaced"""
+
+		# Find the pending replacement row for the original interview
+		log_name = frappe.db.get_value(
+			"DKP_Replacement_Log",
+			{"parent": job.name, "left_interview": self.is_replacement_for, "status": "Pending"},
+			"name",
+		)
+
+		if log_name:
+			frappe.db.set_value(
+				"DKP_Replacement_Log",
+				log_name,
+				{
+					"replacement_candidate": self.candidate_name,
+					"replacement_interview": self.name,
+					"status": "Replaced",
+				},
+			)
+
+	def update_replacement_counts(self, job_opening_name):
+		"""Update pending and total replacement counts on job opening"""
+		pending = frappe.db.count(
+			"DKP_Replacement_Log",
+			{"parent": job_opening_name, "status": "Pending"},
+		)
+
+		total_replaced = frappe.db.count(
+			"DKP_Replacement_Log",
+			{"parent": job_opening_name, "status": "Replaced"},
+		)
+
+		frappe.db.set_value(
+			"DKP_Job_Opening",
+			job_opening_name,
+			{
+				"pending_replacements": pending,
+				"total_replacements": total_replaced,
+			},
+		)
 
 	def create_invoice_on_joined(self):
 		if self.stage != "Joined":

@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-10 14:21:24.766188",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "left_candidate",
+  "left_interview",
+  "joined_date",
+  "left_date",
+  "days_worked",
+  "policy_days",
+  "within_policy",
+  "replacement_candidate",
+  "replacement_interview",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "joined_date",
+   "fieldtype": "Date",
+   "label": "Joined Date"
+  },
+  {
+   "fieldname": "left_date",
+   "fieldtype": "Date",
+   "label": "Left Date"
+  },
+  {
+   "fieldname": "days_worked",
+   "fieldtype": "Int",
+   "label": "Days Worked"
+  },
+  {
+   "fieldname": "policy_days",
+   "fieldtype": "Int",
+   "label": "Policy Days"
+  },
+  {
+   "default": "0",
+   "fieldname": "within_policy",
+   "fieldtype": "Check",
+   "label": "Within Policy"
+  },
+  {
+   "fieldname": "replacement_candidate",
+   "fieldtype": "Link",
+   "label": "Replacement Candidate",
+   "options": "DKP_Candidate"
+  },
+  {
+   "fieldname": "replacement_interview",
+   "fieldtype": "Link",
+   "label": "Replacement Interview",
+   "options": "DKP_Interview"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nReplaced\nNot Required"
+  },
+  {
+   "fieldname": "left_candidate",
+   "fieldtype": "Link",
+   "label": "Candidate Who Left",
+   "options": "DKP_Candidate"
+  },
+  {
+   "fieldname": "left_interview",
+   "fieldtype": "Link",
+   "label": "Interview Ref",
+   "options": "DKP_Interview"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-10 15:28:21.164885",
+ "modified_by": "Administrator",
+ "module": "BTW Recruitment",
+ "name": "DKP_Replacement_Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -17,6 +17,16 @@ frappe.ui.form.on("DKP_Interview", {
 		if (!frm.is_new()) {
 			check_and_apply_freeze(frm);
 		}
+		// Filter is_replacement_for - show only "Joined And Left" interviews of same job opening
+		frm.set_query("is_replacement_for", function () {
+			return {
+				filters: {
+					job_opening: frm.doc.job_opening,
+					stage: "Joined And Left",
+					name: ["!=", frm.doc.name],
+				},
+			};
+		});
 	},
 
 	after_save: function (frm) {
