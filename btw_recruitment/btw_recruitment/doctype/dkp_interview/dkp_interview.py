@@ -489,14 +489,13 @@ class DKP_Interview(Document):
 	def sync_stage_to_opening(self):
 		if not self.job_opening or not self.candidate_name:
 			return
-
-		if self.stage:
-			frappe.db.set_value(
-				"DKP_JobApplication_Child",
-				{"parent": self.job_opening, "candidate_name": self.candidate_name},
-				"sub_stages_interview",
-				self.stage,
-			)
+		# ✅ Always update - even when stage is blank/empty
+		frappe.db.set_value(
+			"DKP_JobApplication_Child",
+			{"parent": self.job_opening, "candidate_name": self.candidate_name},
+			"sub_stages_interview",
+			self.stage or "",  # blank bhi set hoga
+		)
 
 		self.evaluate_job_opening_status()
 
