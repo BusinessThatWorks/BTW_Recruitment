@@ -83,11 +83,8 @@ frappe.ui.form.on("DKP_Candidate", {
 
 		const manual_fields = [
 			"department",
-			"email",
-			"mobile_number",
 			"gender",
 			"current_location",
-			"total_experience_years",
 			"highest_qualification",
 			"current_designation",
 			"current_company",

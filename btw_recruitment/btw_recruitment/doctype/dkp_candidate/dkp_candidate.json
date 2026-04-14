@@ -20,6 +20,7 @@
   "current_location",
   "marital_status",
   "total_experience_years",
+  "total_experience_months",
   "relevant_experience",
   "column_break_cjpe",
   "languages",
@@ -108,7 +109,7 @@
   },
   {
    "fieldname": "total_experience_years",
-   "fieldtype": "Float",
+   "fieldtype": "Int",
    "label": "Total Experience (Years)"
   },
   {
@@ -330,12 +331,17 @@
    "fieldname": "table_gcbt",
    "fieldtype": "Table",
    "options": "DKP_Candidate_Openings_Child"
+  },
+  {
+   "fieldname": "total_experience_months",
+   "fieldtype": "Int",
+   "label": "Total Experience (Months)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-09 18:02:22.259499",
+ "modified": "2026-04-14 14:25:17.457694",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Candidate",

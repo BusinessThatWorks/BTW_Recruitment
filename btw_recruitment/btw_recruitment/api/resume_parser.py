@@ -181,50 +181,99 @@ def process_resume(docname):
 	client = Anthropic(api_key=api_key)
 
 	# ── IMPROVED PROMPT ────────────────────────────────────────────────────────────────
+	# 	prompt = f"""
+	# You are a senior HR analytics resume parser.
+
+	# YOUR TASK:
+	# Extract structured information from this resume with HIGH ACCURACY.
+
+	# CRITICAL RULES:
+	# - Extract ONLY information that is EXPLICITLY stated in the resume
+	# - If a field is not mentioned, return null (not "N/A", "Not provided", or empty string)
+	# - For dates: Use YYYY-MM-DD format, or null if not mentioned
+	# - For lists: Return as arrays, even if only one item
+	# - Be precise with names, emails, phone numbers
+
+	# EXPERIENCE CALCULATION:
+	# - Calculate total years by looking at employment history
+	# - If dates are partial (only year), assume: start=January, end=December
+	# - "Present" means current month
+	# - Example: "Jan 2020 - Present" in March 2026 = 6.17 years
+
+	# Resume Text:
+	# ----------------
+	# {extracted_text}
+	# ----------------
+
+	# Return ONLY valid JSON (no markdown, no comments):
+	# {{
+	#   "candidate_name": null,
+	#   "email": null,
+	#   "mobile_number": null,
+	#   "alternate_mobile_number": null,
+	#   "current_location": null,
+	#   "total_experience_years": null,
+	#   "current_company": null,
+	#   "current_designation": null,
+	#   "skills": [],
+	#   "certifications": [],
+	#   "highest_qualification": null,
+	#   "institute": null,
+	#   "languages_known": [],
+	#   "date_of_birth": null,
+	#   "address": null,
+	#   "age": null
+	# }}
+	# """
 	prompt = f"""
-You are a senior HR analytics resume parser.
+	You are a senior HR analytics resume parser.
 
-YOUR TASK:
-Extract structured information from this resume with HIGH ACCURACY.
+	YOUR TASK:
+	Extract structured information from this resume with HIGH ACCURACY.
 
-CRITICAL RULES:
-- Extract ONLY information that is EXPLICITLY stated in the resume
-- If a field is not mentioned, return null (not "N/A", "Not provided", or empty string)
-- For dates: Use YYYY-MM-DD format, or null if not mentioned
-- For lists: Return as arrays, even if only one item
-- Be precise with names, emails, phone numbers
+	CRITICAL RULES:
+	- Extract ONLY information that is EXPLICITLY stated in the resume
+	- If a field is not mentioned, return null (not "N/A", "Not provided", or empty string)
+	- For dates: Use YYYY-MM-DD format, or null if not mentioned
+	- For lists: Return as arrays, even if only one item
+	- Be precise with names, emails, phone numbers
 
-EXPERIENCE CALCULATION:
-- Calculate total years by looking at employment history
-- If dates are partial (only year), assume: start=January, end=December
-- "Present" means current month
-- Example: "Jan 2020 - Present" in March 2026 = 6.17 years
+	EXPERIENCE CALCULATION:
+	- Calculate total experience by looking at ALL jobs in employment history
+	- "Present" means current month
+	- Split total experience into complete years and remaining months
+	- total_experience_years = floor(total_months / 12)  → Integer only
+	- total_experience_months = total_months % 12  → Integer only, 0 to 11
+	- Example: "Jan 2020 - Present" in April 2026 = 75 months → years: 6, months: 3
+	- Example: 2.5 years = 30 months → years: 2, months: 6
+	- NEVER return float for years or months
 
-Resume Text:
-----------------
-{extracted_text}
-----------------
+	Resume Text:
+	----------------
+	{extracted_text}
+	----------------
 
-Return ONLY valid JSON (no markdown, no comments):
-{{
-  "candidate_name": null,
-  "email": null,
-  "mobile_number": null,
-  "alternate_mobile_number": null,
-  "current_location": null,
-  "total_experience_years": null,
-  "current_company": null,
-  "current_designation": null,
-  "skills": [],
-  "certifications": [],
-  "highest_qualification": null,
-  "institute": null,
-  "languages_known": [],
-  "date_of_birth": null,
-  "address": null,
-  "age": null
-}}
-"""
+	Return ONLY valid JSON (no markdown, no comments):
+	{{
+	"candidate_name": null,
+	"email": null,
+	"mobile_number": null,
+	"alternate_mobile_number": null,
+	"current_location": null,
+	"total_experience_years": null,
+	"total_experience_months": null,
+	"current_company": null,
+	"current_designation": null,
+	"skills": [],
+	"certifications": [],
+	"highest_qualification": null,
+	"institute": null,
+	"languages_known": [],
+	"date_of_birth": null,
+	"address": null,
+	"age": null
+	}}
+	"""
 
 	response = client.messages.create(
 		model="claude-sonnet-4-20250514",  # Using Sonnet for better accuracy
@@ -253,6 +302,7 @@ Return ONLY valid JSON (no markdown, no comments):
 		"mobile_number",
 		"current_location",
 		"total_experience_years",
+		"total_experience_months",
 		"current_company",
 		"current_designation",
 		"skills",
@@ -286,6 +336,7 @@ Return ONLY valid JSON (no markdown, no comments):
 		"alternate_phone": "alternate_mobile_number",
 		"current_location": "current_location",
 		"total_experience_years": "total_experience_years",
+		"total_experience_months": "total_experience_months",
 		"current_company": "current_company",
 		"current_designation": "current_designation",
 		"skills_tags": "skills",
