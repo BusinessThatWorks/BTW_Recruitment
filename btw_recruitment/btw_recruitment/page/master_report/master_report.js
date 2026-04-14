@@ -392,8 +392,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 						(row) => `
             <tr>
                 <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
-                <td>${link(`/app/dkp-job-opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
-                <td>${link(`/app/dkp-candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
                 <td>${badge(row.mapping_stage, stage_color[row.mapping_stage] || "#95a5a6")}</td>
                 <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#bdc3c7")}</td>
                 <td style="color:#888;font-size:12px;">${row.recruiter_remarks || "—"}</td>
