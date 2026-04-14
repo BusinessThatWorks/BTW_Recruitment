@@ -938,11 +938,11 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		const columns = [
 			{ name: "#", width: 50 },
 			{ name: "Recruiter", width: 180 },
-			{ name: "Jobs Assigned", width: 120 },
-			{ name: "Candidates Submitted", width: 150 },
-			{ name: "Rejected", width: 100 },
-			{ name: "Interview", width: 100 },
-			{ name: "Joined", width: 80 },
+			{ name: "Total Jobs Assigned", width: 120 },
+			{ name: "Total Candidates Submitted", width: 150 },
+			{ name: "Total Rejected", width: 100 },
+			{ name: "All Interviews", width: 100 },
+			{ name: "Total Joined", width: 80 },
 			{
 				name: "Conversion %",
 				width: 100,
