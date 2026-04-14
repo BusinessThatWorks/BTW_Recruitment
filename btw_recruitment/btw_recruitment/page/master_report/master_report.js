@@ -73,7 +73,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		recruiter: null,
 		status: null,
 	};
-
+	let current_all_job_names = [];
+	let current_open_job_names = [];
 	// DOM REFERENCES
 	const $body = $(page.body);
 
@@ -270,59 +271,269 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	// ═══════════════════════════════════════════════════════════════════════
 
 	$body.find(".kpi-clickable").on("click", function (e) {
-		// Don't trigger if clicking on info icon
 		if ($(e.target).closest(".kpi-info").length) return;
 
 		const route = $(this).data("route");
+
+		// ✅ Helper to build date filter safely
+		function get_date_filter() {
+			if (state.from_date && state.to_date) {
+				return {
+					creation: ["between", [state.from_date, state.to_date]],
+				};
+			} else if (state.from_date) {
+				return { creation: [">=", state.from_date] };
+			} else if (state.to_date) {
+				return { creation: ["<=", state.to_date] };
+			}
+			return {}; // No date filter at all
+		}
 
 		switch (route) {
 			case "joined":
 				frappe.set_route("List", "DKP_Interview", {
 					stage: "Joined",
+					...get_date_filter(),
 				});
 				break;
 
 			case "joined-left":
 				frappe.set_route("List", "DKP_Interview", {
 					stage: "Joined And Left",
+					...get_date_filter(),
 				});
 				break;
 
 			case "open-jobs":
 				frappe.set_route("List", "DKP_Job_Opening", {
 					status: "Open",
+					...get_date_filter(),
 				});
 				break;
 
 			case "submitted":
-				// Route to Job Openings with Open status (candidates are in child table)
-				frappe.set_route("List", "DKP_Job_Opening", {
-					status: "Open",
-				});
+				// ✅ Will handle with dialog - Issue 2
+				show_submitted_dialog();
 				break;
 
 			case "rejected":
 				frappe.set_route("List", "DKP_Interview", {
 					stage: ["in", ["Rejected By Client"]],
+					...get_date_filter(),
 				});
 				break;
 
 			case "interview-pipeline":
-				frappe.set_route("List", "DKP_Interview", {
-					stage: [
-						"in",
-						["Selected For Offer", "Offered", "Offer Accepted"],
-					],
-				});
+				show_interview_pipeline_dialog(); // ✅ replaces frappe.set_route
 				break;
 
 			case "ageing-critical":
+				const thirty_days_ago = frappe.datetime.add_days(
+					frappe.datetime.get_today(),
+					-30,
+				);
 				frappe.set_route("List", "DKP_Job_Opening", {
 					status: "Open",
+					creation: ["<=", thirty_days_ago], // ✅ 30 days se purane
 				});
 				break;
 		}
 	});
+	function show_submitted_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_submitted_candidates_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_submitted_dialog(data);
+			},
+		});
+	}
+
+	function render_submitted_dialog(data) {
+		const stage_color = {
+			"Submitted To Client": "#5e64ff",
+			"Client Screening Rejected": "#e74c3c",
+			"Schedule Interview": "#f39c12",
+			"No Response": "#95a5a6",
+		};
+
+		const int_color = {
+			"Selected For Offer": "#27ae60",
+			Offered: "#2980b9",
+			"Offer Accepted": "#1abc9c",
+			"Offer Declined": "#e74c3c",
+			Joined: "#27ae60",
+			"Joined And Left": "#e67e22",
+			"Rejected By Client": "#e74c3c",
+			"Interview No Show": "#95a5a6",
+		};
+
+		function badge(label, color) {
+			if (!label) return `<span class="text-muted">—</span>`;
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+                border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+		}
+
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+                   style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp-job-opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/dkp-candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
+                <td>${badge(row.mapping_stage, stage_color[row.mapping_stage] || "#95a5a6")}</td>
+                <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#bdc3c7")}</td>
+                <td style="color:#888;font-size:12px;">${row.recruiter_remarks || "—"}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="6" class="text-center text-muted"
+               style="padding:30px 0;">No submitted candidates found.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> candidates
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:800px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                        <th>Company</th>
+                        <th>Job Opening</th>
+                        <th>Candidate</th>
+                        <th>Mapping Stage</th>
+                        <th>Interview Stage</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Submitted Candidates (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
+	// frontend
+	function show_interview_pipeline_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_interview_pipeline_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_interview_pipeline_dialog(data);
+			},
+		});
+	}
+
+	function render_interview_pipeline_dialog(data) {
+		const int_color = {
+			"Selected For Offer": "#f39c12",
+			Offered: "#2980b9",
+			"Offer Accepted": "#1abc9c",
+		};
+
+		function badge(label, color) {
+			if (!label) return `<span class="text-muted">—</span>`;
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+                border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+		}
+
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+                   style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
+                <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#95a5a6")}</td>
+                <td style="color:#888;font-size:12px;">${row.offered_amount ? "₹" + row.offered_amount.toLocaleString() : "—"}</td>
+                <td style="color:#888;font-size:12px;">${row.joining_date || "—"}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="6" class="text-center text-muted"
+               style="padding:30px 0;">No candidates in pipeline.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> candidates in pipeline
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:750px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                        <th>Company</th>
+                        <th>Job Opening</th>
+                        <th>Candidate</th>
+                        <th>Stage</th>
+                        <th>Offered Amount</th>
+                        <th>Joining Date</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Interview Pipeline (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
 	// ═══════════════════════════════════════════════════════════════════════
 	// QUICK DATE BUTTONS
 	// ═══════════════════════════════════════════════════════════════════════
@@ -403,6 +614,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				$kpi_rejected.text(k.total_rejected || 0);
 				$kpi_interview.text(k.interview_pipeline || 0);
 				$kpi_ageing_critical.text(k.ageing_critical || 0);
+				current_all_job_names = k.all_job_names || [];
+				current_open_job_names = k.open_job_names || [];
 			},
 		});
 	}

@@ -2,7 +2,7 @@
 
 import frappe
 from frappe import _
-from frappe.utils import cint, date_diff, flt, getdate, nowdate
+from frappe.utils import add_days, cint, date_diff, flt, getdate, nowdate
 
 # @frappe.whitelist()
 # def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=None, status=None):
@@ -212,10 +212,95 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 		# OPEN Jobs KPIs
 		"open_jobs": open_jobs,
 		"total_submitted": total_submitted,
-		"total_rejected": total_rejected,
 		"interview_pipeline": interview_pipeline,
 		"ageing_critical": ageing_critical,
+		# 🔥 ADD THIS
+		"all_job_names": all_job_names,
+		"open_job_names": open_job_names,
+		"total_rejected": total_rejected,
+		"screening_rejected": cint(submitted_data.get("child_rejected", 0)) if open_job_names else 0,
+		"interview_rejected": cint(interview_data.get("interview_rejected", 0)) if open_job_names else 0,
 	}
+
+
+@frappe.whitelist()
+def get_submitted_candidates_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get detailed submitted candidates for dialog"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter, status="Open")
+	jobs = get_filtered_jobs(filters)
+	open_job_names = [j.name for j in jobs if j.status == "Open"]
+
+	if not open_job_names:
+		return []
+
+	data = frappe.db.sql(
+		"""
+        SELECT
+            child.name as child_id,
+            child.parent as job_opening,
+            child.candidate_name as candidate,
+            child.stage as mapping_stage,
+            child.remarks as recruiter_remarks,
+            job.designation,
+            job.company_name,
+            COALESCE(interview.stage, '') as interview_stage,
+            interview.name as interview_id
+        FROM `tabDKP_JobApplication_Child` child
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = child.parent
+        LEFT JOIN `tabDKP_Interview` interview
+            ON interview.job_opening = child.parent
+            AND interview.candidate_name = child.candidate_name
+        WHERE child.parent IN %(job_names)s
+        ORDER BY job.company_name, child.parent, child.candidate_name
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	return data
+
+
+# backend
+@frappe.whitelist()
+def get_interview_pipeline_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get interview pipeline candidates scoped to dashboard filters"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter, status="Open")
+	jobs = get_filtered_jobs(filters)
+	open_job_names = [j.name for j in jobs if j.status == "Open"]
+
+	if not open_job_names:
+		return []
+
+	data = frappe.db.sql(
+		"""
+        SELECT
+            i.name as interview_id,
+            i.candidate_name as candidate,
+            i.job_opening,
+            i.stage as interview_stage,
+            i.joining_date,
+            i.offered_amount,
+            job.designation,
+            job.company_name
+        FROM `tabDKP_Interview` i
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = i.job_opening
+        WHERE i.job_opening IN %(job_names)s
+        AND i.stage IN (
+            'Selected For Offer',
+            'Offered',
+            'Offer Accepted'
+        )
+        ORDER BY job.company_name, i.stage
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	return data
 
 
 @frappe.whitelist()
@@ -562,8 +647,8 @@ def get_filtered_jobs(filter_dict):
 		values["from_date"] = from_date
 
 	if to_date:
-		conditions.append("jo.creation <= %(to_date)s")
-		values["to_date"] = to_date
+		conditions.append("jo.creation < %(to_date)s")
+		values["to_date"] = add_days(to_date, 1)
 
 	# ✅ FIXED: Changed 'recruiter' to 'recruiter_name' in JOIN
 	recruiter_join = ""
