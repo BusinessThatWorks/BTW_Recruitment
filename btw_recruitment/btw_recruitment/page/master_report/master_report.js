@@ -911,6 +911,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				to_date: state.to_date,
 				company: state.company,
 				recruiter: state.recruiter,
+				status: state.status, // ← ADD THIS
 			},
 			callback(r) {
 				const data = r.message || [];
@@ -1008,6 +1009,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				to_date: state.to_date,
 				company: state.company,
 				recruiter: state.recruiter,
+				status: state.status, // ← ADD THIS
 			},
 			callback(r) {
 				const data = r.message || [];
