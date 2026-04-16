@@ -224,6 +224,104 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 
 
 @frappe.whitelist()
+def get_open_jobs_detail(from_date=None, to_date=None, company=None, recruiter=None, status=None):
+	"""Get open jobs detail for dialog"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter, status)
+	jobs = get_filtered_jobs(filters)
+
+	# Status filter dialog ke liye
+	# Agar status filter hai toh wahi dikhao, warna sirf Open
+	if status:
+		filtered_jobs = [j for j in jobs if j.status == status]
+	else:
+		filtered_jobs = [j for j in jobs if j.status == "Open"]
+
+	if not filtered_jobs:
+		return []
+
+	job_names = [j.name for j in filtered_jobs]
+
+	# Recruiters fetch karo - child table se
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": job_names},
+		as_dict=True,
+	)
+
+	# Dict banao - job_name → recruiters string
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Final data prepare karo
+	today = frappe.utils.nowdate()
+	result = []
+
+	for job in filtered_jobs:
+		days_open = frappe.utils.date_diff(today, job.creation)
+		result.append(
+			{
+				"job_opening": job.name,
+				"company_name": job.company_name,
+				"designation": job.designation,
+				"status": job.status,
+				"recruiters": recruiter_map.get(job.name, "—"),
+				"days_open": days_open,
+				"priority": job.priority or "—",
+			}
+		)
+
+	# Sort by days_open descending (purane pehle)
+	result.sort(key=lambda x: x["days_open"], reverse=True)
+
+	return result
+
+
+# @frappe.whitelist()
+# def get_submitted_candidates_detail(from_date=None, to_date=None, company=None, recruiter=None):
+# 	"""Get detailed submitted candidates for dialog"""
+
+# 	filters = build_job_filters(from_date, to_date, company, recruiter, status="Open")
+# 	jobs = get_filtered_jobs(filters)
+# 	open_job_names = [j.name for j in jobs if j.status == "Open"]
+
+# 	if not open_job_names:
+# 		return []
+
+# 	data = frappe.db.sql(
+# 		"""
+#         SELECT
+#             child.name as child_id,
+#             child.parent as job_opening,
+#             child.candidate_name as candidate,
+#             child.stage as mapping_stage,
+#             child.remarks as recruiter_remarks,
+#             job.designation,
+#             job.company_name,
+#             COALESCE(interview.stage, '') as interview_stage,
+#             interview.name as interview_id
+#         FROM `tabDKP_JobApplication_Child` child
+#         LEFT JOIN `tabDKP_Job_Opening` job
+#             ON job.name = child.parent
+#         LEFT JOIN `tabDKP_Interview` interview
+#             ON interview.job_opening = child.parent
+#             AND interview.candidate_name = child.candidate_name
+#         WHERE child.parent IN %(job_names)s
+#         ORDER BY job.company_name, child.parent, child.candidate_name
+#         """,
+# 		{"job_names": open_job_names},
+# 		as_dict=True,
+# 	)
+
+
+# 	return data
+@frappe.whitelist()
 def get_submitted_candidates_detail(from_date=None, to_date=None, company=None, recruiter=None):
 	"""Get detailed submitted candidates for dialog"""
 
@@ -234,6 +332,24 @@ def get_submitted_candidates_detail(from_date=None, to_date=None, company=None, 
 	if not open_job_names:
 		return []
 
+	# Step 1: Job wise assigned recruiters fetch karo
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	# Dict banao - job_name → recruiters string
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Step 2: Candidates data fetch karo
 	data = frappe.db.sql(
 		"""
         SELECT
@@ -259,6 +375,10 @@ def get_submitted_candidates_detail(from_date=None, to_date=None, company=None, 
 		as_dict=True,
 	)
 
+	# Step 3: Har row mein assigned recruiters inject karo
+	for row in data:
+		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+
 	return data
 
 
@@ -274,6 +394,24 @@ def get_interview_pipeline_detail(from_date=None, to_date=None, company=None, re
 	if not open_job_names:
 		return []
 
+	# Step 1: Job wise assigned recruiters fetch karo
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	# Dict banao - job_name → recruiters string
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Step 2: Interview pipeline data fetch karo
 	data = frappe.db.sql(
 		"""
         SELECT
@@ -300,7 +438,337 @@ def get_interview_pipeline_detail(from_date=None, to_date=None, company=None, re
 		as_dict=True,
 	)
 
+	# Step 3: Har row mein assigned recruiters inject karo
+	for row in data:
+		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+
 	return data
+
+
+@frappe.whitelist()
+def get_joined_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get joined candidates detail for dialog"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter)
+	jobs = get_filtered_jobs(filters)
+	all_job_names = [j.name for j in jobs]
+
+	if not all_job_names:
+		return []
+
+	# Step 1: Job wise assigned recruiters fetch karo
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
+
+	# Dict banao - job_name → recruiters string
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Step 2: Joined candidates fetch karo
+	data = frappe.db.sql(
+		"""
+        SELECT
+            i.name as interview_id,
+            i.candidate_name as candidate,
+            i.job_opening,
+            i.stage,
+            i.joining_date,
+            i.offered_amount,
+            job.company_name,
+            job.designation
+        FROM `tabDKP_Interview` i
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = i.job_opening
+        WHERE i.job_opening IN %(job_names)s
+        AND i.stage = 'Joined'
+        ORDER BY i.joining_date DESC
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
+
+	# Step 3: Har row mein assigned recruiters inject karo
+	for row in data:
+		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+
+	return data
+
+
+@frappe.whitelist()
+def get_joined_left_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get joined and left candidates detail for dialog"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter)
+	jobs = get_filtered_jobs(filters)
+	all_job_names = [j.name for j in jobs]
+
+	if not all_job_names:
+		return []
+
+	# Step 1: Job wise assigned recruiters fetch karo
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
+
+	# Dict banao - job_name → recruiters string
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Step 2: Joined and left candidates fetch karo
+	data = frappe.db.sql(
+		"""
+        SELECT
+            i.name as interview_id,
+            i.candidate_name as candidate,
+            i.job_opening,
+            i.stage,
+            i.joining_date,
+            i.candidate_left_date,
+            i.days_before_left,
+            i.within_replacement_policy,
+            i.offered_amount,
+            job.company_name,
+            job.designation
+        FROM `tabDKP_Interview` i
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = i.job_opening
+        WHERE i.job_opening IN %(job_names)s
+        AND i.stage = 'Joined And Left'
+        ORDER BY i.candidate_left_date DESC
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
+
+	# Step 3: Har row mein assigned recruiters inject karo
+	for row in data:
+		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+
+	return data
+
+
+@frappe.whitelist()
+def get_rejected_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get rejected candidates detail for dialog - both sources"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter)
+	jobs = get_filtered_jobs(filters)
+	open_job_names = [j.name for j in jobs if j.status == "Open"]
+
+	if not open_job_names:
+		return []
+
+	# Step 1: Job wise recruiters fetch karo
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	# Dict banao - job_name → recruiters string
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Source 1: Rejected By Client - DKP_Interview table se
+	interview_rejected = frappe.db.sql(
+		"""
+        SELECT
+            i.name as interview_id,
+            i.candidate_name as candidate,
+            i.job_opening,
+            job.company_name,
+            job.designation,
+            'Rejected By Client' as rejection_source,
+            'Interview' as source_type
+        FROM `tabDKP_Interview` i
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = i.job_opening
+        WHERE i.job_opening IN %(job_names)s
+        AND i.stage = 'Rejected By Client'
+        ORDER BY job.company_name, i.candidate_name
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	# Source 2: Client Screening Rejected - DKP_JobApplication_Child se
+	screening_rejected = frappe.db.sql(
+		"""
+        SELECT
+            child.name as interview_id,
+            child.candidate_name as candidate,
+            child.parent as job_opening,
+            job.company_name,
+            job.designation,
+            'Client Screening Rejected' as rejection_source,
+            'Screening' as source_type
+        FROM `tabDKP_JobApplication_Child` child
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = child.parent
+        WHERE child.parent IN %(job_names)s
+        AND child.stage = 'Client Screening Rejected'
+        ORDER BY job.company_name, child.candidate_name
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	# Dono combine karo
+	all_rejected = list(interview_rejected) + list(screening_rejected)
+
+	# Har row mein job opening ke assigned recruiters inject karo
+	for row in all_rejected:
+		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+
+	# Sort by company_name
+	all_rejected.sort(key=lambda x: (x.get("company_name") or "", x.get("candidate") or ""))
+
+	return all_rejected
+
+
+# @frappe.whitelist()
+# def get_ageing_critical_detail(from_date=None, to_date=None, company=None, recruiter=None):
+#     """Get ageing critical jobs detail for dialog - Open jobs older than 30 days"""
+
+#     filters = build_job_filters(from_date, to_date, company, recruiter)
+#     jobs = get_filtered_jobs(filters)
+#     open_jobs = [j for j in jobs if j.status == "Open"]
+
+#     if not open_jobs:
+#         return []
+
+#     today = frappe.utils.nowdate()
+#     critical_jobs = []
+
+#     for job in open_jobs:
+#         days_open = frappe.utils.date_diff(today, job.creation)
+#         if days_open > 30:
+#             critical_jobs.append(job)
+
+#     if not critical_jobs:
+#         return []
+
+#     critical_job_names = [j.name for j in critical_jobs]
+
+#     # Recruiters fetch karo
+#     recruiters_data = frappe.db.sql(
+#         """
+#         SELECT
+#             parent,
+#             GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+#         FROM `tabDKP_JobOpeningRecruiter_Child`
+#         WHERE parent IN %(job_names)s
+#         GROUP BY parent
+#         """,
+#         {"job_names": critical_job_names},
+#         as_dict=True,
+#     )
+
+#     recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+#     result = []
+#     for job in critical_jobs:
+#         days_open = frappe.utils.date_diff(today, job.creation)
+#         result.append({
+#             "job_opening": job.name,
+#             "company_name": job.company_name,
+#             "designation": job.designation,
+#             "status": job.status,
+#             "recruiters": recruiter_map.get(job.name, "—"),
+#             "days_open": days_open,
+#             "priority": job.priority or "—",
+#             "creation": str(job.creation)[:10],
+#         })
+
+#     # Sort by days_open descending - sabse purana pehle
+#     result.sort(key=lambda x: x["days_open"], reverse=True)
+
+#     return result
+
+
+@frappe.whitelist()
+def get_ageing_critical_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get ageing critical jobs detail for dialog - Open jobs older than 30 days"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter)
+	jobs = get_filtered_jobs(filters)
+	open_jobs = [j for j in jobs if j.status == "Open"]
+
+	if not open_jobs:
+		return []
+
+	today = frappe.utils.nowdate()
+	critical_jobs = []
+
+	for job in open_jobs:
+		days_open = frappe.utils.date_diff(today, job.creation)
+		if days_open > 30:
+			critical_jobs.append(job)
+
+	if not critical_jobs:
+		return []
+
+	critical_job_names = [j.name for j in critical_jobs]
+
+	# Recruiters fetch karo
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": critical_job_names},
+		as_dict=True,
+	)
+
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	result = []
+	for job in critical_jobs:
+		days_open = frappe.utils.date_diff(today, job.creation)
+		result.append(
+			{
+				"job_opening": job.name,
+				"company_name": job.company_name,
+				"designation": job.designation,
+				"status": job.status,
+				"recruiters": recruiter_map.get(job.name, "—"),
+				"days_open": days_open,
+				"priority": job.priority or "—",
+				"creation": str(job.creation)[:10],
+			}
+		)
+
+	# Sort by days_open descending - sabse purana pehle
+	result.sort(key=lambda x: x["days_open"], reverse=True)
+
+	return result
 
 
 @frappe.whitelist()

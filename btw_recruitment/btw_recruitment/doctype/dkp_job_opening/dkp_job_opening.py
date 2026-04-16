@@ -365,6 +365,8 @@ class DKP_Job_Opening(Document):
 			if row.is_new() and not row.added_by:
 				row.added_by = frappe.session.user
 
+		self.delete_interviews_for_removed_candidates()
+
 	def sync_candidate_openings(self):
 		"""
 		Sync candidates tagged in this Job Opening to their respective
@@ -502,6 +504,51 @@ class DKP_Job_Opening(Document):
 			self.name,
 		)
 		frappe.db.commit()
+
+	# def before_save(self):
+
+	def delete_interviews_for_removed_candidates(self):
+		"""Delete linked interviews when candidate row is removed from opening"""
+
+		old_doc = self.get_doc_before_save()
+		if not old_doc:
+			return
+
+		# Old rows ka set - interview link ke saath
+		old_rows = {
+			row.name: row.interview
+			for row in old_doc.candidates_table
+			if row.interview  # sirf jinke paas interview linked hai
+		}
+
+		# Current rows ka set
+		current_row_names = {row.name for row in self.candidates_table}
+
+		# Jo rows ab nahi hain → deleted rows
+		deleted_row_names = set(old_rows.keys()) - current_row_names
+
+		for row_name in deleted_row_names:
+			interview_name = old_rows[row_name]
+
+			if not interview_name:
+				continue
+
+			if not frappe.db.exists("DKP_Interview", interview_name):
+				continue
+
+			try:
+				frappe.delete_doc(
+					"DKP_Interview",
+					interview_name,
+					ignore_permissions=True,
+					force=True,  # linked docs se bhi delete
+				)
+				frappe.msgprint(f"🗑️ Interview deleted: {interview_name}", alert=True)
+			except Exception as e:
+				frappe.log_error(
+					f"Failed to delete interview {interview_name}: {e}", "Interview Delete Error"
+				)
+				frappe.msgprint(f"⚠️ Could not delete interview {interview_name}: {e}", alert=True)
 
 
 @frappe.whitelist()

@@ -291,24 +291,15 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 
 		switch (route) {
 			case "joined":
-				frappe.set_route("List", "DKP_Interview", {
-					stage: "Joined",
-					...get_date_filter(),
-				});
+				show_joined_dialog();
 				break;
 
 			case "joined-left":
-				frappe.set_route("List", "DKP_Interview", {
-					stage: "Joined And Left",
-					...get_date_filter(),
-				});
+				show_joined_left_dialog();
 				break;
 
 			case "open-jobs":
-				frappe.set_route("List", "DKP_Job_Opening", {
-					status: "Open",
-					...get_date_filter(),
-				});
+				show_open_jobs_dialog();
 				break;
 
 			case "submitted":
@@ -317,10 +308,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				break;
 
 			case "rejected":
-				frappe.set_route("List", "DKP_Interview", {
-					stage: ["in", ["Rejected By Client"]],
-					...get_date_filter(),
-				});
+				show_rejected_dialog();
 				break;
 
 			case "interview-pipeline":
@@ -328,17 +316,140 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				break;
 
 			case "ageing-critical":
-				const thirty_days_ago = frappe.datetime.add_days(
-					frappe.datetime.get_today(),
-					-30,
-				);
-				frappe.set_route("List", "DKP_Job_Opening", {
-					status: "Open",
-					creation: ["<=", thirty_days_ago], // ✅ 30 days se purane
-				});
+				show_ageing_critical_dialog();
 				break;
 		}
 	});
+	// ═══════════════════════════════════════════════
+	// OPEN JOBS DIALOG
+	// ═══════════════════════════════════════════════
+
+	function show_open_jobs_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_open_jobs_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+				status: state.status,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_open_jobs_dialog(data);
+			},
+		});
+	}
+
+	function render_open_jobs_dialog(data) {
+		// Priority colors
+		const priority_color = {
+			Critical: "#e74c3c",
+			High: "#e67e22",
+			Medium: "#f39c12",
+			Low: "#95a5a6",
+		};
+
+		// Days open badge color
+		function days_badge(days) {
+			let color = "#27ae60"; // green - fresh
+			if (days > 30)
+				color = "#e74c3c"; // red - critical
+			else if (days > 15) color = "#e67e22"; // orange - warning
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+            border-radius:10px;font-size:11px;font-weight:600;">${days}d</span>`;
+		}
+
+		function priority_badge(label) {
+			if (!label || label === "—")
+				return `<span class="text-muted">—</span>`;
+			const color = priority_color[label] || "#95a5a6";
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+            border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+		}
+
+		function status_badge(label) {
+			const color_map = {
+				Open: "#27ae60",
+				"On Hold": "#f39c12",
+				"Closed – Hired": "#2980b9",
+				"Closed – Cancelled": "#e74c3c",
+			};
+			const color = color_map[label] || "#95a5a6";
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+            border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+		}
+
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+                   style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+                <td>${link(
+					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+					row.job_opening,
+				)}</td>
+                <td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+                <td>${row.designation || "—"}</td>
+                <td>${status_badge(row.status)}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiters || "—"}</td>
+                <td>${days_badge(row.days_open)}</td>
+                <td>${priority_badge(row.priority)}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="7" class="text-center text-muted"
+               style="padding:30px 0;">No open jobs found.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> jobs
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:900px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                        <th>Job Opening</th>
+                        <th>Company</th>
+                        <th>Designation</th>
+                        <th>Status</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Ageing</th>
+                        <th>Priority</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Open Jobs (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
 	function show_submitted_dialog() {
 		frappe.call({
 			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_submitted_candidates_detail",
@@ -377,7 +488,119 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		function badge(label, color) {
 			if (!label) return `<span class="text-muted">—</span>`;
 			return `<span style="background:${color};color:#fff;padding:2px 8px;
-                border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+            border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+		}
+
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+               style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+
+                <td>${link(
+					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+					row.job_opening,
+				)}</td>
+				<td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+                <td>${link(
+					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+					row.candidate,
+				)}</td>
+                <td>${badge(
+					row.mapping_stage,
+					stage_color[row.mapping_stage] || "#95a5a6",
+				)}</td>
+                <td>${badge(
+					row.interview_stage,
+					int_color[row.interview_stage] || "#bdc3c7",
+				)}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+                <td style="color:#888;font-size:12px;">${row.recruiter_remarks || "—"}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="7" class="text-center text-muted"
+               style="padding:30px 0;">No submitted candidates found.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> candidates
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:900px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                    <th>Job Opening</th>
+					<th>Company</th>
+                        <th>Candidate</th>
+                        <th>Mapping Stage</th>
+                <th>Interview Stage</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Submitted Candidates (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
+	// ═══════════════════════════════════════════════
+	// REJECTED DIALOG
+	// ═══════════════════════════════════════════════
+
+	function show_rejected_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_rejected_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_rejected_dialog(data);
+			},
+		});
+	}
+
+	function render_rejected_dialog(data) {
+		// Rejection source badge
+		function source_badge(source) {
+			const color_map = {
+				"Rejected By Client": "#e74c3c",
+				"Client Screening Rejected": "#e67e22",
+			};
+			const color = color_map[source] || "#95a5a6";
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+            border-radius:10px;font-size:11px;white-space:nowrap;">${source}</span>`;
 		}
 
 		function link(href, label) {
@@ -391,33 +614,42 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
-                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
-                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
-                <td>${badge(row.mapping_stage, stage_color[row.mapping_stage] || "#95a5a6")}</td>
-                <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#bdc3c7")}</td>
-                <td style="color:#888;font-size:12px;">${row.recruiter_remarks || "—"}</td>
+                <td>${link(
+					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+					row.job_opening,
+				)}</td>
+                <td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+                <td>${link(
+					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+					row.candidate,
+				)}</td>
+                <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+                <td>${source_badge(row.rejection_source)}</td>
             </tr>`,
 					)
 					.join("")
 			: `<tr><td colspan="6" class="text-center text-muted"
-               style="padding:30px 0;">No submitted candidates found.</td></tr>`;
+               style="padding:30px 0;">No rejected candidates found.</td></tr>`;
 
 		const table_html = `
         <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> candidates
+            Showing <strong>${data.length}</strong> rejected candidates
         </div>
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
-                   style="font-size:13px;margin:0;min-width:800px;">
+                   style="font-size:13px;margin:0;min-width:850px;">
                 <thead>
                     <tr style="background:#f5f7fa;">
-                        <th>Company</th>
                         <th>Job Opening</th>
+                        <th>Company</th>
                         <th>Candidate</th>
-                        <th>Mapping Stage</th>
-                        <th>Interview Stage</th>
-                        <th>Remarks</th>
+                        <th>Designation</th>
+                        <th>Assigned Recruiter</th>
+                        <th>Rejection Type</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -425,7 +657,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
         </div>`;
 
 		const dialog = new frappe.ui.Dialog({
-			title: `Submitted Candidates (${data.length})`,
+			title: `Rejected Candidates (${data.length})`,
 			size: "extra-large",
 			fields: [
 				{
@@ -469,7 +701,132 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		function badge(label, color) {
 			if (!label) return `<span class="text-muted">—</span>`;
 			return `<span style="background:${color};color:#fff;padding:2px 8px;
-                border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+            border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+		}
+
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+               style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+			<td>${link(
+				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+				row.job_opening,
+			)}</td>
+                <td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+
+                <td>${link(
+					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+					row.candidate,
+				)}</td>
+                <td>${badge(
+					row.interview_stage,
+					int_color[row.interview_stage] || "#95a5a6",
+				)}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+                <td style="color:#888;font-size:12px;">${
+					row.offered_amount
+						? "₹" + Number(row.offered_amount).toLocaleString()
+						: "—"
+				}</td>
+                <td style="color:#888;font-size:12px;">${row.joining_date || "—"}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="7" class="text-center text-muted"
+               style="padding:30px 0;">No candidates in pipeline.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> candidates in pipeline
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:900px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                    <th>Job Opening</th>
+					<th>Company</th>
+                        <th>Candidate</th>
+                        <th>Stage</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Offered Amount</th>
+                        <th>Joining Date</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Interview Pipeline (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
+	// ═══════════════════════════════════════════════
+	// AGEING CRITICAL DIALOG
+	// ═══════════════════════════════════════════════
+
+	function show_ageing_critical_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_ageing_critical_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_ageing_critical_dialog(data);
+			},
+		});
+	}
+
+	function render_ageing_critical_dialog(data) {
+		const priority_color = {
+			Critical: "#e74c3c",
+			High: "#e67e22",
+			Medium: "#f39c12",
+			Low: "#95a5a6",
+		};
+
+		function days_badge(days) {
+			// Ageing critical - sab 30+ days ke hain
+			let color = "#e74c3c"; // red - 30+ days
+			if (days > 60) color = "#8e44ad"; // purple - 60+ days very critical
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+            border-radius:10px;font-size:11px;font-weight:600;">${days}d</span>`;
+		}
+
+		function priority_badge(label) {
+			if (!label || label === "—")
+				return `<span class="text-muted">—</span>`;
+			const color = priority_color[label] || "#95a5a6";
+			return `<span style="background:${color};color:#fff;padding:2px 8px;
+            border-radius:10px;font-size:11px;">${label}</span>`;
 		}
 
 		function link(href, label) {
@@ -483,33 +840,41 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
-                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
-                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
-                <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#95a5a6")}</td>
-                <td style="color:#888;font-size:12px;">${row.offered_amount ? "₹" + row.offered_amount.toLocaleString() : "—"}</td>
-                <td style="color:#888;font-size:12px;">${row.joining_date || "—"}</td>
+                <td>${link(
+					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+					row.job_opening,
+				)}</td>
+                <td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+                <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiters || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.creation || "—"}</td>
+                <td>${days_badge(row.days_open)}</td>
+                <td>${priority_badge(row.priority)}</td>
             </tr>`,
 					)
 					.join("")
-			: `<tr><td colspan="6" class="text-center text-muted"
-               style="padding:30px 0;">No candidates in pipeline.</td></tr>`;
+			: `<tr><td colspan="7" class="text-center text-muted"
+               style="padding:30px 0;">No critical ageing jobs found.</td></tr>`;
 
 		const table_html = `
         <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> candidates in pipeline
+            Showing <strong>${data.length}</strong> jobs open for more than 30 days
         </div>
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
-                   style="font-size:13px;margin:0;min-width:750px;">
+                   style="font-size:13px;margin:0;min-width:950px;">
                 <thead>
-                    <tr style="background:#f5f7fa;">
-                        <th>Company</th>
+                    <tr style="background:#fff3f3;">
                         <th>Job Opening</th>
-                        <th>Candidate</th>
-                        <th>Stage</th>
-                        <th>Offered Amount</th>
-                        <th>Joining Date</th>
+                        <th>Company</th>
+                        <th>Designation</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Posted On</th>
+                        <th>Days Open</th>
+                        <th>Priority</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -517,7 +882,211 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
         </div>`;
 
 		const dialog = new frappe.ui.Dialog({
-			title: `Interview Pipeline (${data.length})`,
+			title: `⚠️ Ageing Critical Jobs (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
+	// ═══════════════════════════════════════════════
+	// JOINED DIALOG
+	// ═══════════════════════════════════════════════
+
+	function show_joined_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_joined_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_joined_dialog(data);
+			},
+		});
+	}
+
+	function render_joined_dialog(data) {
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+                   style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+                <td>${link(
+					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+					row.job_opening,
+				)}</td>
+                <td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+                <td>${link(
+					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+					row.candidate,
+				)}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.joining_date || "—"}</td>
+                <td style="color:#555;font-size:12px;">${
+					row.offered_amount
+						? "₹" + Number(row.offered_amount).toLocaleString()
+						: "—"
+				}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="6" class="text-center text-muted"
+               style="padding:30px 0;">No joined candidates found.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> joined candidates
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:850px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                        <th>Job Opening</th>
+                        <th>Company</th>
+                        <th>Candidate</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Joining Date</th>
+                        <th>Offered Amount (Yearly)</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Joined Candidates (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+	}
+
+	// ═══════════════════════════════════════════════
+	// JOINED AND LEFT DIALOG
+	// ═══════════════════════════════════════════════
+
+	function show_joined_left_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_joined_left_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_joined_left_dialog(data);
+			},
+		});
+	}
+
+	function render_joined_left_dialog(data) {
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+                   style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		function replacement_badge(within_policy) {
+			if (within_policy === 1 || within_policy === true) {
+				return `<span style="background:#27ae60;color:#fff;padding:2px 8px;
+                border-radius:10px;font-size:11px;">Within Policy</span>`;
+			}
+			return `<span style="background:#e74c3c;color:#fff;padding:2px 8px;
+                border-radius:10px;font-size:11px;">Outside Policy</span>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+                <td>${link(
+					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+					row.job_opening,
+				)}</td>
+                <td>${link(
+					`/app/customer/${encodeURIComponent(row.company_name)}`,
+					row.company_name,
+				)}</td>
+                <td>${link(
+					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+					row.candidate,
+				)}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.joining_date || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.candidate_left_date || "—"}</td>
+                <td style="text-align:center;">
+                    ${row.days_before_left != null ? row.days_before_left + "d" : "—"}
+                </td>
+                <td>${replacement_badge(row.within_replacement_policy)}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="8" class="text-center text-muted"
+               style="padding:30px 0;">No candidates found.</td></tr>`;
+
+		const table_html = `
+        <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            Showing <strong>${data.length}</strong> candidates who joined and left
+        </div>
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:950px;">
+                <thead>
+                    <tr style="background:#f5f7fa;">
+                        <th>Job Opening</th>
+                        <th>Company</th>
+                        <th>Candidate</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Joining Date</th>
+                        <th>Left Date</th>
+                        <th>Days Stayed</th>
+                        <th>Replacement Policy</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Joined And Left (${data.length})`,
 			size: "extra-large",
 			fields: [
 				{
