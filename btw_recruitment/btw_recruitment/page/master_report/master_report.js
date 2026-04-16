@@ -1430,14 +1430,15 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 
 		const columns = [
 			{ name: "#", width: 50 },
-			{ name: "Company", width: 200 },
-			{ name: "Open Jobs", width: 100 },
-			{ name: "Total Positions", width: 120 },
-			{ name: "Submitted", width: 100 },
-			{ name: "Rejected", width: 100 },
-			{ name: "Interview", width: 100 },
+			{ name: "Company", width: 180 },
+			{ name: "Assigned Recruiter(s)", width: 180 },
+			{ name: "Open Jobs", width: 90 },
+			{ name: "Total Positions", width: 110 },
+			{ name: "Submitted", width: 90 },
+			{ name: "Rejected", width: 90 },
+			{ name: "Interview", width: 90 },
 			{ name: "Joined", width: 80 },
-			{ name: "Joined & Left", width: 80 },
+			{ name: "Joined & Left", width: 90 },
 			{
 				name: "Conversion %",
 				width: 100,
@@ -1455,6 +1456,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		const tableData = rows.map((row, index) => [
 			index + 1,
 			row.company_name || "",
+			row.recruiters || "—",
 			row.open_jobs || 0,
 			row.total_positions || 0,
 			row.submitted || 0,

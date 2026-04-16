@@ -840,6 +840,109 @@ def get_master_report(from_date=None, to_date=None, company=None, recruiter=None
 	return result
 
 
+# @frappe.whitelist()
+# def get_company_summary(from_date=None, to_date=None, company=None, recruiter=None, status=None):
+# 	"""Get company-wise summary"""
+
+# 	filters = build_job_filters(from_date, to_date, company, recruiter, status)
+# 	jobs = get_filtered_jobs(filters)
+
+# 	if not jobs:
+# 		return []
+
+# 	all_job_names = [j.name for j in jobs]
+
+# 	# Company wise job info pehle banao
+# 	company_data = {}
+# 	for job in jobs:
+# 		company_name = job.company_name
+# 		if company_name not in company_data:
+# 			company_data[company_name] = {
+# 				"company_name": company_name,
+# 				"open_jobs": 0,
+# 				"total_positions": 0,
+# 				"submitted": 0,
+# 				"rejected": 0,
+# 				"interview_pipeline": 0,
+# 				"joined": 0,
+# 				"replaced": 0,
+# 			}
+# 		if job.status == "Open":
+# 			company_data[company_name]["open_jobs"] += 1
+
+# 		company_data[company_name]["total_positions"] += cint(job.number_of_positions)
+
+# 	# Single query - child stats company wise
+# 	child_stats = frappe.db.sql(
+# 		"""
+#         SELECT
+#             job.company_name,
+#             COUNT(*) as submitted,
+#             SUM(CASE WHEN child.stage = 'Client Screening Rejected'
+#                 THEN 1 ELSE 0 END) as child_rejected
+#         FROM `tabDKP_JobApplication_Child` child
+#         LEFT JOIN `tabDKP_Job_Opening` job
+#             ON job.name = child.parent
+#         WHERE child.parent IN %(job_names)s
+#         GROUP BY job.company_name
+#         """,
+# 		{"job_names": all_job_names},
+# 		as_dict=True,
+# 	)
+
+# 	# Single query - interview stats company wise
+# 	interview_stats = frappe.db.sql(
+# 		"""
+#         SELECT
+#             job.company_name,
+#             SUM(CASE WHEN i.stage = 'Rejected By Client'
+#                 THEN 1 ELSE 0 END) as interview_rejected,
+#             SUM(CASE WHEN i.stage IN ('Selected For Offer', 'Offered', 'Offer Accepted')
+#                 THEN 1 ELSE 0 END) as pipeline,
+#             SUM(CASE WHEN i.stage = 'Joined'
+#                 THEN 1 ELSE 0 END) as joined,
+#             SUM(CASE WHEN i.stage = 'Joined And Left'
+#                 THEN 1 ELSE 0 END) as replaced
+#         FROM `tabDKP_Interview` i
+#         LEFT JOIN `tabDKP_Job_Opening` job
+#             ON job.name = i.job_opening
+#         WHERE i.job_opening IN %(job_names)s
+#         GROUP BY job.company_name
+#         """,
+# 		{"job_names": all_job_names},
+# 		as_dict=True,
+# 	)
+
+# 	# Child stats inject karo
+# 	for row in child_stats:
+# 		company_name = row.company_name
+# 		if company_name in company_data:
+# 			company_data[company_name]["submitted"] += cint(row.submitted)
+# 			company_data[company_name]["rejected"] += cint(row.child_rejected)
+
+# 	# Interview stats inject karo
+# 	for row in interview_stats:
+# 		company_name = row.company_name
+# 		if company_name in company_data:
+# 			company_data[company_name]["rejected"] += cint(row.interview_rejected)
+# 			company_data[company_name]["interview_pipeline"] += cint(row.pipeline)
+# 			company_data[company_name]["joined"] += cint(row.joined)
+# 			company_data[company_name]["replaced"] += cint(row.replaced)
+
+# 	# Conversion rate calculate karo
+# 	result = []
+# 	for _company_name, data in company_data.items():
+# 		conversion = 0
+# 		if data["submitted"] > 0:
+# 			conversion = round((data["joined"] / data["submitted"]) * 100, 1)
+# 		data["conversion_rate"] = conversion
+# 		result.append(data)
+
+# 	# Sort by open jobs desc
+# 	result.sort(key=lambda x: x["open_jobs"], reverse=True)
+
+
+# 	return result
 @frappe.whitelist()
 def get_company_summary(from_date=None, to_date=None, company=None, recruiter=None, status=None):
 	"""Get company-wise summary"""
@@ -852,7 +955,7 @@ def get_company_summary(from_date=None, to_date=None, company=None, recruiter=No
 
 	all_job_names = [j.name for j in jobs]
 
-	# Company wise job info pehle banao
+	# Company wise job info
 	company_data = {}
 	for job in jobs:
 		company_name = job.company_name
@@ -866,11 +969,35 @@ def get_company_summary(from_date=None, to_date=None, company=None, recruiter=No
 				"interview_pipeline": 0,
 				"joined": 0,
 				"replaced": 0,
+				"recruiter_set": set(),  # recruiters collect karenge
 			}
 		if job.status == "Open":
 			company_data[company_name]["open_jobs"] += 1
 
 		company_data[company_name]["total_positions"] += cint(job.number_of_positions)
+
+	# Recruiters fetch karo - company wise
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            job.company_name,
+            rec.recruiter_name
+        FROM `tabDKP_JobOpeningRecruiter_Child` rec
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = rec.parent
+        WHERE rec.parent IN %(job_names)s
+        AND rec.recruiter_name IS NOT NULL
+        GROUP BY job.company_name, rec.recruiter_name
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
+
+	# Recruiters company wise inject karo
+	for row in recruiters_data:
+		company_name = row.company_name
+		if company_name in company_data:
+			company_data[company_name]["recruiter_set"].add(row.recruiter_name)
 
 	# Single query - child stats company wise
 	child_stats = frappe.db.sql(
@@ -913,14 +1040,13 @@ def get_company_summary(from_date=None, to_date=None, company=None, recruiter=No
 		as_dict=True,
 	)
 
-	# Child stats inject karo
+	# Stats inject karo
 	for row in child_stats:
 		company_name = row.company_name
 		if company_name in company_data:
 			company_data[company_name]["submitted"] += cint(row.submitted)
 			company_data[company_name]["rejected"] += cint(row.child_rejected)
 
-	# Interview stats inject karo
 	for row in interview_stats:
 		company_name = row.company_name
 		if company_name in company_data:
@@ -929,13 +1055,18 @@ def get_company_summary(from_date=None, to_date=None, company=None, recruiter=No
 			company_data[company_name]["joined"] += cint(row.joined)
 			company_data[company_name]["replaced"] += cint(row.replaced)
 
-	# Conversion rate calculate karo
+	# Final result
 	result = []
 	for _company_name, data in company_data.items():
 		conversion = 0
 		if data["submitted"] > 0:
 			conversion = round((data["joined"] / data["submitted"]) * 100, 1)
 		data["conversion_rate"] = conversion
+
+		# Set → String
+		data["recruiters"] = ", ".join(sorted(data["recruiter_set"])) or "—"
+		del data["recruiter_set"]  # set delete karo before return
+
 		result.append(data)
 
 	# Sort by open jobs desc
@@ -951,62 +1082,95 @@ def get_recruiter_performance(from_date=None, to_date=None, company=None, recrui
 	filters = build_job_filters(from_date, to_date, company, recruiter, status)
 	jobs = get_filtered_jobs(filters)
 
+	if not jobs:
+		return []
+
+	all_job_names = [j.name for j in jobs]
+
+	# Step 1: Recruiter wise jobs count karo
+	recruiter_jobs = frappe.db.sql(
+		"""
+        SELECT
+            rec.recruiter_name,
+            COUNT(DISTINCT rec.parent) as jobs_assigned
+        FROM `tabDKP_JobOpeningRecruiter_Child` rec
+        WHERE rec.parent IN %(job_names)s
+        AND rec.recruiter_name IS NOT NULL
+        GROUP BY rec.recruiter_name
+        """,
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
+
+	# Recruiter data dict banao
 	recruiter_data = {}
+	for row in recruiter_jobs:
+		rec_name = row.recruiter_name
+		recruiter_data[rec_name] = {
+			"recruiter_name": rec_name,
+			"jobs_assigned": cint(row.jobs_assigned),
+			"submitted": 0,
+			"rejected": 0,
+			"interview_pipeline": 0,
+			"joined": 0,
+		}
 
-	for job in jobs:
-		# ✅ FIXED: Changed 'recruiter' to 'recruiter_name'
-		recruiters = frappe.db.get_all(
-			"DKP_JobOpeningRecruiter_Child", filters={"parent": job.name}, pluck="recruiter_name"
-		)
-
-		# Get stats
-		child_stats = frappe.db.sql(
-			"""
-            SELECT
-                COUNT(*) as submitted,
-                SUM(CASE WHEN stage = 'Client Screening Rejected' THEN 1 ELSE 0 END) as rejected
-            FROM `tabDKP_JobApplication_Child`
-            WHERE parent = %(job_name)s
+	# Step 2: Child stats - recruiter wise
+	child_stats = frappe.db.sql(
+		"""
+        SELECT
+            rec.recruiter_name,
+            COUNT(*) as submitted,
+            SUM(CASE WHEN child.stage = 'Client Screening Rejected'
+                THEN 1 ELSE 0 END) as child_rejected
+        FROM `tabDKP_JobApplication_Child` child
+        INNER JOIN `tabDKP_JobOpeningRecruiter_Child` rec
+            ON rec.parent = child.parent
+        WHERE child.parent IN %(job_names)s
+        AND rec.recruiter_name IS NOT NULL
+        GROUP BY rec.recruiter_name
         """,
-			{"job_name": job.name},
-			as_dict=True,
-		)[0]
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
 
-		interview_stats = frappe.db.sql(
-			"""
-            SELECT
-                SUM(CASE WHEN stage = 'Rejected By Client' THEN 1 ELSE 0 END) as rejected,
-                SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as pipeline,
-                SUM(CASE WHEN stage = 'Joined' THEN 1 ELSE 0 END) as joined
-            FROM `tabDKP_Interview`
-            WHERE job_opening = %(job_name)s
+	# Step 3: Interview stats - recruiter wise
+	interview_stats = frappe.db.sql(
+		"""
+        SELECT
+            rec.recruiter_name,
+            SUM(CASE WHEN i.stage = 'Rejected By Client'
+                THEN 1 ELSE 0 END) as interview_rejected,
+            SUM(CASE WHEN i.stage IN ('Selected For Offer', 'Offered', 'Offer Accepted')
+                THEN 1 ELSE 0 END) as pipeline,
+            SUM(CASE WHEN i.stage = 'Joined'
+                THEN 1 ELSE 0 END) as joined
+        FROM `tabDKP_Interview` i
+        INNER JOIN `tabDKP_JobOpeningRecruiter_Child` rec
+            ON rec.parent = i.job_opening
+        WHERE i.job_opening IN %(job_names)s
+        AND rec.recruiter_name IS NOT NULL
+        GROUP BY rec.recruiter_name
         """,
-			{"job_name": job.name},
-			as_dict=True,
-		)[0]
+		{"job_names": all_job_names},
+		as_dict=True,
+	)
 
-		for rec in recruiters:
-			if not rec:
-				continue
-			if rec not in recruiter_data:
-				recruiter_data[rec] = {
-					"recruiter_name": rec,
-					"jobs_assigned": 0,
-					"submitted": 0,
-					"rejected": 0,
-					"interview_pipeline": 0,
-					"joined": 0,
-				}
+	# Stats inject karo
+	for row in child_stats:
+		rec_name = row.recruiter_name
+		if rec_name in recruiter_data:
+			recruiter_data[rec_name]["submitted"] += cint(row.submitted)
+			recruiter_data[rec_name]["rejected"] += cint(row.child_rejected)
 
-			recruiter_data[rec]["jobs_assigned"] += 1
-			recruiter_data[rec]["submitted"] += cint(child_stats.get("submitted", 0))
-			recruiter_data[rec]["rejected"] += cint(child_stats.get("rejected", 0)) + cint(
-				interview_stats.get("rejected", 0)
-			)
-			recruiter_data[rec]["interview_pipeline"] += cint(interview_stats.get("pipeline", 0))
-			recruiter_data[rec]["joined"] += cint(interview_stats.get("joined", 0))
+	for row in interview_stats:
+		rec_name = row.recruiter_name
+		if rec_name in recruiter_data:
+			recruiter_data[rec_name]["rejected"] += cint(row.interview_rejected)
+			recruiter_data[rec_name]["interview_pipeline"] += cint(row.pipeline)
+			recruiter_data[rec_name]["joined"] += cint(row.joined)
 
-	# Calculate conversion
+	# Conversion calculate karo
 	result = []
 	for _rec_name, data in recruiter_data.items():
 		conversion = 0
