@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "column_break_vqqz",
   "candidate_name",
   "stage",
   "sub_stages_interview",
@@ -19,27 +20,37 @@
  ],
  "fields": [
   {
+   "columns": 1,
    "fetch_from": "candidate_id.candidate_name",
    "fieldname": "candidate_name",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Candidate Name",
    "options": "DKP_Candidate"
   },
   {
+   "columns": 1,
    "fieldname": "stage",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Mapping Stages",
    "options": "\nNo Response\nSubmitted To Client\nClient Screening Rejected\nSchedule Interview"
   },
   {
+   "columns": 1,
    "fieldname": "remarks",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Recruiter Remarks"
   },
   {
+   "columns": 2,
+   "depends_on": "eval:doc.stage=='Schedule Interview'",
    "fieldname": "create_interview",
    "fieldtype": "Button",
-   "label": "Create Interview"
+   "in_list_view": 1,
+   "label": "Create Interview",
+   "read_only": 1
   },
   {
    "fieldname": "interview",
@@ -67,25 +78,33 @@
    "label": "Enneagram Test"
   },
   {
+   "columns": 1,
    "fetch_from": "interview.stage",
    "fieldname": "sub_stages_interview",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Interview Stages",
    "read_only": 1
   },
   {
+   "columns": 1,
    "fieldname": "added_by",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Added By",
    "options": "User"
+  },
+  {
+   "fieldname": "column_break_vqqz",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-16 12:51:08.882803",
- "modified_by": "sarimk360@gmail.com",
+ "modified": "2026-04-17 14:26:44.549024",
+ "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_JobApplication_Child",
  "owner": "Administrator",

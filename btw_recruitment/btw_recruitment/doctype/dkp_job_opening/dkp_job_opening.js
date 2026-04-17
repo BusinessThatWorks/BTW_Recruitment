@@ -1171,42 +1171,77 @@ function show_multiple_candidates_previous_openings(
 			if (callback) callback();
 		});
 }
+frappe.ui.form.on("DKP_Job_Opening", {
+	refresh: function (frm) {
+		// Ensure the button column is accessible on form load
+		if (frm.fields_dict["candidates_table"]) {
+			frm.fields_dict["candidates_table"].grid.update_docfield_property(
+				"create_interview",
+				"read_only",
+				0,
+			);
+		}
+	},
+});
 
-// Improved interview creation with check for candidate selection and better flow
 frappe.ui.form.on("DKP_JobApplication_Child", {
-	create_interview(frm, cdt, cdn) {
+	// Refresh grid to re-evaluate field visibility (depends_on) when stage changes
+	stage: function (frm, cdt, cdn) {
+		frm.refresh_field("candidates_table");
+	},
+
+	create_interview: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
 
+		// --- STEP 1: Mandatory Field Validation ---
 		if (!row.candidate_name) {
-			frappe.msgprint("Please select a candidate first");
+			frappe.throw({
+				title: __("Missing Information"),
+				message: __(
+					"Please select a Candidate before creating an interview.",
+				),
+				indicator: "orange",
+			});
 			return;
 		}
 
+		// --- STEP 2: Workflow Stage Validation ---
+		if (row.stage !== "Schedule Interview") {
+			frappe.throw({
+				title: __("Invalid Stage"),
+				message: __(
+					"Interviews can only be created when the stage is set to 'Schedule Interview'. Current stage: {0}",
+					[row.stage],
+				),
+				indicator: "red",
+			});
+			return;
+		}
+
+		// --- STEP 3: Check for Existing Interview & Route ---
 		frappe.db
 			.get_value(
 				"DKP_Interview",
 				{
 					job_opening: frm.doc.name,
-					candidate_name: row.candidate_name,
+					candidate_name: row.candidate_name, // Changed from 'candidate' to 'candidate_name'
 				},
 				"name",
 			)
 			.then((r) => {
 				if (r.message && r.message.name) {
-					// ✅ Interview exists → OPEN it
+					// If interview exists, redirect to the existing record
 					frappe.set_route("Form", "DKP_Interview", r.message.name);
-					return;
+				} else {
+					// If no interview exists, initialize a new document
+					frappe.new_doc("DKP_Interview", {
+						job_opening: frm.doc.name,
+						candidate_name: row.candidate_name,
+					});
 				}
-
-				// ✅ Interview does not exist → CREATE it
-				frappe.new_doc("DKP_Interview", {
-					job_opening: frm.doc.name,
-					candidate_name: row.candidate_name,
-				});
 			});
 	},
 });
-
 // --------- CANDIDATE manual addition VALIDATIONS ----------
 frappe.ui.form.on("DKP_JobApplication_Child", {
 	candidate_name(frm, cdt, cdn) {
