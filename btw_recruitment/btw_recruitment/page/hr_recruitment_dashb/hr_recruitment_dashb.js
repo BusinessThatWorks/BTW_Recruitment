@@ -145,12 +145,7 @@ frappe.pages["hr-recruitment-dashb"].on_page_load = function (wrapper) {
 			load_candidates_tab();
 		}
 		if (tab === "jobs") {
-			if (!jobs_from_control) {
-				init_jobs_tab();
-			} else {
-				load_jobs_table();
-				load_job_kpis();
-			}
+			load_jobs_tab();
 		}
 		if (tab === "company") {
 			if (!companyDataTable) {
@@ -176,8 +171,8 @@ function load_candidates_tab() {
 		init_candidate_tab();
 	} else {
 		load_candidate_table();
+		load_kpis();
 	}
-	load_kpis();
 }
 
 function init_candidate_tab() {
@@ -186,7 +181,10 @@ function init_candidate_tab() {
 		df: {
 			fieldtype: "Date",
 			label: "From Date",
-			change: () => load_candidate_table(),
+			change: () => {
+				load_candidate_table();
+				load_kpis();
+			},
 		},
 		render_input: true,
 	});
@@ -196,7 +194,10 @@ function init_candidate_tab() {
 		df: {
 			fieldtype: "Date",
 			label: "To Date",
-			change: () => load_candidate_table(),
+			change: () => {
+				load_candidate_table();
+				load_kpis();
+			},
 		},
 		render_input: true,
 	});
@@ -207,6 +208,7 @@ function init_candidate_tab() {
 			candidate_from_control.set_value(null);
 			candidate_to_control.set_value(null);
 			load_candidate_table();
+			load_kpis();
 		});
 
 	$("#download-candidates-excel")
@@ -215,16 +217,12 @@ function init_candidate_tab() {
 			download_candidates_excel();
 		});
 
-	// 👇 FIX: ONLY ONE setTimeout - no duplicate
-	setTimeout(() => {
-		let today = frappe.datetime.get_today(); // 2026-04-13
-		let year = today.split("-")[0]; // 2026
-
-		candidate_from_control.set_value(`${year}-01-01`);
-		candidate_to_control.set_value(today);
-
-		load_candidate_table();
-	}, 100);
+	let today = frappe.datetime.get_today();
+	let year = today.split("-")[0];
+	candidate_from_control.set_value(`${year}-01-01`);
+	candidate_to_control.set_value(today);
+	load_candidate_table();
+	load_kpis();
 }
 
 // ============ LOAD TABLE (NO PAGINATION) ============
@@ -480,6 +478,16 @@ let jobs_from_control, jobs_to_control;
 // 	load_jobs_table();
 // 	load_job_kpis();
 // }
+
+function load_jobs_tab() {
+	if (!jobs_from_control) {
+		init_jobs_tab();
+	} else {
+		load_jobs_table();
+		load_job_kpis();
+	}
+}
+
 function init_jobs_tab() {
 	jobs_from_control = frappe.ui.form.make_control({
 		parent: $(".jobs-from-date"),
@@ -522,26 +530,30 @@ function init_jobs_tab() {
 			download_jobs_excel();
 		});
 
-	// 👇 FIX: setTimeout with date set THEN load
-	setTimeout(() => {
-		let today = frappe.datetime.get_today();
-		let year = today.split("-")[0];
-
-		jobs_from_control.set_value(`${year}-01-01`);
-		jobs_to_control.set_value(today);
-
-		load_jobs_table();
-		load_job_kpis();
-	}, 100);
+	let today = frappe.datetime.get_today();
+	let year = today.split("-")[0];
+	const from_d = `${year}-01-01`;
+	const to_d = today;
+	jobs_from_control.set_value(from_d);
+	jobs_to_control.set_value(to_d);
+	// Date get_value() can lag behind set_value on first init; pass range explicitly.
+	load_jobs_table(from_d, to_d);
+	load_job_kpis(from_d, to_d);
 }
 
 // ============ LOAD TABLE ============
-function load_jobs_table() {
+function load_jobs_table(from_date, to_date) {
+	const fd =
+		from_date !== undefined
+			? from_date
+			: jobs_from_control?.get_value() || null;
+	const td =
+		to_date !== undefined ? to_date : jobs_to_control?.get_value() || null;
 	frappe.call({
 		method: "btw_recruitment.btw_recruitment.api.hr_dashboard.get_jobs_table",
 		args: {
-			from_date: jobs_from_control?.get_value() || null,
-			to_date: jobs_to_control?.get_value() || null,
+			from_date: fd,
+			to_date: td,
 			limit: 0,
 			offset: 0,
 		},
@@ -749,15 +761,19 @@ function stripHTML(value) {
 	tmp.innerHTML = str;
 	return tmp.textContent || tmp.innerText || str;
 }
-function load_job_kpis() {
-	const from_date = jobs_from_control?.get_value() || null;
-	const to_date = jobs_to_control?.get_value() || null;
+function load_job_kpis(from_date, to_date) {
+	const fd =
+		from_date !== undefined
+			? from_date
+			: jobs_from_control?.get_value() || null;
+	const td =
+		to_date !== undefined ? to_date : jobs_to_control?.get_value() || null;
 
 	frappe.call({
 		method: "frappe.desk.query_report.run",
 		args: {
 			report_name: "HR Recruitment – Jobs KPIs",
-			filters: { from_date, to_date },
+			filters: { from_date: fd, to_date: td },
 		},
 		callback(r) {
 			if (r.message) {
