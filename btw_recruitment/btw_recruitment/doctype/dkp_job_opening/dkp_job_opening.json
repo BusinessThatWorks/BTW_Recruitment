@@ -320,7 +320,8 @@
   {
    "fieldname": "pending_replacements",
    "fieldtype": "Int",
-   "label": "Pending Replacements"
+   "label": "Pending Replacements",
+   "read_only": 1
   },
   {
    "fieldname": "replacement_history",
@@ -331,7 +332,8 @@
   {
    "fieldname": "total_replacements",
    "fieldtype": "Int",
-   "label": "Total Replacements Given"
+   "label": "Total Replacements Given",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -342,7 +344,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-04-10 14:41:44.996150",
+ "modified": "2026-04-18 12:28:34.823603",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
