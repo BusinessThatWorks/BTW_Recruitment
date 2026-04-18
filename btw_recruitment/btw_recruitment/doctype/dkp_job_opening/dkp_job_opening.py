@@ -6,9 +6,10 @@ class DKP_Job_Opening(Document):
 	def on_update(self):
 		self.send_change_notification_email()
 		self.sync_candidate_openings()
+		self.delete_removed_candidate_interviews()
 
-	# def after_save(self):
-	# 	self.sync_candidate_openings()
+	def validate(self):
+		self.validate_removed_candidates()
 
 	def on_trash(self):
 		self.remove_from_all_candidates()
@@ -365,7 +366,7 @@ class DKP_Job_Opening(Document):
 			if row.is_new() and not row.added_by:
 				row.added_by = frappe.session.user
 
-		self.delete_interviews_for_removed_candidates()
+		# self.delete_interviews_for_removed_candidates()
 
 	def sync_candidate_openings(self):
 		"""
@@ -506,32 +507,114 @@ class DKP_Job_Opening(Document):
 
 	# def before_save(self):
 
-	def delete_interviews_for_removed_candidates(self):
-		"""Delete linked interviews when candidate row is removed from opening"""
+	# def delete_interviews_for_removed_candidates(self):
+	# 	"""Delete linked interviews when candidate row is removed from opening,
+	# 	but block deletion if interview has a Joining Tracker linked.
+	# 	"""
 
+	# 	old_doc = self.get_doc_before_save()
+	# 	if not old_doc:
+	# 		return
+
+	# 	old_rows = {
+	# 		row.name: row.interview
+	# 		for row in old_doc.candidates_table
+	# 		if row.interview
+	# 	}
+
+	# 	current_row_names = {row.name for row in self.candidates_table}
+	# 	deleted_row_names = set(old_rows.keys()) - current_row_names
+
+	# 	# Pehle check kar lo kahin joining tracker linked to nahi
+	# 	for row_name in deleted_row_names:
+	# 		interview_name = old_rows[row_name]
+
+	# 		if not interview_name or not frappe.db.exists("DKP_Interview", interview_name):
+	# 			continue
+
+	# 		candidate_name, joining_tracker = frappe.db.get_value(
+	# 			"DKP_Interview",
+	# 			interview_name,
+	# 			["candidate_name", "invoice_ref"]
+	# 		)
+
+	# 		if joining_tracker:
+	# 			frappe.throw(
+	# 				f"Cannot remove candidate <b>{candidate_name or ''}</b> because "
+	# 				f"Interview <b>{interview_name}</b> is linked with Joining Tracker "
+	# 				f"<b>{joining_tracker}</b>.",
+	# 				title="Deletion Not Allowed"
+	# 			)
+
+	# 	# Agar kahin joining tracker nahi mila, to safe delete
+	# 	deleted_interviews = []
+
+	# 	for row_name in deleted_row_names:
+	# 		interview_name = old_rows[row_name]
+
+	# 		if not interview_name or not frappe.db.exists("DKP_Interview", interview_name):
+	# 			continue
+
+	# 		try:
+	# 			frappe.delete_doc(
+	# 				"DKP_Interview",
+	# 				interview_name,
+	# 				ignore_permissions=True,
+	# 				force=True,
+	# 			)
+	# 			deleted_interviews.append(interview_name)
+
+	# 		except Exception as e:
+	# 			frappe.log_error(
+	# 				f"Failed to delete interview {interview_name}: {e}",
+	# 				"Interview Delete Error"
+	# 			)
+	# 			frappe.msgprint(
+	# 				f"Could not delete interview <b>{interview_name}</b>: {str(e)}",
+	# 				alert=True
+	# 			)
+
+	# 	if deleted_interviews:
+	# 		frappe.msgprint(
+	# 			f"Interview deleted successfully: <b>{', '.join(deleted_interviews)}</b>",
+	# 			alert=True
+	# 		)
+
+	def validate_removed_candidates(self):
 		old_doc = self.get_doc_before_save()
+		self.flags.interviews_to_delete = []
+
 		if not old_doc:
 			return
 
-		# Old rows ka set - interview link ke saath
-		old_rows = {
-			row.name: row.interview
-			for row in old_doc.candidates_table
-			if row.interview  # sirf jinke paas interview linked hai
-		}
+		old_rows = {row.name: row.interview for row in old_doc.candidates_table if row.interview}
 
-		# Current rows ka set
 		current_row_names = {row.name for row in self.candidates_table}
-
-		# Jo rows ab nahi hain → deleted rows
 		deleted_row_names = set(old_rows.keys()) - current_row_names
 
 		for row_name in deleted_row_names:
 			interview_name = old_rows[row_name]
 
-			if not interview_name:
+			if not interview_name or not frappe.db.exists("DKP_Interview", interview_name):
 				continue
 
+			candidate_name, joining_tracker = frappe.db.get_value(
+				"DKP_Interview", interview_name, ["candidate_name", "invoice_ref"]
+			)
+
+			if joining_tracker:
+				frappe.throw(
+					f"Cannot remove candidate <b>{candidate_name or ''}</b> because "
+					f"Joining Tracker <b>{joining_tracker}</b> is linked with Interview <b>{interview_name}</b>.",
+					title="Deletion Not Allowed",
+				)
+
+			self.flags.interviews_to_delete.append(interview_name)
+
+	def delete_removed_candidate_interviews(self):
+		deleted_interviews = []
+
+		for interview_name in self.flags.get("interviews_to_delete", []):
 			if not frappe.db.exists("DKP_Interview", interview_name):
 				continue
 
@@ -540,14 +623,19 @@ class DKP_Job_Opening(Document):
 					"DKP_Interview",
 					interview_name,
 					ignore_permissions=True,
-					force=True,  # linked docs se bhi delete
+					force=True,
 				)
-				frappe.msgprint(f"🗑️ Interview deleted: {interview_name}", alert=True)
+				deleted_interviews.append(interview_name)
+
 			except Exception as e:
 				frappe.log_error(
 					f"Failed to delete interview {interview_name}: {e}", "Interview Delete Error"
 				)
-				frappe.msgprint(f"⚠️ Could not delete interview {interview_name}: {e}", alert=True)
+
+		if deleted_interviews:
+			frappe.msgprint(
+				f"Interview deleted successfully: <b>{', '.join(deleted_interviews)}</b>", alert=True
+			)
 
 
 @frappe.whitelist()

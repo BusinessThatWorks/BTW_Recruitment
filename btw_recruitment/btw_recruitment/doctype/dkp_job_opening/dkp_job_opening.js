@@ -37,6 +37,27 @@
 //         frappe.model.set_value(cdt, cdn, 'added_by', frappe.session.user);
 //     }
 // });
+frappe.ui.form.on("DKP_JobApplication_Child", {
+	async before_candidates_table_remove(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row.interview) return;
+
+		const r = await frappe.db.get_value("DKP_Interview", row.interview, [
+			"invoice_ref",
+			"candidate_name",
+		]);
+
+		const joining_tracker = r?.message?.invoice_ref;
+		const candidate_name = r?.message?.candidate_name || "";
+
+		if (joining_tracker) {
+			frappe.throw(
+				`Cannot remove candidate <b>${candidate_name}</b> because ` +
+					`Joining Tracker <b>${joining_tracker}</b> is linked with Interview <b>${row.interview}</b>.`,
+			);
+		}
+	},
+});
 frappe.ui.form.on("DKP_Job_Opening", {
 	refresh(frm) {
 		frm.set_query(
