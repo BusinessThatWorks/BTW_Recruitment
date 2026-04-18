@@ -1,4 +1,129 @@
 // Excel Download Helper Functions
+// Page load hone par SheetJS load karo
+function load_xlsx_library() {
+	return new Promise((resolve) => {
+		if (window.XLSX) {
+			resolve();
+			return;
+		}
+		const script = document.createElement("script");
+		script.src =
+			"https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js";
+		script.onload = resolve;
+		document.head.appendChild(script);
+	});
+}
+
+// App initialize hote hi load kar do
+load_xlsx_library();
+// ═══════════════════════════════════════════════════════════
+// MASTER EXCEL EXPORT UTILITY
+// ═══════════════════════════════════════════════════════════
+
+// function export_to_excel(headers, rows_data, filename) {
+//     if (!window.XLSX) {
+//         frappe.msgprint("Excel library load nahi hui. Thodi der mein try karo.");
+//         return;
+//     }
+
+//     // Headers + Data combine karo
+//     const worksheet_data = [headers, ...rows_data];
+
+//     // Worksheet banao
+//     const ws = XLSX.utils.aoa_to_sheet(worksheet_data);
+
+//     // Column widths auto-set karo
+//     const col_widths = headers.map((h, i) => {
+//         const max_len = Math.max(
+//             h.length,
+//             ...rows_data.map((row) =>
+//                 String(row[i] || "").length
+//             )
+//         );
+//         return { wch: Math.min(max_len + 4, 40) };
+//     });
+//     ws["!cols"] = col_widths;
+
+//     // Header row ko bold banao
+//     headers.forEach((_, i) => {
+//         const cell_ref = XLSX.utils.encode_cell({ r: 0, c: i });
+//         if (ws[cell_ref]) {
+//             ws[cell_ref].s = {
+//                 font: { bold: true },
+//                 fill: { fgColor: { rgb: "F5F7FA" } },
+//             };
+//         }
+//     });
+
+//     // Workbook banao
+//     const wb = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+//     // Download karo
+//     XLSX.writeFile(wb, `${filename}_${frappe.datetime.get_today()}.xlsx`);
+// }
+function export_to_excel(headers, rows_data, filename) {
+	if (!window.XLSX) {
+		frappe.msgprint(
+			"Excel library load nahi hui. Thodi der mein try karo.",
+		);
+		return;
+	}
+	const worksheet_data = [headers, ...rows_data];
+	const ws = XLSX.utils.aoa_to_sheet(worksheet_data);
+	const col_widths = headers.map((h, i) => {
+		const max_len = Math.max(
+			h.length,
+			...rows_data.map((row) => String(row[i] || "").length),
+		);
+		return { wch: Math.min(max_len + 4, 40) };
+	});
+	ws["!cols"] = col_widths;
+	const wb = XLSX.utils.book_new();
+	XLSX.utils.book_append_sheet(wb, ws, "Data");
+	XLSX.writeFile(wb, `${filename}_${frappe.datetime.get_today()}.xlsx`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXCEL BUTTON HTML GENERATOR
+// ═══════════════════════════════════════════════════════════
+
+function excel_btn_html(count) {
+	return `
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:10px;">
+            <div style="color:#888;font-size:12px;">
+                Showing <strong>${count}</strong> records
+            </div>
+            <button class="dialog-excel-btn"
+                style="
+                    display:flex;align-items:center;gap:6px;
+                    background:#1d6f42;color:#fff;
+                    border:none;border-radius:6px;
+                    padding:6px 14px;font-size:12px;
+                    font-weight:600;cursor:pointer;
+                    transition: opacity 0.2s;
+                "
+                onmouseover="this.style.opacity='0.85'"
+                onmouseout="this.style.opacity='1'"
+            >
+                <svg width="14" height="14" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor"
+                     stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download Excel
+            </button>
+        </div>`;
+}
+function bind_excel_btn(dialog, headers, rows_data, filename) {
+	// dialog.$wrapper is always available after dialog.show()
+	dialog.$wrapper.find(".dialog-excel-btn").on("click", function () {
+		export_to_excel(headers, rows_data, filename);
+	});
+}
 function download_excel_from_rows(filename, headers, rows) {
 	let html = "<table><thead><tr>";
 	headers.forEach((h) => {
@@ -340,9 +465,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			},
 		});
 	}
-
 	function render_open_jobs_dialog(data) {
-		// Priority colors
 		const priority_color = {
 			Critical: "#e74c3c",
 			High: "#e67e22",
@@ -350,12 +473,10 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			Low: "#95a5a6",
 		};
 
-		// Days open badge color
 		function days_badge(days) {
-			let color = "#27ae60"; // green - fresh
-			if (days > 30)
-				color = "#e74c3c"; // red - critical
-			else if (days > 15) color = "#e67e22"; // orange - warning
+			let color = "#27ae60";
+			if (days > 30) color = "#e74c3c";
+			else if (days > 15) color = "#e67e22";
 			return `<span style="background:${color};color:#fff;padding:2px 8px;
             border-radius:10px;font-size:11px;font-weight:600;">${days}d</span>`;
 		}
@@ -391,14 +512,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(
-					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-					row.job_opening,
-				)}</td>
-                <td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
                 <td>${row.designation || "—"}</td>
                 <td>${status_badge(row.status)}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiters || "—"}</td>
@@ -410,10 +525,9 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			: `<tr><td colspan="7" class="text-center text-muted"
                style="padding:30px 0;">No open jobs found.</td></tr>`;
 
+		// ✅ No BTN_ID needed
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> jobs
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:900px;">
@@ -449,7 +563,161 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		// ✅ Seedha bind - no setTimeout, no ID hunting
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.designation || "",
+			row.status || "",
+			row.recruiters || "",
+			row.days_open || 0,
+			row.priority || "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Designation",
+				"Status",
+				"Assigned Recruiter(s)",
+				"Days Open",
+				"Priority",
+			],
+			excel_rows,
+			"Open_Jobs",
+		);
 	}
+	// function render_open_jobs_dialog(data) {
+	// 	// Priority colors
+	// 	const priority_color = {
+	// 		Critical: "#e74c3c",
+	// 		High: "#e67e22",
+	// 		Medium: "#f39c12",
+	// 		Low: "#95a5a6",
+	// 	};
+
+	// 	// Days open badge color
+	// 	function days_badge(days) {
+	// 		let color = "#27ae60"; // green - fresh
+	// 		if (days > 30)
+	// 			color = "#e74c3c"; // red - critical
+	// 		else if (days > 15) color = "#e67e22"; // orange - warning
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;font-weight:600;">${days}d</span>`;
+	// 	}
+
+	// 	function priority_badge(label) {
+	// 		if (!label || label === "—")
+	// 			return `<span class="text-muted">—</span>`;
+	// 		const color = priority_color[label] || "#95a5a6";
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+	// 	}
+
+	// 	function status_badge(label) {
+	// 		const color_map = {
+	// 			Open: "#27ae60",
+	// 			"On Hold": "#f39c12",
+	// 			"Closed – Hired": "#2980b9",
+	// 			"Closed – Cancelled": "#e74c3c",
+	// 		};
+	// 		const color = color_map[label] || "#95a5a6";
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+	// 	}
+
+	// 	function link(href, label) {
+	// 		if (!label) return "—";
+	// 		return `<a href="${href}" target="_blank"
+	//                style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 	}
+
+	// 	const rows = data.length
+	// 		? data
+	// 				.map(
+	// 					(row) => `
+	//         <tr>
+	//             <td>${link(
+	// 				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 				row.job_opening,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 				row.company_name,
+	// 			)}</td>
+	//             <td>${row.designation || "—"}</td>
+	//             <td>${status_badge(row.status)}</td>
+	//             <td style="color:#555;font-size:12px;">${row.recruiters || "—"}</td>
+	//             <td>${days_badge(row.days_open)}</td>
+	//             <td>${priority_badge(row.priority)}</td>
+	//         </tr>`,
+	// 				)
+	// 				.join("")
+	// 		: `<tr><td colspan="7" class="text-center text-muted"
+	//            style="padding:30px 0;">No open jobs found.</td></tr>`;
+
+	// 		     // ✅ Excel button ID unique rakho
+	// const BTN_ID = "excel_open_jobs";
+	// 	const table_html = `
+	// 	 ${excel_btn_html(BTN_ID, data.length)}
+	//     <div style="overflow:auto;max-height:65vh;">
+	//         <table class="table table-bordered table-hover"
+	//                style="font-size:13px;margin:0;min-width:900px;">
+	//             <thead>
+	//                 <tr style="background:#f5f7fa;">
+	//                     <th>Job Opening</th>
+	//                     <th>Company</th>
+	//                     <th>Designation</th>
+	//                     <th>Status</th>
+	//                     <th>Assigned Recruiter(s)</th>
+	//                     <th>Ageing</th>
+	//                     <th>Priority</th>
+	//                 </tr>
+	//             </thead>
+	//             <tbody>${rows}</tbody>
+	//         </table>
+	//     </div>`;
+
+	// 	const dialog = new frappe.ui.Dialog({
+	// 		title: `Open Jobs (${data.length})`,
+	// 		size: "extra-large",
+	// 		fields: [
+	// 			{
+	// 				fieldtype: "HTML",
+	// 				fieldname: "table_html",
+	// 				options: table_html,
+	// 			},
+	// 		],
+	// 		primary_action_label: "Close",
+	// 		primary_action() {
+	// 			dialog.hide();
+	// 		},
+	// 	});
+
+	// 	dialog.show();
+
+	// 	 // ✅ Button click handler - dialog show hone ke baad
+	// setTimeout(() => {
+	//     document.getElementById(BTN_ID)?.addEventListener("click", () => {
+	//         const headers = [
+	//             "Job Opening", "Company", "Designation",
+	//             "Status", "Assigned Recruiter(s)", "Days Open", "Priority"
+	//         ];
+	//         const rows_data = data.map((row) => [
+	//             row.job_opening || "",
+	//             row.company_name || "",
+	//             row.designation || "",
+	//             row.status || "",
+	//             row.recruiters || "",
+	//             row.days_open || 0,
+	//             row.priority || "",
+	//         ]);
+	//         export_to_excel(headers, rows_data, "Open_Jobs");
+	//     });
+	// }, 300);
+	// }
 	function show_submitted_dialog() {
 		frappe.call({
 			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_submitted_candidates_detail",
@@ -466,6 +734,130 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 	}
 
+	// function render_submitted_dialog(data) {
+	// 	const stage_color = {
+	// 		"Submitted To Client": "#5e64ff",
+	// 		"Client Screening Rejected": "#e74c3c",
+	// 		"Schedule Interview": "#f39c12",
+	// 		"No Response": "#95a5a6",
+	// 	};
+
+	// 	const int_color = {
+	// 		"Selected For Offer": "#27ae60",
+	// 		Offered: "#2980b9",
+	// 		"Offer Accepted": "#1abc9c",
+	// 		"Offer Declined": "#e74c3c",
+	// 		Joined: "#27ae60",
+	// 		"Joined And Left": "#e67e22",
+	// 		"Rejected By Client": "#e74c3c",
+	// 		"Interview No Show": "#95a5a6",
+	// 	};
+
+	// 	function badge(label, color) {
+	// 		if (!label) return `<span class="text-muted">—</span>`;
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+	// 	}
+
+	// 	function link(href, label) {
+	// 		if (!label) return "—";
+	// 		return `<a href="${href}" target="_blank"
+	//            style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 	}
+
+	// 	const rows = data.length
+	// 		? data
+	// 				.map(
+	// 					(row) => `
+	//         <tr>
+
+	//             <td>${link(
+	// 				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 				row.job_opening,
+	// 			)}</td>
+	// 			<td>${link(
+	// 				`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 				row.company_name,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+	// 				row.candidate,
+	// 			)}</td>
+	//             <td>${badge(
+	// 				row.mapping_stage,
+	// 				stage_color[row.mapping_stage] || "#95a5a6",
+	// 			)}</td>
+	//             <td>${badge(
+	// 				row.interview_stage,
+	// 				int_color[row.interview_stage] || "#bdc3c7",
+	// 			)}</td>
+	//             <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+	//             <td style="color:#888;font-size:12px;">${row.recruiter_remarks || "—"}</td>
+	//         </tr>`,
+	// 				)
+	// 				.join("")
+	// 		: `<tr><td colspan="7" class="text-center text-muted"
+	//            style="padding:30px 0;">No submitted candidates found.</td></tr>`;
+	// 	    const BTN_ID = "excel_submitted";
+
+	// 	const table_html = `
+	// 	${excel_btn_html(BTN_ID, data.length)}
+
+	//     <div style="overflow:auto;max-height:65vh;">
+	//         <table class="table table-bordered table-hover"
+	//                style="font-size:13px;margin:0;min-width:900px;">
+	//             <thead>
+	//                 <tr style="background:#f5f7fa;">
+	//                 <th>Job Opening</th>
+	// 				<th>Company</th>
+	//                     <th>Candidate</th>
+	//                     <th>Mapping Stage</th>
+	//             <th>Interview Stage</th>
+	//                     <th>Assigned Recruiter(s)</th>
+	//                     <th>Remarks</th>
+	//                 </tr>
+	//             </thead>
+	//             <tbody>${rows}</tbody>
+	//         </table>
+	//     </div>`;
+
+	// 	const dialog = new frappe.ui.Dialog({
+	// 		title: `Submitted Candidates (${data.length})`,
+	// 		size: "extra-large",
+	// 		fields: [
+	// 			{
+	// 				fieldtype: "HTML",
+	// 				fieldname: "table_html",
+	// 				options: table_html,
+	// 			},
+	// 		],
+	// 		primary_action_label: "Close",
+	// 		primary_action() {
+	// 			dialog.hide();
+	// 		},
+	// 	});
+
+	// 	dialog.show();
+	// 	setTimeout(() => {
+	//     document.getElementById(BTN_ID)?.addEventListener("click", () => {
+	//         const headers = [
+	//             "Job Opening", "Company", "Candidate",
+	//             "Mapping Stage", "Interview Stage",
+	//             "Assigned Recruiter(s)", "Remarks"
+	//         ];
+	//         const rows_data = data.map((row) => [
+	//             row.job_opening || "",
+	//             row.company_name || "",
+	//             row.candidate || "",
+	//             row.mapping_stage || "",
+	//             row.interview_stage || "",
+	//             row.recruiter || "",
+	//             row.recruiter_remarks || "",
+	//         ]);
+	//         export_to_excel(headers, rows_data, "Submitted_Candidates");
+	//     });
+	// }, 300);
+	// }
 	function render_submitted_dialog(data) {
 		const stage_color = {
 			"Submitted To Client": "#5e64ff",
@@ -502,27 +894,11 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-
-                <td>${link(
-					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-					row.job_opening,
-				)}</td>
-				<td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
-                <td>${link(
-					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
-					row.candidate,
-				)}</td>
-                <td>${badge(
-					row.mapping_stage,
-					stage_color[row.mapping_stage] || "#95a5a6",
-				)}</td>
-                <td>${badge(
-					row.interview_stage,
-					int_color[row.interview_stage] || "#bdc3c7",
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
+                <td>${badge(row.mapping_stage, stage_color[row.mapping_stage] || "#95a5a6")}</td>
+                <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#bdc3c7")}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
                 <td style="color:#888;font-size:12px;">${row.recruiter_remarks || "—"}</td>
             </tr>`,
@@ -532,19 +908,17 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
                style="padding:30px 0;">No submitted candidates found.</td></tr>`;
 
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> candidates
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:900px;">
                 <thead>
                     <tr style="background:#f5f7fa;">
-                    <th>Job Opening</th>
-					<th>Company</th>
+                        <th>Job Opening</th>
+                        <th>Company</th>
                         <th>Candidate</th>
                         <th>Mapping Stage</th>
-                <th>Interview Stage</th>
+                        <th>Interview Stage</th>
                         <th>Assigned Recruiter(s)</th>
                         <th>Remarks</th>
                     </tr>
@@ -570,6 +944,30 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.candidate || "",
+			row.mapping_stage || "",
+			row.interview_stage || "",
+			row.recruiter || "",
+			row.recruiter_remarks || "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Candidate",
+				"Mapping Stage",
+				"Interview Stage",
+				"Assigned Recruiter(s)",
+				"Remarks",
+			],
+			excel_rows,
+			"Submitted_Candidates",
+		);
 	}
 	// ═══════════════════════════════════════════════
 	// REJECTED DIALOG
@@ -591,8 +989,107 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 	}
 
+	// 	function render_rejected_dialog(data) {
+	// 		// Rejection source badge
+	// 		function source_badge(source) {
+	// 			const color_map = {
+	// 				"Rejected By Client": "#e74c3c",
+	// 				"Client Screening Rejected": "#e67e22",
+	// 			};
+	// 			const color = color_map[source] || "#95a5a6";
+	// 			return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//             border-radius:10px;font-size:11px;white-space:nowrap;">${source}</span>`;
+	// 		}
+
+	// 		function link(href, label) {
+	// 			if (!label) return "—";
+	// 			return `<a href="${href}" target="_blank"
+	//                    style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 		}
+
+	// 		const rows = data.length
+	// 			? data
+	// 					.map(
+	// 						(row) => `
+	//             <tr>
+	//                 <td>${link(
+	// 					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 					row.job_opening,
+	// 				)}</td>
+	//                 <td>${link(
+	// 					`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 					row.company_name,
+	// 				)}</td>
+	//                 <td>${link(
+	// 					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+	// 					row.candidate,
+	// 				)}</td>
+	//                 <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
+	//                 <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+	//                 <td>${source_badge(row.rejection_source)}</td>
+	//             </tr>`,
+	// 					)
+	// 					.join("")
+	// 			: `<tr><td colspan="6" class="text-center text-muted"
+	//                style="padding:30px 0;">No rejected candidates found.</td></tr>`;
+	// const BTN_ID = "excel_rejected";
+
+	// 		const table_html = `
+	// 		${excel_btn_html(BTN_ID, data.length)}
+
+	//         <div style="overflow:auto;max-height:65vh;">
+	//             <table class="table table-bordered table-hover"
+	//                    style="font-size:13px;margin:0;min-width:850px;">
+	//                 <thead>
+	//                     <tr style="background:#f5f7fa;">
+	//                         <th>Job Opening</th>
+	//                         <th>Company</th>
+	//                         <th>Candidate</th>
+	//                         <th>Designation</th>
+	//                         <th>Assigned Recruiter</th>
+	//                         <th>Rejection Type</th>
+	//                     </tr>
+	//                 </thead>
+	//                 <tbody>${rows}</tbody>
+	//             </table>
+	//         </div>`;
+
+	// 		const dialog = new frappe.ui.Dialog({
+	// 			title: `Rejected Candidates (${data.length})`,
+	// 			size: "extra-large",
+	// 			fields: [
+	// 				{
+	// 					fieldtype: "HTML",
+	// 					fieldname: "table_html",
+	// 					options: table_html,
+	// 				},
+	// 			],
+	// 			primary_action_label: "Close",
+	// 			primary_action() {
+	// 				dialog.hide();
+	// 			},
+	// 		});
+
+	// 		dialog.show();
+	// 		setTimeout(() => {
+	//         document.getElementById(BTN_ID)?.addEventListener("click", () => {
+	//             const headers = [
+	//                 "Job Opening", "Company", "Candidate",
+	//                 "Designation", "Assigned Recruiter", "Rejection Type"
+	//             ];
+	//             const rows_data = data.map((row) => [
+	//                 row.job_opening || "",
+	//                 row.company_name || "",
+	//                 row.candidate || "",
+	//                 row.designation || "",
+	//                 row.recruiter || "",
+	//                 row.rejection_source || "",
+	//             ]);
+	//             export_to_excel(headers, rows_data, "Rejected_Candidates");
+	//         });
+	//     }, 300);
+	// 	}
 	function render_rejected_dialog(data) {
-		// Rejection source badge
 		function source_badge(source) {
 			const color_map = {
 				"Rejected By Client": "#e74c3c",
@@ -614,18 +1111,9 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(
-					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-					row.job_opening,
-				)}</td>
-                <td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
-                <td>${link(
-					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
-					row.candidate,
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
                 <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
                 <td>${source_badge(row.rejection_source)}</td>
@@ -636,9 +1124,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
                style="padding:30px 0;">No rejected candidates found.</td></tr>`;
 
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> rejected candidates
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:850px;">
@@ -673,6 +1159,28 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.candidate || "",
+			row.designation || "",
+			row.recruiter || "",
+			row.rejection_source || "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Candidate",
+				"Designation",
+				"Assigned Recruiter",
+				"Rejection Type",
+			],
+			excel_rows,
+			"Rejected_Candidates",
+		);
 	}
 	// frontend
 	function show_interview_pipeline_dialog() {
@@ -691,6 +1199,119 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 	}
 
+	// function render_interview_pipeline_dialog(data) {
+	// 	const int_color = {
+	// 		"Selected For Offer": "#f39c12",
+	// 		Offered: "#2980b9",
+	// 		"Offer Accepted": "#1abc9c",
+	// 	};
+
+	// 	function badge(label, color) {
+	// 		if (!label) return `<span class="text-muted">—</span>`;
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;white-space:nowrap;">${label}</span>`;
+	// 	}
+
+	// 	function link(href, label) {
+	// 		if (!label) return "—";
+	// 		return `<a href="${href}" target="_blank"
+	//            style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 	}
+
+	// 	const rows = data.length
+	// 		? data
+	// 				.map(
+	// 					(row) => `
+	//         <tr>
+	// 		<td>${link(
+	// 			`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 			row.job_opening,
+	// 		)}</td>
+	//             <td>${link(
+	// 				`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 				row.company_name,
+	// 			)}</td>
+
+	//             <td>${link(
+	// 				`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+	// 				row.candidate,
+	// 			)}</td>
+	//             <td>${badge(
+	// 				row.interview_stage,
+	// 				int_color[row.interview_stage] || "#95a5a6",
+	// 			)}</td>
+	//             <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+	//             <td style="color:#888;font-size:12px;">${
+	// 				row.offered_amount
+	// 					? "₹" + Number(row.offered_amount).toLocaleString()
+	// 					: "—"
+	// 			}</td>
+	//             <td style="color:#888;font-size:12px;">${row.joining_date || "—"}</td>
+	//         </tr>`,
+	// 				)
+	// 				.join("")
+	// 		: `<tr><td colspan="7" class="text-center text-muted"
+	//            style="padding:30px 0;">No candidates in pipeline.</td></tr>`;
+	// 				    const BTN_ID = "excel_interview_pipeline";
+
+	// 	const table_html = `
+	// 	        ${excel_btn_html(BTN_ID, data.length)}
+	//     <div style="overflow:auto;max-height:65vh;">
+	//         <table class="table table-bordered table-hover"
+	//                style="font-size:13px;margin:0;min-width:900px;">
+	//             <thead>
+	//                 <tr style="background:#f5f7fa;">
+	//                 <th>Job Opening</th>
+	// 				<th>Company</th>
+	//                     <th>Candidate</th>
+	//                     <th>Stage</th>
+	//                     <th>Assigned Recruiter(s)</th>
+	//                     <th>Offered Amount</th>
+	//                     <th>Joining Date</th>
+	//                 </tr>
+	//             </thead>
+	//             <tbody>${rows}</tbody>
+	//         </table>
+	//     </div>`;
+
+	// 	const dialog = new frappe.ui.Dialog({
+	// 		title: `Interview Pipeline (${data.length})`,
+	// 		size: "extra-large",
+	// 		fields: [
+	// 			{
+	// 				fieldtype: "HTML",
+	// 				fieldname: "table_html",
+	// 				options: table_html,
+	// 			},
+	// 		],
+	// 		primary_action_label: "Close",
+	// 		primary_action() {
+	// 			dialog.hide();
+	// 		},
+	// 	});
+
+	// 	dialog.show();
+	// 	 setTimeout(() => {
+	//     document.getElementById(BTN_ID)?.addEventListener("click", () => {
+	//         const headers = [
+	//             "Job Opening", "Company", "Candidate",
+	//             "Stage", "Assigned Recruiter(s)",
+	//             "Offered Amount (₹)", "Joining Date"
+	//         ];
+	//         const rows_data = data.map((row) => [
+	//             row.job_opening || "",
+	//             row.company_name || "",
+	//             row.candidate || "",
+	//             row.interview_stage || "",
+	//             row.recruiter || "",
+	//             // ✅ Excel mein raw number daal do (currency format ke liye)
+	//             row.offered_amount ? Number(row.offered_amount) : "",
+	//             row.joining_date || "",
+	//         ]);
+	//         export_to_excel(headers, rows_data, "Interview_Pipeline");
+	//     });
+	// }, 300);
+	// }
 	function render_interview_pipeline_dialog(data) {
 		const int_color = {
 			"Selected For Offer": "#f39c12",
@@ -715,23 +1336,10 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-			<td>${link(
-				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-				row.job_opening,
-			)}</td>
-                <td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
-
-                <td>${link(
-					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
-					row.candidate,
-				)}</td>
-                <td>${badge(
-					row.interview_stage,
-					int_color[row.interview_stage] || "#95a5a6",
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
+                <td>${badge(row.interview_stage, int_color[row.interview_stage] || "#95a5a6")}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
                 <td style="color:#888;font-size:12px;">${
 					row.offered_amount
@@ -746,16 +1354,14 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
                style="padding:30px 0;">No candidates in pipeline.</td></tr>`;
 
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> candidates in pipeline
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:900px;">
                 <thead>
                     <tr style="background:#f5f7fa;">
-                    <th>Job Opening</th>
-					<th>Company</th>
+                        <th>Job Opening</th>
+                        <th>Company</th>
                         <th>Candidate</th>
                         <th>Stage</th>
                         <th>Assigned Recruiter(s)</th>
@@ -784,6 +1390,31 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.candidate || "",
+			row.interview_stage || "",
+			row.recruiter || "",
+			// ✅ Raw number for Excel calculations
+			row.offered_amount ? Number(row.offered_amount) : "",
+			row.joining_date || "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Candidate",
+				"Stage",
+				"Assigned Recruiter(s)",
+				"Offered Amount (₹)",
+				"Joining Date",
+			],
+			excel_rows,
+			"Interview_Pipeline",
+		);
 	}
 	// ═══════════════════════════════════════════════
 	// AGEING CRITICAL DIALOG
@@ -805,6 +1436,119 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 	}
 
+	// function render_ageing_critical_dialog(data) {
+	// 	const priority_color = {
+	// 		Critical: "#e74c3c",
+	// 		High: "#e67e22",
+	// 		Medium: "#f39c12",
+	// 		Low: "#95a5a6",
+	// 	};
+
+	// 	function days_badge(days) {
+	// 		// Ageing critical - sab 30+ days ke hain
+	// 		let color = "#e74c3c"; // red - 30+ days
+	// 		if (days > 60) color = "#8e44ad"; // purple - 60+ days very critical
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;font-weight:600;">${days}d</span>`;
+	// 	}
+
+	// 	function priority_badge(label) {
+	// 		if (!label || label === "—")
+	// 			return `<span class="text-muted">—</span>`;
+	// 		const color = priority_color[label] || "#95a5a6";
+	// 		return `<span style="background:${color};color:#fff;padding:2px 8px;
+	//         border-radius:10px;font-size:11px;">${label}</span>`;
+	// 	}
+
+	// 	function link(href, label) {
+	// 		if (!label) return "—";
+	// 		return `<a href="${href}" target="_blank"
+	//                style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 	}
+
+	// 	const rows = data.length
+	// 		? data
+	// 				.map(
+	// 					(row) => `
+	//         <tr>
+	//             <td>${link(
+	// 				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 				row.job_opening,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 				row.company_name,
+	// 			)}</td>
+	//             <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
+	//             <td style="color:#555;font-size:12px;">${row.recruiters || "—"}</td>
+	//             <td style="color:#555;font-size:12px;">${row.creation || "—"}</td>
+	//             <td>${days_badge(row.days_open)}</td>
+	//             <td>${priority_badge(row.priority)}</td>
+	//         </tr>`,
+	// 				)
+	// 				.join("")
+	// 		: `<tr><td colspan="7" class="text-center text-muted"
+	//            style="padding:30px 0;">No critical ageing jobs found.</td></tr>`;
+	// 				    const BTN_ID = "excel_ageing_critical";
+
+	// 	const table_html = `
+	// 	        ${excel_btn_html(BTN_ID, data.length)}
+
+	//     <div style="overflow:auto;max-height:65vh;">
+	//         <table class="table table-bordered table-hover"
+	//                style="font-size:13px;margin:0;min-width:950px;">
+	//             <thead>
+	//                 <tr style="background:#fff3f3;">
+	//                     <th>Job Opening</th>
+	//                     <th>Company</th>
+	//                     <th>Designation</th>
+	//                     <th>Assigned Recruiter(s)</th>
+	//                     <th>Posted On</th>
+	//                     <th>Days Open</th>
+	//                     <th>Priority</th>
+	//                 </tr>
+	//             </thead>
+	//             <tbody>${rows}</tbody>
+	//         </table>
+	//     </div>`;
+
+	// 	const dialog = new frappe.ui.Dialog({
+	// 		title: `⚠️ Ageing Critical Jobs (${data.length})`,
+	// 		size: "extra-large",
+	// 		fields: [
+	// 			{
+	// 				fieldtype: "HTML",
+	// 				fieldname: "table_html",
+	// 				options: table_html,
+	// 			},
+	// 		],
+	// 		primary_action_label: "Close",
+	// 		primary_action() {
+	// 			dialog.hide();
+	// 		},
+	// 	});
+
+	// 	dialog.show();
+	// 	setTimeout(() => {
+	//     document.getElementById(BTN_ID)?.addEventListener("click", () => {
+	//         const headers = [
+	//             "Job Opening", "Company", "Designation",
+	//             "Assigned Recruiter(s)", "Posted On",
+	//             "Days Open", "Priority"
+	//         ];
+	//         const rows_data = data.map((row) => [
+	//             row.job_opening || "",
+	//             row.company_name || "",
+	//             row.designation || "",
+	//             row.recruiters || "",
+	//             row.creation || "",
+	//             row.days_open || 0,
+	//             row.priority || "",
+	//         ]);
+	//         export_to_excel(headers, rows_data, "Ageing_Critical_Jobs");
+	//     });
+	// }, 300);
+	// }
 	function render_ageing_critical_dialog(data) {
 		const priority_color = {
 			Critical: "#e74c3c",
@@ -814,9 +1558,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		};
 
 		function days_badge(days) {
-			// Ageing critical - sab 30+ days ke hain
-			let color = "#e74c3c"; // red - 30+ days
-			if (days > 60) color = "#8e44ad"; // purple - 60+ days very critical
+			let color = "#e74c3c";
+			if (days > 60) color = "#8e44ad";
 			return `<span style="background:${color};color:#fff;padding:2px 8px;
             border-radius:10px;font-size:11px;font-weight:600;">${days}d</span>`;
 		}
@@ -840,14 +1583,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(
-					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-					row.job_opening,
-				)}</td>
-                <td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
                 <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiters || "—"}</td>
                 <td style="color:#555;font-size:12px;">${row.creation || "—"}</td>
@@ -860,9 +1597,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
                style="padding:30px 0;">No critical ageing jobs found.</td></tr>`;
 
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> jobs open for more than 30 days
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:950px;">
@@ -898,6 +1633,30 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.designation || "",
+			row.recruiters || "",
+			row.creation || "",
+			row.days_open || 0,
+			row.priority || "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Designation",
+				"Assigned Recruiter(s)",
+				"Posted On",
+				"Days Open",
+				"Priority",
+			],
+			excel_rows,
+			"Ageing_Critical_Jobs",
+		);
 	}
 	// ═══════════════════════════════════════════════
 	// JOINED DIALOG
@@ -920,6 +1679,100 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 	}
 
+	// function render_joined_dialog(data) {
+	// 	function link(href, label) {
+	// 		if (!label) return "—";
+	// 		return `<a href="${href}" target="_blank"
+	//                style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 	}
+
+	// 	const rows = data.length
+	// 		? data
+	// 				.map(
+	// 					(row) => `
+	//         <tr>
+	//             <td>${link(
+	// 				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 				row.job_opening,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 				row.company_name,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+	// 				row.candidate,
+	// 			)}</td>
+	//             <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+	//             <td style="color:#555;font-size:12px;">${row.joining_date || "—"}</td>
+	//             <td style="color:#555;font-size:12px;">${
+	// 				row.offered_amount
+	// 					? "₹" + Number(row.offered_amount).toLocaleString()
+	// 					: "—"
+	// 			}</td>
+	//         </tr>`,
+	// 				)
+	// 				.join("")
+	// 		: `<tr><td colspan="6" class="text-center text-muted"
+	//            style="padding:30px 0;">No joined candidates found.</td></tr>`;
+	// const BTN_ID = "excel_joined";
+
+	// 	const table_html = `
+	// 	        ${excel_btn_html(BTN_ID, data.length)}
+	//     <div style="overflow:auto;max-height:65vh;">
+	//         <table class="table table-bordered table-hover"
+	//                style="font-size:13px;margin:0;min-width:850px;">
+	//             <thead>
+	//                 <tr style="background:#f5f7fa;">
+	//                     <th>Job Opening</th>
+	//                     <th>Company</th>
+	//                     <th>Candidate</th>
+	//                     <th>Assigned Recruiter(s)</th>
+	//                     <th>Joining Date</th>
+	//                     <th>Offered Amount (Yearly)</th>
+	//                 </tr>
+	//             </thead>
+	//             <tbody>${rows}</tbody>
+	//         </table>
+	//     </div>`;
+
+	// 	const dialog = new frappe.ui.Dialog({
+	// 		title: `Joined Candidates (${data.length})`,
+	// 		size: "extra-large",
+	// 		fields: [
+	// 			{
+	// 				fieldtype: "HTML",
+	// 				fieldname: "table_html",
+	// 				options: table_html,
+	// 			},
+	// 		],
+	// 		primary_action_label: "Close",
+	// 		primary_action() {
+	// 			dialog.hide();
+	// 		},
+	// 	});
+
+	// 	dialog.show();
+	// 	setTimeout(() => {
+	//     document.getElementById(BTN_ID)?.addEventListener("click", () => {
+	//         const headers = [
+	//             "Job Opening", "Company", "Candidate",
+	//             "Assigned Recruiter(s)", "Joining Date",
+	//             "Offered Amount (Yearly ₹)"
+	//         ];
+	//         const rows_data = data.map((row) => [
+	//             row.job_opening || "",
+	//             row.company_name || "",
+	//             row.candidate || "",
+	//             row.recruiter || "",
+	//             row.joining_date || "",
+	//             // ✅ Excel mein raw number - better for calculations
+	//             row.offered_amount ? Number(row.offered_amount) : "",
+	//         ]);
+	//         export_to_excel(headers, rows_data, "Joined_Candidates");
+	//     });
+	// }, 300);
+	// }
 	function render_joined_dialog(data) {
 		function link(href, label) {
 			if (!label) return "—";
@@ -932,18 +1785,9 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(
-					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-					row.job_opening,
-				)}</td>
-                <td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
-                <td>${link(
-					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
-					row.candidate,
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
                 <td style="color:#555;font-size:12px;">${row.joining_date || "—"}</td>
                 <td style="color:#555;font-size:12px;">${
@@ -958,9 +1802,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
                style="padding:30px 0;">No joined candidates found.</td></tr>`;
 
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> joined candidates
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:850px;">
@@ -995,6 +1837,29 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.candidate || "",
+			row.recruiter || "",
+			row.joining_date || "",
+			// ✅ Raw number for Excel
+			row.offered_amount ? Number(row.offered_amount) : "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Candidate",
+				"Assigned Recruiter(s)",
+				"Joining Date",
+				"Offered Amount (Yearly ₹)",
+			],
+			excel_rows,
+			"Joined_Candidates",
+		);
 	}
 
 	// ═══════════════════════════════════════════════
@@ -1018,6 +1883,92 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 	}
 
+	// function render_joined_left_dialog(data) {
+	// 	function link(href, label) {
+	// 		if (!label) return "—";
+	// 		return `<a href="${href}" target="_blank"
+	//                style="color:#5e64ff;font-weight:500;">${label}</a>`;
+	// 	}
+
+	// 	function replacement_badge(within_policy) {
+	// 		if (within_policy === 1 || within_policy === true) {
+	// 			return `<span style="background:#27ae60;color:#fff;padding:2px 8px;
+	//             border-radius:10px;font-size:11px;">Within Policy</span>`;
+	// 		}
+	// 		return `<span style="background:#e74c3c;color:#fff;padding:2px 8px;
+	//             border-radius:10px;font-size:11px;">Outside Policy</span>`;
+	// 	}
+
+	// 	const rows = data.length
+	// 		? data
+	// 				.map(
+	// 					(row) => `
+	//         <tr>
+	//             <td>${link(
+	// 				`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
+	// 				row.job_opening,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/customer/${encodeURIComponent(row.company_name)}`,
+	// 				row.company_name,
+	// 			)}</td>
+	//             <td>${link(
+	// 				`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
+	// 				row.candidate,
+	// 			)}</td>
+	//             <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+	//             <td style="color:#555;font-size:12px;">${row.joining_date || "—"}</td>
+	//             <td style="color:#555;font-size:12px;">${row.candidate_left_date || "—"}</td>
+	//             <td style="text-align:center;">
+	//                 ${row.days_before_left != null ? row.days_before_left + "d" : "—"}
+	//             </td>
+	//             <td>${replacement_badge(row.within_replacement_policy)}</td>
+	//         </tr>`,
+	// 				)
+	// 				.join("")
+	// 		: `<tr><td colspan="8" class="text-center text-muted"
+	//            style="padding:30px 0;">No candidates found.</td></tr>`;
+	// const BTN_ID = "excel_joined_left";
+
+	// 	const table_html = `
+	// 	        ${excel_btn_html(BTN_ID, data.length)}
+	//     <div style="overflow:auto;max-height:65vh;">
+	//         <table class="table table-bordered table-hover"
+	//                style="font-size:13px;margin:0;min-width:950px;">
+	//             <thead>
+	//                 <tr style="background:#f5f7fa;">
+	//                     <th>Job Opening</th>
+	//                     <th>Company</th>
+	//                     <th>Candidate</th>
+	//                     <th>Assigned Recruiter(s)</th>
+	//                     <th>Joining Date</th>
+	//                     <th>Left Date</th>
+	//                     <th>Days Stayed</th>
+	//                     <th>Replacement Policy</th>
+	//                 </tr>
+	//             </thead>
+	//             <tbody>${rows}</tbody>
+	//         </table>
+	//     </div>`;
+
+	// 	const dialog = new frappe.ui.Dialog({
+	// 		title: `Joined And Left (${data.length})`,
+	// 		size: "extra-large",
+	// 		fields: [
+	// 			{
+	// 				fieldtype: "HTML",
+	// 				fieldname: "table_html",
+	// 				options: table_html,
+	// 			},
+	// 		],
+	// 		primary_action_label: "Close",
+	// 		primary_action() {
+	// 			dialog.hide();
+	// 		},
+	// 	});
+
+	// 	dialog.show();
+	// }
 	function render_joined_left_dialog(data) {
 		function link(href, label) {
 			if (!label) return "—";
@@ -1039,24 +1990,13 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					.map(
 						(row) => `
             <tr>
-                <td>${link(
-					`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`,
-					row.job_opening,
-				)}</td>
-                <td>${link(
-					`/app/customer/${encodeURIComponent(row.company_name)}`,
-					row.company_name,
-				)}</td>
-                <td>${link(
-					`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`,
-					row.candidate,
-				)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
                 <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
                 <td style="color:#555;font-size:12px;">${row.joining_date || "—"}</td>
                 <td style="color:#555;font-size:12px;">${row.candidate_left_date || "—"}</td>
-                <td style="text-align:center;">
-                    ${row.days_before_left != null ? row.days_before_left + "d" : "—"}
-                </td>
+                <td style="text-align:center;">${row.days_before_left != null ? row.days_before_left + "d" : "—"}</td>
                 <td>${replacement_badge(row.within_replacement_policy)}</td>
             </tr>`,
 					)
@@ -1065,9 +2005,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
                style="padding:30px 0;">No candidates found.</td></tr>`;
 
 		const table_html = `
-        <div style="color:#888;font-size:12px;margin-bottom:8px;">
-            Showing <strong>${data.length}</strong> candidates who joined and left
-        </div>
+        ${excel_btn_html(data.length)}
         <div style="overflow:auto;max-height:65vh;">
             <table class="table table-bordered table-hover"
                    style="font-size:13px;margin:0;min-width:950px;">
@@ -1104,6 +2042,33 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 		});
 
 		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.job_opening || "",
+			row.company_name || "",
+			row.candidate || "",
+			row.recruiter || "",
+			row.joining_date || "",
+			row.candidate_left_date || "",
+			row.days_before_left != null ? row.days_before_left : "",
+			// ✅ Clean text for Excel
+			row.within_replacement_policy ? "Within Policy" : "Outside Policy",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Job Opening",
+				"Company",
+				"Candidate",
+				"Assigned Recruiter(s)",
+				"Joining Date",
+				"Left Date",
+				"Days Stayed",
+				"Replacement Policy",
+			],
+			excel_rows,
+			"Joined_And_Left",
+		);
 	}
 	// ═══════════════════════════════════════════════════════════════════════
 	// QUICK DATE BUTTONS
