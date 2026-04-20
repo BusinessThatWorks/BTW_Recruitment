@@ -1714,6 +1714,28 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	// LOAD AGEING ANALYSIS
 	// ═══════════════════════════════════════════════════════════════════════
 
+	// function load_ageing_analysis() {
+	// 	frappe.call({
+	// 		method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_ageing_analysis",
+	// 		args: {
+	// 			from_date: state.from_date,
+	// 			to_date: state.to_date,
+	// 			company: state.company,
+	// 			recruiter: state.recruiter,
+	// 		},
+	// 		callback(r) {
+	// 			const data = r.message || {};
+
+	// 			// Update buckets
+	// 			$ageing_0_15.text(data.bucket_0_15 || 0);
+	// 			$ageing_16_30.text(data.bucket_16_30 || 0);
+	// 			$ageing_30_plus.text(data.bucket_30_plus || 0);
+
+	// 			// Render critical table
+	// 			render_ageing_critical_table(data.critical_jobs || []);
+	// 		},
+	// 	});
+	// }
 	function load_ageing_analysis() {
 		frappe.call({
 			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_ageing_analysis",
@@ -1731,42 +1753,181 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				$ageing_16_30.text(data.bucket_16_30 || 0);
 				$ageing_30_plus.text(data.bucket_30_plus || 0);
 
-				// Render critical table
-				render_ageing_critical_table(data.critical_jobs || []);
+				// Render ON HOLD table
+				render_ageing_critical_table(data.on_hold_jobs || []);
 			},
 		});
 	}
 
+	// function render_ageing_critical_table(rows) {
+	// 	$ageing_table.empty();
+
+	// 	const columns = [
+	// 		{ name: "#", width: 50 },
+	// 		{
+	// 			name: "Job Opening",
+	// 			width: 160,
+	// 			format: (value) => {
+	// 				const name = value || "";
+	// 				const url = `/app/dkp_job_opening/${encodeURIComponent(name)}`;
+	// 				return `<a href="${url}" target="_blank" style="color:#dc2626;font-weight:600;">${frappe.utils.escape_html(name)}</a>`;
+	// 			},
+	// 		},
+	// 		{ name: "Company", width: 140 },
+	// 		{ name: "Designation", width: 120 },
+	// 		{
+	// 			name: "Ageing (Days)",
+	// 			width: 100,
+	// 			format: (value) => {
+	// 				return `<span class="ageing-badge red">${value} days</span>`;
+	// 			},
+	// 		},
+	// 		{ name: "Submitted", width: 80 },
+	// 		{ name: "Interview", width: 80 },
+	// 		{ name: "Status", width: 100 },
+	// 		{ name: "Recruiter(s)", width: 150 },
+	// 	];
+
+	// 	const tableData = rows.map((row, index) => [
+	// 		index + 1,
+	// 		row.job_opening || "",
+	// 		row.company_name || "",
+	// 		row.designation || "",
+	// 		row.ageing_days || 0,
+	// 		row.submitted || 0,
+	// 		row.interview_pipeline || 0,
+	// 		row.status || "",
+	// 		row.recruiters || "",
+	// 	]);
+
+	// 	if (ageingDataTable) {
+	// 		ageingDataTable.destroy();
+	// 	}
+
+	// 	ageingDataTable = new frappe.DataTable($ageing_table[0], {
+	// 		columns,
+	// 		data: tableData,
+	// 		inlineFilters: true,
+	// 		noDataMessage: __("No critical ageing jobs found "),
+	// 		layout: window.innerWidth < 768 ? "fixed" : "fluid",
+	// 		serialNoColumn: false,
+	// 		editing: false,
+	// 	});
+	// }
 	function render_ageing_critical_table(rows) {
+		$(".ageing-top-bar").remove();
 		$ageing_table.empty();
 
+		// ═══════════════════════════════════════════════
+		// Store rows globally for checkbox access
+		// ═══════════════════════════════════════════════
+		window._ageing_rows = rows;
+
+		// ═══════════════════════════════════════════════
+		// TOP BAR — Select All + Send Button
+		// ═══════════════════════════════════════════════
+		const $topBar = $(`
+		<div class="ageing-top-bar" style="
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 12px;
+			padding: 8px 12px;
+			background: #f8f9fa;
+			border-radius: 8px;
+			border: 1px solid #e2e8f0;
+		">
+			<div style="display:flex; align-items:center; gap:10px;">
+				<input type="checkbox" id="ageing-select-all" style="width:16px;height:16px;cursor:pointer;" />
+				<label for="ageing-select-all" style="margin:0;cursor:pointer;font-weight:500;color:#475569;">
+					Select All
+				</label>
+				<span id="ageing-selected-count" style="
+					background:#3b82f6;
+					color:white;
+					padding:2px 10px;
+					border-radius:12px;
+					font-size:12px;
+					font-weight:600;
+					display:none;
+				">0 selected</span>
+			</div>
+			<button id="ageing-send-followup-btn" class="btn btn-primary btn-sm" style="
+				display:none;
+				font-weight:600;
+				padding:6px 16px;
+				border-radius:6px;
+			">
+				Send Follow-up
+			</button>
+		</div>
+	`);
+
+		$ageing_table.before($topBar);
+
+		// ═══════════════════════════════════════════════
+		// TABLE COLUMNS
+		// ═══════════════════════════════════════════════
 		const columns = [
-			{ name: "#", width: 50 },
+			{
+				name: "",
+				width: 40,
+				format: (value) => {
+					return `<input type="checkbox" class="ageing-row-check" data-job="${value}" style="width:15px;height:15px;cursor:pointer;" />`;
+				},
+			},
+			{ name: "#", width: 40 },
 			{
 				name: "Job Opening",
-				width: 160,
+				width: 180,
 				format: (value) => {
 					const name = value || "";
 					const url = `/app/dkp_job_opening/${encodeURIComponent(name)}`;
 					return `<a href="${url}" target="_blank" style="color:#dc2626;font-weight:600;">${frappe.utils.escape_html(name)}</a>`;
 				},
 			},
-			{ name: "Company", width: 140 },
-			{ name: "Designation", width: 120 },
+			{ name: "Company", width: 160 },
+			{ name: "Designation", width: 140 },
 			{
 				name: "Ageing (Days)",
-				width: 100,
+				width: 110,
 				format: (value) => {
 					return `<span class="ageing-badge red">${value} days</span>`;
 				},
 			},
-			{ name: "Submitted", width: 80 },
-			{ name: "Interview", width: 80 },
-			{ name: "Status", width: 100 },
-			{ name: "Recruiter(s)", width: 150 },
+			{ name: "Submitted", width: 90 },
+			{ name: "Interview", width: 90 },
+			{ name: "Status", width: 110 },
+			{ name: "Recruiter(s)", width: 170 },
+			{
+				name: "Last Follow-up",
+				width: 150,
+				format: (value) => {
+					if (!value || value === "—")
+						return `<span style="color:#94a3b8;">—</span>`;
+					let color = "#f59e0b";
+					if (value === "Follow-up Sent") color = "#3b82f6";
+					if (value === "Closing Query Sent") color = "#ef4444";
+					if (value === "Pending Response Sent") color = "#f59e0b";
+					return `<span style="color:${color};font-weight:600;font-size:11px;">${value}</span>`;
+				},
+			},
+			{
+				name: "Last Mail Date",
+				width: 160,
+				format: (value) => {
+					if (!value || value === "—")
+						return `<span style="color:#94a3b8;">—</span>`;
+					return frappe.datetime.str_to_user(value);
+				},
+			},
 		];
 
+		// ═══════════════════════════════════════════════
+		// TABLE DATA
+		// ═══════════════════════════════════════════════
 		const tableData = rows.map((row, index) => [
+			row.job_opening || "",
 			index + 1,
 			row.job_opening || "",
 			row.company_name || "",
@@ -1776,6 +1937,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			row.interview_pipeline || 0,
 			row.status || "",
 			row.recruiters || "",
+			row.last_followup_status || "—",
+			row.last_followup_date || "—",
 		]);
 
 		if (ageingDataTable) {
@@ -1786,13 +1949,259 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			columns,
 			data: tableData,
 			inlineFilters: true,
-			noDataMessage: __("No critical ageing jobs found "),
+			noDataMessage: __("No on hold ageing jobs found"),
 			layout: window.innerWidth < 768 ? "fixed" : "fluid",
 			serialNoColumn: false,
 			editing: false,
 		});
+
+		// ═══════════════════════════════════════════════
+		// CHECKBOX EVENT HANDLERS
+		// ═══════════════════════════════════════════════
+
+		function updateSelectedCount() {
+			const checked = $ageing_table.find(
+				".ageing-row-check:checked",
+			).length;
+			const $count = $("#ageing-selected-count");
+			const $btn = $("#ageing-send-followup-btn");
+
+			if (checked > 0) {
+				$count.text(checked + " selected").show();
+				$btn.show();
+			} else {
+				$count.hide();
+				$btn.hide();
+			}
+		}
+
+		// Individual checkbox
+		$ageing_table.on("change", ".ageing-row-check", function () {
+			const total = $ageing_table.find(".ageing-row-check").length;
+			const checked = $ageing_table.find(
+				".ageing-row-check:checked",
+			).length;
+			$("#ageing-select-all").prop("checked", total === checked);
+			updateSelectedCount();
+		});
+
+		// Select All
+		$("#ageing-select-all").on("change", function () {
+			const isChecked = $(this).prop("checked");
+			$ageing_table.find(".ageing-row-check").prop("checked", isChecked);
+			updateSelectedCount();
+		});
+
+		// ═══════════════════════════════════════════════
+		// SEND FOLLOW-UP BUTTON
+		// ═══════════════════════════════════════════════
+		$("#ageing-send-followup-btn").on("click", function () {
+			const selectedJobs = [];
+			$ageing_table.find(".ageing-row-check:checked").each(function () {
+				selectedJobs.push($(this).data("job"));
+			});
+
+			if (selectedJobs.length === 0) {
+				frappe.msgprint(__("Please select at least one job"));
+				return;
+			}
+
+			// Open template selection dialog
+			open_followup_template_dialog(selectedJobs);
+		});
 	}
 
+	// ═══════════════════════════════════════════════════════════════════════
+	// FOLLOW-UP TEMPLATE DIALOG
+	// ═══════════════════════════════════════════════════════════════════════
+
+	function open_followup_template_dialog(selectedJobs) {
+		// First fetch templates from backend
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_mail_templates",
+			callback(r) {
+				const templates = r.message || [];
+
+				if (!templates.length) {
+					frappe.msgprint(__("No templates found"));
+					return;
+				}
+
+				// Build template options HTML
+				let templateHTML = `
+				<div style="margin-bottom:16px;">
+					<p style="font-weight:600;color:#334155;margin-bottom:12px;">
+						Sending follow-up for <strong>${selectedJobs.length}</strong> job(s)
+					</p>
+					<p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+						Select a template below. Same template will be sent to all selected jobs with dynamic content.
+					</p>
+				</div>
+			`;
+
+				templates.forEach((t, index) => {
+					templateHTML += `
+					<div class="template-option" style="
+						padding: 14px 16px;
+						margin-bottom: 10px;
+						border: 2px solid #e2e8f0;
+						border-radius: 10px;
+						cursor: pointer;
+						transition: all 0.2s;
+					" data-template="${t.status_value}" onclick="select_template(this, '${t.status_value}')">
+						<div style="display:flex;align-items:center;gap:10px;">
+							<input type="radio" name="template_choice" value="${t.status_value}"
+								style="width:16px;height:16px;" ${index === 0 ? "checked" : ""} />
+							<div>
+								<div style="font-weight:600;font-size:14px;color:#1e293b;">
+									${t.label}
+								</div>
+								<div style="font-size:12px;color:#64748b;margin-top:2px;">
+									${t.description}
+								</div>
+							</div>
+						</div>
+					</div>
+				`;
+				});
+
+				const dialog = new frappe.ui.Dialog({
+					title: "Send Follow-up Email",
+					size: "large",
+					fields: [
+						{
+							fieldtype: "HTML",
+							fieldname: "template_html",
+							options: templateHTML,
+						},
+					],
+					primary_action_label: "Send Emails",
+					primary_action() {
+						const selected = dialog.$wrapper
+							.find("input[name='template_choice']:checked")
+							.val();
+
+						if (!selected) {
+							frappe.msgprint(__("Please select a template"));
+							return;
+						}
+
+						dialog.hide();
+
+						// Confirm before sending
+						frappe.confirm(
+							`Are you sure you want to send <strong>"${selected}"</strong> email to <strong>${selectedJobs.length}</strong> job(s)?`,
+							() => {
+								send_followup_emails(selectedJobs, selected);
+							},
+						);
+					},
+				});
+
+				dialog.show();
+
+				// Style: highlight selected template
+				dialog.$wrapper.on("click", ".template-option", function () {
+					dialog.$wrapper.find(".template-option").css({
+						"border-color": "#e2e8f0",
+						background: "white",
+					});
+					$(this).css({
+						"border-color": "#3b82f6",
+						background: "#eff6ff",
+					});
+					$(this).find("input[type=radio]").prop("checked", true);
+				});
+
+				// Auto highlight first
+				dialog.$wrapper.find(".template-option").first().click();
+			},
+		});
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════
+	// SEND FOLLOW-UP EMAILS
+	// ═══════════════════════════════════════════════════════════════════════
+
+	function send_followup_emails(jobNames, templateType) {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.send_bulk_followup",
+			args: {
+				job_names: JSON.stringify(jobNames),
+				template_type: templateType,
+			},
+			freeze: true,
+			freeze_message: "Sending follow-up emails...",
+			callback(r) {
+				const results = r.message || {};
+				const success = results.success || [];
+				const failed = results.failed || [];
+
+				// Build result message
+				let msg = "";
+
+				if (success.length > 0) {
+					msg += `<div style="margin-bottom:12px;">
+					<h4 style="color:#16a34a;">✅ Successfully sent: ${success.length}</h4>
+					<table class="table table-bordered" style="font-size:12px;">
+						<thead>
+							<tr>
+								<th>Job</th>
+								<th>Company</th>
+								<th>Recipients</th>
+							</tr>
+						</thead>
+						<tbody>`;
+
+					success.forEach((s) => {
+						msg += `<tr>
+						<td>${s.job}</td>
+						<td>${s.company}</td>
+						<td>${s.recipients}</td>
+					</tr>`;
+					});
+
+					msg += `</tbody></table></div>`;
+				}
+
+				if (failed.length > 0) {
+					msg += `<div>
+					<h4 style="color:#dc2626;">❌ Failed: ${failed.length}</h4>
+					<table class="table table-bordered" style="font-size:12px;">
+						<thead>
+							<tr>
+								<th>Job</th>
+								<th>Reason</th>
+							</tr>
+						</thead>
+						<tbody>`;
+
+					failed.forEach((f) => {
+						msg += `<tr>
+						<td>${f.job}</td>
+						<td>${f.reason}</td>
+					</tr>`;
+					});
+
+					msg += `</tbody></table></div>`;
+				}
+
+				frappe.msgprint({
+					title: "Follow-up Email Results",
+					indicator: failed.length > 0 ? "orange" : "green",
+					message: msg,
+				});
+
+				// Reload ageing data
+				load_ageing_analysis();
+
+				// Clean up top bar selection
+				$("#ageing-select-all").prop("checked", false);
+				$("#ageing-selected-count").hide();
+				$("#ageing-send-followup-btn").hide();
+			},
+		});
+	}
 	// ═══════════════════════════════════════════════════════════════════════
 	// EXCEL DOWNLOAD
 	// ═══════════════════════════════════════════════════════════════════════

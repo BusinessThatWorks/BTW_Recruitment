@@ -51,7 +51,11 @@
   "replacement_section_section",
   "pending_replacements",
   "total_replacements",
-  "replacement_history"
+  "replacement_history",
+  "email_history_tab",
+  "last_followup_status",
+  "last_followup_date",
+  "ageing_mail_log"
  ],
  "fields": [
   {
@@ -334,6 +338,28 @@
    "fieldtype": "Int",
    "label": "Total Replacements Given",
    "read_only": 1
+  },
+  {
+   "fieldname": "email_history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Email History"
+  },
+  {
+   "fieldname": "last_followup_date",
+   "fieldtype": "Datetime",
+   "label": "Last Follow up Date"
+  },
+  {
+   "fieldname": "last_followup_status",
+   "fieldtype": "Select",
+   "label": "Last Follow up Status",
+   "options": "\nFollow-up Sent\nClosing Query Sent\nPending Response Sent"
+  },
+  {
+   "fieldname": "ageing_mail_log",
+   "fieldtype": "Table",
+   "label": "Follow up Email Log",
+   "options": "DKP_Ageing_Mail_Log"
   }
  ],
  "grid_page_length": 50,
@@ -344,7 +370,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-04-18 12:28:34.823603",
+ "modified": "2026-04-20 16:57:20.444079",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

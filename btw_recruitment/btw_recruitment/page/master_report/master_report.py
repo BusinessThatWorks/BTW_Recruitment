@@ -901,19 +901,165 @@ def get_recruiter_performance(from_date=None, to_date=None, company=None, recrui
 	return result
 
 
+# @frappe.whitelist()
+# def get_ageing_analysis(from_date=None, to_date=None, company=None, recruiter=None):
+# 	"""Get ageing analysis data"""
+
+# 	# Only open jobs for ageing
+# 	filters = build_job_filters(from_date, to_date, company, recruiter, "Open")
+# 	jobs = get_filtered_jobs(filters)
+
+# 	bucket_0_15 = 0
+# 	bucket_16_30 = 0
+# 	bucket_30_plus = 0
+# 	critical_jobs = []
+
+# 	for job in jobs:
+# 		ageing_days = date_diff(nowdate(), job.creation)
+
+# 		if ageing_days <= 15:
+# 			bucket_0_15 += 1
+# 		elif ageing_days <= 30:
+# 			bucket_16_30 += 1
+# 		else:
+# 			bucket_30_plus += 1
+
+# 			# Get stats for critical job
+# 			child_stats = frappe.db.sql(
+# 				"""
+#                 SELECT COUNT(*) as submitted
+#                 FROM `tabDKP_JobApplication_Child`
+#                 WHERE parent = %(job_name)s
+#             """,
+# 				{"job_name": job.name},
+# 				as_dict=True,
+# 			)[0]
+
+# 			interview_stats = frappe.db.sql(
+# 				"""
+#                 SELECT
+#                     SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as pipeline
+#                 FROM `tabDKP_Interview`
+#                 WHERE job_opening = %(job_name)s
+#             """,
+# 				{"job_name": job.name},
+# 				as_dict=True,
+# 			)[0]
+
+# 			# ✅ FIXED: Changed 'recruiter' to 'recruiter_name'
+# 			recruiters = frappe.db.get_all(
+# 				"DKP_JobOpeningRecruiter_Child", filters={"parent": job.name}, pluck="recruiter_name"
+# 			)
+
+# 			critical_jobs.append(
+# 				{
+# 					"job_opening": job.name,
+# 					"company_name": job.company_name,
+# 					"designation": job.designation,
+# 					"ageing_days": ageing_days,
+# 					"submitted": cint(child_stats.get("submitted", 0)),
+# 					"interview_pipeline": cint(interview_stats.get("pipeline", 0)),
+# 					"status": job.status,
+# 					"recruiters": ", ".join([r for r in recruiters if r]) if recruiters else "-",
+# 				}
+# 			)
+
+# 	# Sort critical jobs by ageing desc
+# 	critical_jobs.sort(key=lambda x: x["ageing_days"], reverse=True)
+
+
+# 	return {
+# 		"bucket_0_15": bucket_0_15,
+# 		"bucket_16_30": bucket_16_30,
+# 		"bucket_30_plus": bucket_30_plus,
+# 		"critical_jobs": critical_jobs,
+# 	}
 @frappe.whitelist()
 def get_ageing_analysis(from_date=None, to_date=None, company=None, recruiter=None):
-	"""Get ageing analysis data"""
+	"""Get ageing analysis data - On Hold jobs only, any priority"""
 
-	# Only open jobs for ageing
-	filters = build_job_filters(from_date, to_date, company, recruiter, "Open")
+	# ✅ CHANGED: "Open" → "On Hold"
+	filters = build_job_filters(from_date, to_date, company, recruiter, "On Hold")
 	jobs = get_filtered_jobs(filters)
 
 	bucket_0_15 = 0
 	bucket_16_30 = 0
 	bucket_30_plus = 0
-	critical_jobs = []
+	on_hold_jobs = []
 
+	# Collect all job names for batch queries
+	all_job_names = [j.name for j in jobs]
+
+	# ── Batch fetch: submitted counts ──
+	submitted_map = {}
+	if all_job_names:
+		submitted_data = frappe.db.sql(
+			"""
+			SELECT
+				parent,
+				COUNT(*) as submitted
+			FROM `tabDKP_JobApplication_Child`
+			WHERE parent IN %(job_names)s
+			GROUP BY parent
+			""",
+			{"job_names": all_job_names},
+			as_dict=True,
+		)
+		submitted_map = {r.parent: cint(r.submitted) for r in submitted_data}
+
+	# ── Batch fetch: interview pipeline counts ──
+	pipeline_map = {}
+	if all_job_names:
+		pipeline_data = frappe.db.sql(
+			"""
+			SELECT
+				job_opening,
+				SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted')
+					THEN 1 ELSE 0 END) as pipeline
+			FROM `tabDKP_Interview`
+			WHERE job_opening IN %(job_names)s
+			GROUP BY job_opening
+			""",
+			{"job_names": all_job_names},
+			as_dict=True,
+		)
+		pipeline_map = {r.job_opening: cint(r.pipeline) for r in pipeline_data}
+
+	# ── Batch fetch: recruiters ──
+	recruiter_map = {}
+	if all_job_names:
+		recruiters_data = frappe.db.sql(
+			"""
+			SELECT
+				parent,
+				GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+			FROM `tabDKP_JobOpeningRecruiter_Child`
+			WHERE parent IN %(job_names)s
+			GROUP BY parent
+			""",
+			{"job_names": all_job_names},
+			as_dict=True,
+		)
+		recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# ── Batch fetch: last mail date from child table ──
+	last_mail_map = {}
+	if all_job_names:
+		last_mail_data = frappe.db.sql(
+			"""
+			SELECT
+				parent,
+				MAX(sent_on) as last_sent
+			FROM `tabDKP_Ageing_Mail_Log`
+			WHERE parent IN %(job_names)s
+			GROUP BY parent
+			""",
+			{"job_names": all_job_names},
+			as_dict=True,
+		)
+		last_mail_map = {r.parent: r.last_sent for r in last_mail_data}
+
+	# ── Process each job ──
 	for job in jobs:
 		ageing_days = date_diff(nowdate(), job.creation)
 
@@ -924,54 +1070,34 @@ def get_ageing_analysis(from_date=None, to_date=None, company=None, recruiter=No
 		else:
 			bucket_30_plus += 1
 
-			# Get stats for critical job
-			child_stats = frappe.db.sql(
-				"""
-                SELECT COUNT(*) as submitted
-                FROM `tabDKP_JobApplication_Child`
-                WHERE parent = %(job_name)s
-            """,
-				{"job_name": job.name},
-				as_dict=True,
-			)[0]
+		# ✅ ALL On Hold jobs go into the table (not just 30+)
+		on_hold_jobs.append(
+			{
+				"job_opening": job.name,
+				"company_name": job.company_name,
+				"designation": job.designation,
+				"location": job.location or "",
+				"ageing_days": ageing_days,
+				"submitted": submitted_map.get(job.name, 0),
+				"interview_pipeline": pipeline_map.get(job.name, 0),
+				"status": job.status,
+				"priority": job.priority or "—",
+				"recruiters": recruiter_map.get(job.name, "—"),
+				"last_followup_status": job.last_followup_status or "—",
+				"last_followup_date": str(last_mail_map.get(job.name, ""))
+				if last_mail_map.get(job.name)
+				else "—",
+			}
+		)
 
-			interview_stats = frappe.db.sql(
-				"""
-                SELECT
-                    SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as pipeline
-                FROM `tabDKP_Interview`
-                WHERE job_opening = %(job_name)s
-            """,
-				{"job_name": job.name},
-				as_dict=True,
-			)[0]
-
-			# ✅ FIXED: Changed 'recruiter' to 'recruiter_name'
-			recruiters = frappe.db.get_all(
-				"DKP_JobOpeningRecruiter_Child", filters={"parent": job.name}, pluck="recruiter_name"
-			)
-
-			critical_jobs.append(
-				{
-					"job_opening": job.name,
-					"company_name": job.company_name,
-					"designation": job.designation,
-					"ageing_days": ageing_days,
-					"submitted": cint(child_stats.get("submitted", 0)),
-					"interview_pipeline": cint(interview_stats.get("pipeline", 0)),
-					"status": job.status,
-					"recruiters": ", ".join([r for r in recruiters if r]) if recruiters else "-",
-				}
-			)
-
-	# Sort critical jobs by ageing desc
-	critical_jobs.sort(key=lambda x: x["ageing_days"], reverse=True)
+	# Sort by ageing desc — sabse purana pehle
+	on_hold_jobs.sort(key=lambda x: x["ageing_days"], reverse=True)
 
 	return {
 		"bucket_0_15": bucket_0_15,
 		"bucket_16_30": bucket_16_30,
 		"bucket_30_plus": bucket_30_plus,
-		"critical_jobs": critical_jobs,
+		"on_hold_jobs": on_hold_jobs,
 	}
 
 
@@ -991,6 +1117,62 @@ def build_job_filters(from_date=None, to_date=None, company=None, recruiter=None
 		filters["status"] = status
 
 	return {"filters": filters, "from_date": from_date, "to_date": to_date, "recruiter": recruiter}
+
+
+# def get_filtered_jobs(filter_dict):
+# 	"""Get filtered job openings"""
+
+# 	filters = filter_dict.get("filters", {})
+# 	from_date = filter_dict.get("from_date")
+# 	to_date = filter_dict.get("to_date")
+# 	recruiter = filter_dict.get("recruiter")
+
+# 	# Build SQL conditions
+# 	conditions = ["1=1"]
+# 	values = {}
+
+# 	if filters.get("company_name"):
+# 		conditions.append("jo.company_name = %(company_name)s")
+# 		values["company_name"] = filters["company_name"]
+
+# 	if filters.get("status"):
+# 		conditions.append("jo.status = %(status)s")
+# 		values["status"] = filters["status"]
+
+# 	if from_date:
+# 		conditions.append("jo.creation >= %(from_date)s")
+# 		values["from_date"] = from_date
+
+# 	if to_date:
+# 		conditions.append("jo.creation < %(to_date)s")
+# 		values["to_date"] = add_days(to_date, 1)
+
+# 	# ✅ FIXED: Changed 'recruiter' to 'recruiter_name' in JOIN
+# 	recruiter_join = ""
+# 	if recruiter:
+# 		recruiter_join = """
+#             INNER JOIN `tabDKP_JobOpeningRecruiter_Child` rec
+#             ON rec.parent = jo.name AND rec.recruiter_name = %(recruiter)s
+#         """
+# 		values["recruiter"] = recruiter
+
+# 	sql = f"""
+#         SELECT DISTINCT
+#             jo.name,
+#             jo.company_name,
+#             jo.designation,
+#             jo.number_of_positions,
+#             jo.status,
+#             jo.priority,
+#             jo.creation,
+#             jo.replacement_used
+#         FROM `tabDKP_Job_Opening` jo
+#         {recruiter_join}
+#         WHERE {" AND ".join(conditions)}
+#         ORDER BY jo.creation DESC
+#     """
+
+# 	return frappe.db.sql(sql, values, as_dict=True)
 
 
 def get_filtered_jobs(filter_dict):
@@ -1039,7 +1221,10 @@ def get_filtered_jobs(filter_dict):
             jo.status,
             jo.priority,
             jo.creation,
-            jo.replacement_used
+            jo.replacement_used,
+			jo.last_followup_status,
+			jo.last_followup_date,
+			jo.location
         FROM `tabDKP_Job_Opening` jo
         {recruiter_join}
         WHERE {" AND ".join(conditions)}
@@ -1047,3 +1232,464 @@ def get_filtered_jobs(filter_dict):
     """
 
 	return frappe.db.sql(sql, values, as_dict=True)
+
+
+@frappe.whitelist()
+def get_mail_templates():
+	"""Return 3 mail template options for follow-up"""
+
+	templates = [
+		{
+			"id": "followup",
+			"label": "📋 Follow-up Sent",
+			"status_value": "Follow-up Sent",
+			"subject": "Follow-up: Update Required on {designation} Position",
+			"description": "General follow-up asking client for status update on the open requirement.",
+		},
+		{
+			"id": "closing",
+			"label": "🔒 Closing Query Sent",
+			"status_value": "Closing Query Sent",
+			"subject": "Status Confirmation: {designation} Position \u2013 Action Required",
+			"description": "Asking client if this requirement should be closed or is still active.",
+		},
+		{
+			"id": "pending",
+			"label": "⏳ Pending Response Sent",
+			"status_value": "Pending Response Sent",
+			"subject": "Reminder: Awaiting Your Response on {designation} Position",
+			"description": "Reminder that we haven't received any response and need confirmation.",
+		},
+	]
+
+	return templates
+
+
+@frappe.whitelist()
+def send_bulk_followup(job_names=None, template_type=None):
+	"""Send bulk follow-up emails for selected On Hold jobs"""
+
+	import json
+
+	if isinstance(job_names, str):
+		job_names = json.loads(job_names)
+
+	if not job_names or not template_type:
+		frappe.throw(_("Please select jobs and a template type"))
+
+	# Template definitions
+	templates = {
+		"Follow-up Sent": {
+			"subject": "Follow-up: Update Required on {designation} Position | {company_name}",
+			"body": """
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    <p>Dear Team,</p>
+
+    <p>Hope you are doing well.</p>
+
+    <p>We are writing to request an update on the following position which is currently <strong>on hold</strong> in our records:</p>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
+        <tr style="background: #f8fafc;">
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
+        </tr>
+        <tr style="background: #f8fafc;">
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
+        </tr>
+    </table>
+
+    <p>We would appreciate it if you could share the current status so we can plan our efforts accordingly.</p>
+
+    <p><strong>Please let us know:</strong></p>
+    <ol style="margin: 8px 0; padding-left: 20px;">
+        <li>Is this requirement still active?</li>
+        <li>Should we continue holding or resume working on it?</li>
+        <li>Any changes in the requirement specifications?</li>
+    </ol>
+
+    <p>Looking forward to your response.</p>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;">Regards,</p>
+        <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+    </div>
+</div>""",
+		},
+		"Closing Query Sent": {
+			"subject": "Status Confirmation: {designation} Position \u2013 Action Required | {company_name}",
+			"body": """
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    <p>Dear Team,</p>
+
+    <p>Hope you are doing well.</p>
+
+    <p>We are reaching out regarding the following position which has been <strong>on hold for a significant period</strong>:</p>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
+        <tr style="background: #f8fafc;">
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
+        </tr>
+        <tr style="background: #f8fafc;">
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
+        </tr>
+    </table>
+
+    <p>As this requirement has been inactive for a while, we wanted to confirm:</p>
+
+    <ol style="margin: 8px 0; padding-left: 20px;">
+        <li>Should this position be <strong>closed</strong> in our records?</li>
+        <li>Has this been <strong>fulfilled from another source</strong>?</li>
+        <li>Or is there a <strong>revised timeline</strong> for this requirement?</li>
+    </ol>
+
+    <p>Your confirmation will help us maintain accurate records and prioritize active requirements.</p>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;">Regards,</p>
+        <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+    </div>
+</div>""",
+		},
+		"Pending Response Sent": {
+			"subject": "Reminder: Awaiting Your Response on {designation} Position | {company_name}",
+			"body": """
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    <p>Dear Team,</p>
+
+    <p>This is a gentle reminder regarding the following position:</p>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
+        <tr style="background: #f8fafc;">
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
+        </tr>
+        <tr style="background: #f8fafc;">
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
+            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
+        </tr>
+    </table>
+
+    <p>We have been awaiting your response on this requirement. Our records show that this position has been on hold and we have not yet received any update from your end.</p>
+
+    <p><strong>We request you to kindly share:</strong></p>
+    <ol style="margin: 8px 0; padding-left: 20px;">
+        <li>Current status of this requirement</li>
+        <li>Any feedback on profiles shared (if applicable)</li>
+        <li>Next steps from your side</li>
+    </ol>
+
+    <p>Your prompt response will help us serve you better.</p>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;">Regards,</p>
+        <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+    </div>
+</div>""",
+		},
+	}
+
+	if template_type not in templates:
+		frappe.throw(_("Invalid template type: {0}").format(template_type))
+
+	template = templates[template_type]
+	results = {"success": [], "failed": []}
+	sender_name = frappe.utils.get_fullname(frappe.session.user)
+	sender_email = frappe.session.user
+
+	for job_name in job_names:
+		try:
+			# Fetch job details
+			job = frappe.get_doc("DKP_Job_Opening", job_name)
+			ageing_days = date_diff(nowdate(), job.creation)
+
+			# ── Get recipient emails (all contacts of customer) ──
+			recipient_emails = get_customer_emails(job.company_name)
+
+			if not recipient_emails:
+				results["failed"].append(
+					{"job": job_name, "reason": f"No contact emails found for {job.company_name}"}
+				)
+				continue
+
+			# ── Get CC emails (assigned recruiters) ──
+			cc_emails = get_recruiter_emails(job_name)
+
+			# ── Build dynamic email content ──
+			format_data = {
+				"company_name": job.company_name or "",
+				"designation": job.designation or "",
+				"location": job.location or "",
+				"ageing_days": ageing_days,
+				"sender_name": sender_name,
+				"sender_email": sender_email,
+			}
+
+			subject = template["subject"].format(**format_data)
+			body = template["body"].format(**format_data)
+
+			# ── Send email via Frappe ──
+			frappe.sendmail(
+				recipients=recipient_emails,
+				cc=cc_emails if cc_emails else None,
+				subject=subject,
+				message=body,
+				reference_doctype="DKP_Job_Opening",
+				reference_name=job_name,
+				expose_recipients="header",
+				now=True,
+			)
+
+			# ── Log to child table ──
+			job.append(
+				"ageing_mail_log",
+				{
+					"sent_on": frappe.utils.now_datetime(),
+					"template_type": template_type,
+					"sent_by": frappe.session.user,
+					"recipient": ", ".join(recipient_emails),
+					"cc": ", ".join(cc_emails) if cc_emails else "",
+				},
+			)
+
+			# ── Update status fields ──
+			job.last_followup_status = template_type
+			job.last_followup_date = frappe.utils.now_datetime()
+			job.flags.ignore_permissions = True
+			job.flags.ignore_mandatory = True
+			job.save()
+
+			results["success"].append(
+				{
+					"job": job_name,
+					"company": job.company_name,
+					"recipients": ", ".join(recipient_emails),
+				}
+			)
+
+		except Exception as e:
+			results["failed"].append({"job": job_name, "reason": str(e)})
+			frappe.log_error(title=f"Follow-up Email Failed: {job_name}", message=frappe.get_traceback())
+
+	frappe.db.commit()
+
+	return results
+
+
+# def get_customer_emails(customer_name):
+# 	"""Get all contact email IDs linked to a Customer"""
+
+# 	if not customer_name:
+# 		return []
+
+# 	emails = frappe.db.sql(
+# 		"""
+# 		SELECT
+# 			c.email_id
+# 		FROM `tabContact` c
+# 		INNER JOIN `tabDynamic Link` dl
+# 			ON dl.parent = c.name
+# 			AND dl.parenttype = 'Contact'
+# 		WHERE dl.link_doctype = 'Customer'
+# 		AND dl.link_name = %(customer_name)s
+# 		AND c.email_id IS NOT NULL
+# 		AND c.email_id != ''
+# 		""",
+# 		{"customer_name": customer_name},
+# 		as_list=True,
+# 	)
+
+
+# 	return [e[0] for e in emails if e[0]]
+def get_customer_emails(customer_name):
+	"""Get all contact/address email IDs linked to a Customer"""
+
+	if not customer_name:
+		return []
+
+	emails = set()
+
+	# ── Source 1: Contact → email_id (primary email field) ──
+	contact_emails = frappe.db.sql(
+		"""
+		SELECT
+			c.email_id
+		FROM `tabContact` c
+		INNER JOIN `tabDynamic Link` dl
+			ON dl.parent = c.name
+			AND dl.parenttype = 'Contact'
+		WHERE dl.link_doctype = 'Customer'
+		AND dl.link_name = %(customer_name)s
+		AND c.email_id IS NOT NULL
+		AND c.email_id != ''
+		""",
+		{"customer_name": customer_name},
+		as_list=True,
+	)
+	for e in contact_emails:
+		if e[0]:
+			emails.add(e[0].strip())
+
+	# ── Source 2: Contact → email_ids child table ──
+	contact_child_emails = frappe.db.sql(
+		"""
+		SELECT
+			ce.email_id
+		FROM `tabContact Email` ce
+		INNER JOIN `tabContact` c
+			ON c.name = ce.parent
+		INNER JOIN `tabDynamic Link` dl
+			ON dl.parent = c.name
+			AND dl.parenttype = 'Contact'
+		WHERE dl.link_doctype = 'Customer'
+		AND dl.link_name = %(customer_name)s
+		AND ce.email_id IS NOT NULL
+		AND ce.email_id != ''
+		""",
+		{"customer_name": customer_name},
+		as_list=True,
+	)
+	for e in contact_child_emails:
+		if e[0]:
+			emails.add(e[0].strip())
+
+	# ── Source 3: Contact → user field (linked User's email) ──
+	contact_users = frappe.db.sql(
+		"""
+		SELECT
+			c.user
+		FROM `tabContact` c
+		INNER JOIN `tabDynamic Link` dl
+			ON dl.parent = c.name
+			AND dl.parenttype = 'Contact'
+		WHERE dl.link_doctype = 'Customer'
+		AND dl.link_name = %(customer_name)s
+		AND c.user IS NOT NULL
+		AND c.user != ''
+		""",
+		{"customer_name": customer_name},
+		as_list=True,
+	)
+	for e in contact_users:
+		if e[0]:
+			emails.add(e[0].strip())
+
+	# ── Source 4: Address → email_id ──
+	address_emails = frappe.db.sql(
+		"""
+		SELECT
+			a.email_id
+		FROM `tabAddress` a
+		INNER JOIN `tabDynamic Link` dl
+			ON dl.parent = a.name
+			AND dl.parenttype = 'Address'
+		WHERE dl.link_doctype = 'Customer'
+		AND dl.link_name = %(customer_name)s
+		AND a.email_id IS NOT NULL
+		AND a.email_id != ''
+		""",
+		{"customer_name": customer_name},
+		as_list=True,
+	)
+	for e in address_emails:
+		if e[0]:
+			emails.add(e[0].strip())
+
+	return list(emails)
+
+
+# def get_recruiter_emails(job_name):
+# 	"""Get email IDs of assigned recruiters for a job opening"""
+
+# 	if not job_name:
+# 		return []
+
+# 	# Get recruiter names from child table
+# 	recruiter_names = frappe.db.get_all(
+# 		"DKP_JobOpeningRecruiter_Child",
+# 		filters={"parent": job_name},
+# 		pluck="recruiter_name",
+# 	)
+
+# 	if not recruiter_names:
+# 		return []
+
+# 	# Get email IDs from User doctype
+# 	emails = []
+# 	for rec_name in recruiter_names:
+# 		if rec_name:
+# 			# Try finding user by full_name
+# 			user_email = frappe.db.get_value(
+# 				"User",
+# 				{"full_name": rec_name, "enabled": 1},
+# 				"email",
+# 			)
+# 			if user_email:
+# 				emails.append(user_email)
+
+# 	return emails
+
+
+def get_recruiter_emails(job_name):
+	"""Get email IDs of assigned recruiters for a job opening"""
+
+	if not job_name:
+		return []
+
+	# recruiter_name is Link to User, so value = User.name
+	recruiter_users = frappe.db.get_all(
+		"DKP_JobOpeningRecruiter_Child",
+		filters={"parent": job_name},
+		pluck="recruiter_name",
+	)
+
+	if not recruiter_users:
+		return []
+
+	# remove blanks + duplicates
+	recruiter_users = list(dict.fromkeys([u.strip() for u in recruiter_users if u]))
+
+	# fetch only enabled users
+	enabled_users = frappe.db.get_all(
+		"User",
+		filters={
+			"name": ["in", recruiter_users],
+			"enabled": 1,
+		},
+		pluck="name",
+	)
+
+	# In Frappe, User.name is generally the email id
+	cc_emails = [u for u in enabled_users if u and "@" in u]
+
+	return list(dict.fromkeys(cc_emails))
