@@ -271,7 +271,7 @@
    KPI RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════ */
 
-@media (max-width: 1200px) {
+/* @media (max-width: 1200px) {
     .kpi-grid-5 {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -310,8 +310,46 @@
     .kpi-grid-5 {
         grid-template-columns: 1fr 1fr;
     }
+} */
+/* ═══════════════════════════════════════════════════════════════════════
+   KPI GRID 6 COLUMNS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.kpi-grid-6 {
+    grid-template-columns: repeat(6, 1fr);
 }
 
+/* Cyan color for Interview Pipeline */
+.kpi-cyan { border-left-color: #06b6d4; }
+.kpi-cyan .kpi-value { color: #0891b2; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KPI GRID 6 RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+    .kpi-grid-6 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .kpi-grid-6 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .kpi-grid-6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-grid-6 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
 /* ═══════════════════════════════════════════════════════════════════════
    TABS SECTION
    ═══════════════════════════════════════════════════════════════════════ */

@@ -61,7 +61,7 @@
 	<!-- ═══════════════════════════════════════════════════════════════ -->
 	<div class="master-kpi-section">
 		<!-- ROW 2: OPEN JOBS ONLY -->
-		<div class="kpi-row-header">Open Jobs Only</div>
+		<!-- <div class="kpi-row-header">Open Jobs Only</div>
 		<div class="kpi-grid kpi-grid-5">
 			<div class="kpi-card kpi-blue kpi-clickable" data-route="open-jobs">
 				<div class="kpi-content">
@@ -98,8 +98,8 @@
 
 			<div class="kpi-card kpi-orange kpi-clickable" data-route="interview-pipeline">
 				<div class="kpi-content">
-					<div class="kpi-value kpi-interview">0</div>
-					<div class="kpi-label">Interview Pipeline</div>
+					<div class="kpi-value kpi-offer">0</div>
+					<div class="kpi-label">Offer Pipeline</div>
 				</div>
 				<div
 					class="kpi-info"
@@ -118,8 +118,71 @@
 					<i class="fa fa-info-circle"></i>
 				</div>
 			</div>
+		</div> -->
+		<!-- ROW 2: OPEN JOBS ONLY -->
+		<div class="kpi-row-header">Open Jobs Only</div>
+		<div class="kpi-grid kpi-grid-6">
+			<div class="kpi-card kpi-blue kpi-clickable" data-route="open-jobs">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-open-jobs">0</div>
+					<div class="kpi-label">Open Jobs</div>
+				</div>
+				<div class="kpi-info" title="Count of Job Openings with status Open">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+
+			<div class="kpi-card kpi-purple kpi-clickable" data-route="submitted">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-submitted">0</div>
+					<div class="kpi-label">Candidates Submitted</div>
+				</div>
+				<div class="kpi-info" title="Total candidates mapped">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+
+			<div class="kpi-card kpi-red kpi-clickable" data-route="rejected">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-rejected">0</div>
+					<div class="kpi-label">Rejected</div>
+				</div>
+				<div class="kpi-info" title="Client Screening Rejected + Rejected By Client">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+
+			<div class="kpi-card kpi-cyan kpi-clickable" data-route="interview-scheduled">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-interview-scheduled">0</div>
+					<div class="kpi-label">Interview Pipeline</div>
+				</div>
+				<div class="kpi-info" title="Candidates with Interview Scheduled in DKP Interview">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+
+			<div class="kpi-card kpi-orange kpi-clickable" data-route="interview-pipeline">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-offer">0</div>
+					<div class="kpi-label">Offer Pipeline</div>
+				</div>
+				<div class="kpi-info" title="Selected For Offer, Offered, Offer Accepted">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
+
+			<div class="kpi-card kpi-critical kpi-clickable" data-route="ageing-critical">
+				<div class="kpi-content">
+					<div class="kpi-value kpi-ageing-critical">0</div>
+					<div class="kpi-label">Ageing &gt;30 Days</div>
+				</div>
+				<div class="kpi-info" title="Jobs older than 30 days">
+					<i class="fa fa-info-circle"></i>
+				</div>
+			</div>
 		</div>
-        <!-- ROW 1: ALL JOBS (Historical) -->
+		<!-- ROW 1: ALL JOBS (Historical) -->
 		<div class="kpi-row-header">All Jobs (Historical)</div>
 		<div class="kpi-grid kpi-grid-3">
 			<div class="kpi-card kpi-green kpi-clickable" data-route="joined">
@@ -137,10 +200,7 @@
 					<div class="kpi-value kpi-joined-left">0</div>
 					<div class="kpi-label">Joined & Left</div>
 				</div>
-				<div
-					class="kpi-info"
-					title="Candidates with stage Joined And Left"
-				>
+				<div class="kpi-info" title="Candidates with stage Joined And Left">
 					<i class="fa fa-info-circle"></i>
 				</div>
 			</div>

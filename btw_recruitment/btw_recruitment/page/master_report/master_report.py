@@ -29,7 +29,7 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 			"open_jobs": 0,
 			"total_submitted": 0,
 			"total_rejected": 0,
-			"interview_pipeline": 0,
+			"offer_pipeline": 0,
 			"ageing_critical": 0,
 		}
 
@@ -77,8 +77,9 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 	# Default values if no open jobs
 	total_submitted = 0
 	total_rejected = 0
-	interview_pipeline = 0
+	offer_pipeline = 0
 	ageing_critical = 0
+	interview_scheduled = 0
 
 	if open_job_names:
 		# Get candidate stats for OPEN jobs only
@@ -99,9 +100,20 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 			"""
             SELECT
                 SUM(CASE WHEN stage = 'Rejected By Client' THEN 1 ELSE 0 END) as interview_rejected,
-                SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as interview_pipeline
+                SUM(CASE WHEN stage IN ('Selected For Offer', 'Offered', 'Offer Accepted') THEN 1 ELSE 0 END) as offer_pipeline
             FROM `tabDKP_Interview`
             WHERE job_opening IN %(job_names)s
+            """,
+			{"job_names": open_job_names},
+			as_dict=True,
+		)[0]
+
+		interview_scheduled_data = frappe.db.sql(
+			"""
+            SELECT COUNT(*) as total
+            FROM `tabDKP_Interview`
+            WHERE job_opening IN %(job_names)s
+            AND stage = 'Interview Scheduled'
             """,
 			{"job_names": open_job_names},
 			as_dict=True,
@@ -111,13 +123,15 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 		total_rejected = cint(submitted_data.get("child_rejected", 0)) + cint(
 			interview_data.get("interview_rejected", 0)
 		)
-		interview_pipeline = cint(interview_data.get("interview_pipeline", 0))
+		offer_pipeline = cint(interview_data.get("offer_pipeline", 0))
 
 		# Ageing critical (Open jobs > 30 days)
 		for job in open_jobs_list:
 			days = date_diff(nowdate(), job.creation)
 			if days > 30:
 				ageing_critical += 1
+
+		interview_scheduled = cint(interview_scheduled_data.get("total", 0))
 
 	return {
 		# ALL Jobs KPIs
@@ -127,7 +141,8 @@ def get_dashboard_kpis(from_date=None, to_date=None, company=None, recruiter=Non
 		# OPEN Jobs KPIs
 		"open_jobs": open_jobs,
 		"total_submitted": total_submitted,
-		"interview_pipeline": interview_pipeline,
+		"offer_pipeline": offer_pipeline,
+		"interview_scheduled": interview_scheduled,
 		"ageing_critical": ageing_critical,
 		# 🔥 ADD THIS
 		"all_job_names": all_job_names,
@@ -319,6 +334,65 @@ def get_interview_pipeline_detail(from_date=None, to_date=None, company=None, re
 	# Step 3: Har row mein assigned recruiters inject karo
 	for row in data:
 		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+
+	return data
+
+
+@frappe.whitelist()
+def get_interview_scheduled_detail(from_date=None, to_date=None, company=None, recruiter=None):
+	"""Get candidates with Interview Scheduled stage for open jobs"""
+
+	filters = build_job_filters(from_date, to_date, company, recruiter, status="Open")
+	jobs = get_filtered_jobs(filters)
+	open_job_names = [j.name for j in jobs if j.status == "Open"]
+
+	if not open_job_names:
+		return []
+
+	# Job wise assigned recruiters
+	recruiters_data = frappe.db.sql(
+		"""
+        SELECT
+            parent,
+            GROUP_CONCAT(recruiter_name SEPARATOR ', ') as recruiters
+        FROM `tabDKP_JobOpeningRecruiter_Child`
+        WHERE parent IN %(job_names)s
+        GROUP BY parent
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	recruiter_map = {r.parent: r.recruiters for r in recruiters_data}
+
+	# Interview Scheduled data
+	data = frappe.db.sql(
+		"""
+        SELECT
+            i.name as interview_id,
+            i.candidate_name as candidate,
+            i.job_opening,
+            i.stage,
+            i.added_by as recruiter_added,
+            job.designation,
+            job.company_name,
+            i.creation
+        FROM `tabDKP_Interview` i
+        LEFT JOIN `tabDKP_Job_Opening` job
+            ON job.name = i.job_opening
+        WHERE i.job_opening IN %(job_names)s
+        AND i.stage = 'Interview Scheduled'
+        ORDER BY job.company_name, i.creation DESC
+        """,
+		{"job_names": open_job_names},
+		as_dict=True,
+	)
+
+	for row in data:
+		row["recruiter"] = recruiter_map.get(row["job_opening"], "—")
+		row["creation"] = (
+			frappe.utils.formatdate(row.get("creation"), "dd-MM-yyyy") if row.get("creation") else "—"
+		)
 
 	return data
 

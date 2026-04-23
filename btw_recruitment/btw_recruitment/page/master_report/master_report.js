@@ -183,7 +183,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	const $kpi_open_jobs = $body.find(".kpi-open-jobs");
 	const $kpi_submitted = $body.find(".kpi-submitted");
 	const $kpi_rejected = $body.find(".kpi-rejected");
-	const $kpi_interview = $body.find(".kpi-interview");
+	const $kpi_offer = $body.find(".kpi-offer");
+	const $kpi_interview_scheduled = $body.find(".kpi-interview-scheduled");
 	const $kpi_ageing_critical = $body.find(".kpi-ageing-critical");
 
 	// Ageing buckets
@@ -392,6 +393,10 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 
 			case "interview-pipeline":
 				show_interview_pipeline_dialog(); // ✅ replaces frappe.set_route
+				break;
+
+			case "interview-scheduled":
+				show_interview_scheduled_dialog();
 				break;
 
 			case "ageing-critical":
@@ -859,7 +864,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
         </div>`;
 
 		const dialog = new frappe.ui.Dialog({
-			title: `Interview Pipeline (${data.length})`,
+			title: `Offer Pipeline (${data.length})`,
 			size: "extra-large",
 			fields: [
 				{
@@ -899,6 +904,114 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			],
 			excel_rows,
 			"Interview_Pipeline",
+		);
+	}
+
+	// ═══════════════════════════════════════════════
+	// INTERVIEW SCHEDULED DIALOG
+	// ═══════════════════════════════════════════════
+
+	function show_interview_scheduled_dialog() {
+		frappe.call({
+			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_interview_scheduled_detail",
+			args: {
+				from_date: state.from_date,
+				to_date: state.to_date,
+				company: state.company,
+				recruiter: state.recruiter,
+			},
+			callback(r) {
+				const data = r.message || [];
+				render_interview_scheduled_dialog(data);
+			},
+		});
+	}
+
+	function render_interview_scheduled_dialog(data) {
+		function link(href, label) {
+			if (!label) return "—";
+			return `<a href="${href}" target="_blank"
+               style="color:#5e64ff;font-weight:500;">${label}</a>`;
+		}
+
+		const rows = data.length
+			? data
+					.map(
+						(row) => `
+            <tr>
+                <td>${link(`/app/dkp_interview/${encodeURIComponent(row.interview_id)}`, row.interview_id)}</td>
+                <td>${link(`/app/dkp_job_opening/${encodeURIComponent(row.job_opening)}`, row.job_opening)}</td>
+                <td>${link(`/app/customer/${encodeURIComponent(row.company_name)}`, row.company_name)}</td>
+                <td>${link(`/app/dkp_candidate/${encodeURIComponent(row.candidate)}`, row.candidate)}</td>
+                <td style="color:#555;font-size:12px;">${row.designation || "—"}</td>
+                <td style="color:#555;font-size:12px;">${row.recruiter || "—"}</td>
+                <td style="color:#888;font-size:12px;">${row.creation || "—"}</td>
+            </tr>`,
+					)
+					.join("")
+			: `<tr><td colspan="7" class="text-center text-muted"
+               style="padding:30px 0;">No interviews scheduled.</td></tr>`;
+
+		const table_html = `
+        ${excel_btn_html(data.length)}
+        <div style="overflow:auto;max-height:65vh;">
+            <table class="table table-bordered table-hover"
+                   style="font-size:13px;margin:0;min-width:900px;">
+                <thead>
+                    <tr style="background:#ecfeff;">
+                        <th>Interview ID</th>
+                        <th>Job Opening</th>
+                        <th>Company</th>
+                        <th>Candidate</th>
+                        <th>Designation</th>
+                        <th>Assigned Recruiter(s)</th>
+                        <th>Created On</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+
+		const dialog = new frappe.ui.Dialog({
+			title: `Interview Pipeline (${data.length})`,
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "table_html",
+					options: table_html,
+				},
+			],
+			primary_action_label: "Close",
+			primary_action() {
+				dialog.hide();
+			},
+		});
+
+		dialog.show();
+
+		const excel_rows = data.map((row) => [
+			row.interview_id || "",
+			row.job_opening || "",
+			row.company_name || "",
+			row.candidate || "",
+			row.designation || "",
+			row.recruiter || "",
+			row.creation || "",
+		]);
+		bind_excel_btn(
+			dialog,
+			[
+				"Interview ID",
+				"Job Opening",
+				"Company",
+				"Candidate",
+				"Designation",
+				"Assigned Recruiter(s)",
+				"Created On",
+			],
+			excel_rows,
+			"Interview_Scheduled",
 		);
 	}
 	// ═══════════════════════════════════════════════
@@ -1337,7 +1450,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				$kpi_open_jobs.text(k.open_jobs || 0);
 				$kpi_submitted.text(k.total_submitted || 0);
 				$kpi_rejected.text(k.total_rejected || 0);
-				$kpi_interview.text(k.interview_pipeline || 0);
+				$kpi_offer.text(k.offer_pipeline || 0);
+				$kpi_interview_scheduled.text(k.interview_scheduled || 0);
 				$kpi_ageing_critical.text(k.ageing_critical || 0);
 				current_all_job_names = k.all_job_names || [];
 				current_open_job_names = k.open_job_names || [];
