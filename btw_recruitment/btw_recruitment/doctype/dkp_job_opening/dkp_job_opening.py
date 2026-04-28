@@ -373,7 +373,6 @@ class DKP_Job_Opening(Document):
 		Sync candidates tagged in this Job Opening to their respective
 		DKP_Candidate.table_gcbt (Tagged Openings child table)
 		"""
-		frappe.msgprint("Synced candidates to tagged openings")
 
 		job_opening_name = self.name
 
