@@ -1308,40 +1308,310 @@ def get_filtered_jobs(filter_dict):
 	return frappe.db.sql(sql, values, as_dict=True)
 
 
+# @frappe.whitelist()
+# def get_mail_templates():
+# 	"""Return 3 mail template options for follow-up"""
+
+# 	templates = [
+# 		{
+# 			"id": "followup",
+# 			"label": "📋 Follow-up Sent",
+# 			"status_value": "Follow-up Sent",
+# 			"subject": "Follow-up: Update Required on {designation} Position",
+# 			"description": "General follow-up asking client for status update on the open requirement.",
+# 		},
+# 		{
+# 			"id": "closing",
+# 			"label": "🔒 Closing Query Sent",
+# 			"status_value": "Closing Query Sent",
+# 			"subject": "Status Confirmation: {designation} Position \u2013 Action Required",
+# 			"description": "Asking client if this requirement should be closed or is still active.",
+# 		},
+# 		{
+# 			"id": "pending",
+# 			"label": "⏳ Pending Response Sent",
+# 			"status_value": "Pending Response Sent",
+# 			"subject": "Reminder: Awaiting Your Response on {designation} Position",
+# 			"description": "Reminder that we haven't received any response and need confirmation.",
+# 		},
+# 	]
+
+
+# 	return templates
 @frappe.whitelist()
 def get_mail_templates():
-	"""Return 3 mail template options for follow-up"""
+	"""Return template options for on-hold job emails"""
 
 	templates = [
 		{
-			"id": "followup",
-			"label": "📋 Follow-up Sent",
-			"status_value": "Follow-up Sent",
-			"subject": "Follow-up: Update Required on {designation} Position",
-			"description": "General follow-up asking client for status update on the open requirement.",
+			"id": "no_update",
+			"label": "No Update from Client",
+			"status_value": "No Update from Client Sent",
+			"subject": "Dua's Knowledge Potli: Update on Requirement Status \u2013 Pending Feedback",
+			"description": "Use when there has been no update from the client and requirement status needs confirmation.",
 		},
 		{
-			"id": "closing",
-			"label": "🔒 Closing Query Sent",
-			"status_value": "Closing Query Sent",
-			"subject": "Status Confirmation: {designation} Position \u2013 Action Required",
-			"description": "Asking client if this requirement should be closed or is still active.",
+			"id": "nearby_profiles",
+			"label": "Nearby Profile Suggestion",
+			"status_value": "Nearby Profiles Alignment Sent",
+			"subject": "Dua's Knowledge Potli: Alignment on Candidate Profiles \u2013 {designation}",
+			"description": "Use when exact matching profiles are limited and nearby profiles need client approval.",
 		},
 		{
-			"id": "pending",
-			"label": "⏳ Pending Response Sent",
-			"status_value": "Pending Response Sent",
-			"subject": "Reminder: Awaiting Your Response on {designation} Position",
-			"description": "Reminder that we haven't received any response and need confirmation.",
+			"id": "compensation_alignment",
+			"label": "Compensation Alignment",
+			"status_value": "Compensation Alignment Sent",
+			"subject": "Dua's Knowledge Potli: Discussion on Compensation Alignment \u2013 {designation}",
+			"description": "Use when the market compensation is higher than the current approved budget.",
 		},
 	]
 
 	return templates
 
 
+# @frappe.whitelist()
+# def send_bulk_followup(job_names=None, template_type=None):
+# 	"""Send bulk follow-up emails for selected On Hold jobs"""
+
+# 	import json
+
+# 	if isinstance(job_names, str):
+# 		job_names = json.loads(job_names)
+
+# 	if not job_names or not template_type:
+# 		frappe.throw(_("Please select jobs and a template type"))
+
+# 	# Template definitions
+# 	templates = {
+# 		"Follow-up Sent": {
+# 			"subject": "Follow-up: Update Required on {designation} Position | {company_name}",
+# 			"body": """
+# <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+#     <p>Dear Team,</p>
+
+#     <p>Hope you are doing well.</p>
+
+#     <p>We are writing to request an update on the following position which is currently <strong>on hold</strong> in our records:</p>
+
+#     <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
+#         <tr style="background: #f8fafc;">
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
+#         </tr>
+#         <tr>
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
+#         </tr>
+#         <tr style="background: #f8fafc;">
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
+#         </tr>
+#         <tr>
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
+#         </tr>
+#     </table>
+
+#     <p>We would appreciate it if you could share the current status so we can plan our efforts accordingly.</p>
+
+#     <p><strong>Please let us know:</strong></p>
+#     <ol style="margin: 8px 0; padding-left: 20px;">
+#         <li>Is this requirement still active?</li>
+#         <li>Should we continue holding or resume working on it?</li>
+#         <li>Any changes in the requirement specifications?</li>
+#     </ol>
+
+#     <p>Looking forward to your response.</p>
+
+#     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+#         <p style="margin: 0;">Regards,</p>
+#         <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
+#         <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+#     </div>
+# </div>""",
+# 		},
+# 		"Closing Query Sent": {
+# 			"subject": "Status Confirmation: {designation} Position \u2013 Action Required | {company_name}",
+# 			"body": """
+# <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+#     <p>Dear Team,</p>
+
+#     <p>Hope you are doing well.</p>
+
+#     <p>We are reaching out regarding the following position which has been <strong>on hold for a significant period</strong>:</p>
+
+#     <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
+#         <tr style="background: #f8fafc;">
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
+#         </tr>
+#         <tr>
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
+#         </tr>
+#         <tr style="background: #f8fafc;">
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
+#         </tr>
+#         <tr>
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
+#         </tr>
+#     </table>
+
+#     <p>As this requirement has been inactive for a while, we wanted to confirm:</p>
+
+#     <ol style="margin: 8px 0; padding-left: 20px;">
+#         <li>Should this position be <strong>closed</strong> in our records?</li>
+#         <li>Has this been <strong>fulfilled from another source</strong>?</li>
+#         <li>Or is there a <strong>revised timeline</strong> for this requirement?</li>
+#     </ol>
+
+#     <p>Your confirmation will help us maintain accurate records and prioritize active requirements.</p>
+
+#     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+#         <p style="margin: 0;">Regards,</p>
+#         <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
+#         <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+#     </div>
+# </div>""",
+# 		},
+# 		"Pending Response Sent": {
+# 			"subject": "Reminder: Awaiting Your Response on {designation} Position | {company_name}",
+# 			"body": """
+# <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+#     <p>Dear Team,</p>
+
+#     <p>This is a gentle reminder regarding the following position:</p>
+
+#     <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
+#         <tr style="background: #f8fafc;">
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
+#         </tr>
+#         <tr>
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
+#         </tr>
+#         <tr style="background: #f8fafc;">
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
+#         </tr>
+#         <tr>
+#             <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
+#             <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
+#         </tr>
+#     </table>
+
+#     <p>We have been awaiting your response on this requirement. Our records show that this position has been on hold and we have not yet received any update from your end.</p>
+
+#     <p><strong>We request you to kindly share:</strong></p>
+#     <ol style="margin: 8px 0; padding-left: 20px;">
+#         <li>Current status of this requirement</li>
+#         <li>Any feedback on profiles shared (if applicable)</li>
+#         <li>Next steps from your side</li>
+#     </ol>
+
+#     <p>Your prompt response will help us serve you better.</p>
+
+#     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+#         <p style="margin: 0;">Regards,</p>
+#         <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
+#         <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+#     </div>
+# </div>""",
+# 		},
+# 	}
+
+# 	if template_type not in templates:
+# 		frappe.throw(_("Invalid template type: {0}").format(template_type))
+
+# 	template = templates[template_type]
+# 	results = {"success": [], "failed": []}
+# 	sender_name = frappe.utils.get_fullname(frappe.session.user)
+# 	sender_email = frappe.session.user
+
+# 	for job_name in job_names:
+# 		try:
+# 			# Fetch job details
+# 			job = frappe.get_doc("DKP_Job_Opening", job_name)
+# 			ageing_days = date_diff(nowdate(), job.creation)
+
+# 			# ── Get recipient emails (all contacts of customer) ──
+# 			recipient_emails = get_customer_emails(job.company_name)
+
+# 			if not recipient_emails:
+# 				results["failed"].append(
+# 					{"job": job_name, "reason": f"No contact emails found for {job.company_name}"}
+# 				)
+# 				continue
+
+# 			# ── Get CC emails (assigned recruiters) ──
+# 			cc_emails = get_recruiter_emails(job_name)
+
+# 			# ── Build dynamic email content ──
+# 			format_data = {
+# 				"company_name": job.company_name or "",
+# 				"designation": job.designation or "",
+# 				"location": job.location or "",
+# 				"ageing_days": ageing_days,
+# 				"sender_name": sender_name,
+# 				"sender_email": sender_email,
+# 			}
+
+# 			subject = template["subject"].format(**format_data)
+# 			body = template["body"].format(**format_data)
+
+# 			# ── Send email via Frappe ──
+# 			frappe.sendmail(
+# 				recipients=recipient_emails,
+# 				cc=cc_emails if cc_emails else None,
+# 				subject=subject,
+# 				message=body,
+# 				reference_doctype="DKP_Job_Opening",
+# 				reference_name=job_name,
+# 				expose_recipients="header",
+# 				now=True,
+# 			)
+
+# 			# ── Log to child table ──
+# 			job.append(
+# 				"ageing_mail_log",
+# 				{
+# 					"sent_on": frappe.utils.now_datetime(),
+# 					"template_type": template_type,
+# 					"sent_by": frappe.session.user,
+# 					"recipient": ", ".join(recipient_emails),
+# 					"cc": ", ".join(cc_emails) if cc_emails else "",
+# 				},
+# 			)
+
+# 			# ── Update status fields ──
+# 			job.last_followup_status = template_type
+# 			job.last_followup_date = frappe.utils.now_datetime()
+# 			job.flags.ignore_permissions = True
+# 			job.flags.ignore_mandatory = True
+# 			job.save()
+
+# 			results["success"].append(
+# 				{
+# 					"job": job_name,
+# 					"company": job.company_name,
+# 					"recipients": ", ".join(recipient_emails),
+# 				}
+# 			)
+
+# 		except Exception as e:
+# 			results["failed"].append({"job": job_name, "reason": str(e)})
+# 			frappe.log_error(title=f"Follow-up Email Failed: {job_name}", message=frappe.get_traceback())
+
+# 	frappe.db.commit()
+
+
+# 	return results
 @frappe.whitelist()
 def send_bulk_followup(job_names=None, template_type=None):
-	"""Send bulk follow-up emails for selected On Hold jobs"""
+	"""Send bulk on-hold job emails for selected jobs"""
 
 	import json
 
@@ -1351,145 +1621,78 @@ def send_bulk_followup(job_names=None, template_type=None):
 	if not job_names or not template_type:
 		frappe.throw(_("Please select jobs and a template type"))
 
-	# Template definitions
 	templates = {
-		"Follow-up Sent": {
-			"subject": "Follow-up: Update Required on {designation} Position | {company_name}",
+		"No Update from Client Sent": {
+			"subject": "Dua's Knowledge Potli: Update on Requirement Status \u2013 Pending Feedback",
 			"body": """
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-    <p>Dear Team,</p>
+<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+	<p>Dear {hiring_manager_name},</p>
 
-    <p>Hope you are doing well.</p>
+	<p>I hope you are doing well.</p>
 
-    <p>We are writing to request an update on the following position which is currently <strong>on hold</strong> in our records:</p>
+	<p>We would like to check in regarding the status of the requirement for <strong>{designation}</strong>, for which several profiles were shared earlier. As the requirement has now been open for over <strong>{ageing_days} days</strong>, and we have not received further feedback or follow-ups on the resumes shared, we wanted to confirm the current status from your end.</p>
 
-    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
-        <tr style="background: #f8fafc;">
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
-        </tr>
-        <tr>
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
-        </tr>
-        <tr style="background: #f8fafc;">
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
-        </tr>
-        <tr>
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
-        </tr>
-    </table>
+	<p>In case the requirement is no longer active or has been put on hold, please let us know so that we may consider the position closed from our end.</p>
 
-    <p>We would appreciate it if you could share the current status so we can plan our efforts accordingly.</p>
+	<p>If the requirement is still active, we would be happy to continue supporting the hiring process and align on the next steps.</p>
 
-    <p><strong>Please let us know:</strong></p>
-    <ol style="margin: 8px 0; padding-left: 20px;">
-        <li>Is this requirement still active?</li>
-        <li>Should we continue holding or resume working on it?</li>
-        <li>Any changes in the requirement specifications?</li>
-    </ol>
+	<p>Looking forward to your guidance.</p>
 
-    <p>Looking forward to your response.</p>
-
-    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0;">Regards,</p>
-        <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
-        <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
-    </div>
-</div>""",
+	<div style="margin-top: 24px;">
+		<p style="margin-bottom: 4px;">Warm regards,</p>
+		<p style="margin: 0; font-weight: 600;">{sender_name}</p>
+		<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+	</div>
+</div>
+""",
 		},
-		"Closing Query Sent": {
-			"subject": "Status Confirmation: {designation} Position \u2013 Action Required | {company_name}",
+		"Nearby Profiles Alignment Sent": {
+			"subject": "Dua's Knowledge Potli: Alignment on Candidate Profiles \u2013 {designation}",
 			"body": """
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-    <p>Dear Team,</p>
+<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+	<p>Dear {hiring_manager_name},</p>
 
-    <p>Hope you are doing well.</p>
+	<p>With reference to the <strong>{designation}</strong> requirement, we wanted to share a quick update.</p>
 
-    <p>We are reaching out regarding the following position which has been <strong>on hold for a significant period</strong>:</p>
+	<p>Over the past few weeks, we have been actively exploring relevant profiles in the market. However, candidates who match the exact combination of skills and experience as outlined in the requirement appear to be limited at the moment.</p>
 
-    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
-        <tr style="background: #f8fafc;">
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
-        </tr>
-        <tr>
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
-        </tr>
-        <tr style="background: #f8fafc;">
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
-        </tr>
-        <tr>
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
-        </tr>
-    </table>
+	<p>In view of this, we wanted to check if we could expand the search scope slightly and consider nearby profiles, who may not match the requirement 100% but have closely relevant experience and the potential to fit the role with minimal ramp-up time.</p>
 
-    <p>As this requirement has been inactive for a while, we wanted to confirm:</p>
+	<p>Your guidance on this will help us broaden the search and move the hiring process forward more effectively.</p>
 
-    <ol style="margin: 8px 0; padding-left: 20px;">
-        <li>Should this position be <strong>closed</strong> in our records?</li>
-        <li>Has this been <strong>fulfilled from another source</strong>?</li>
-        <li>Or is there a <strong>revised timeline</strong> for this requirement?</li>
-    </ol>
+	<p>Looking forward to your thoughts.</p>
 
-    <p>Your confirmation will help us maintain accurate records and prioritize active requirements.</p>
-
-    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0;">Regards,</p>
-        <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
-        <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
-    </div>
-</div>""",
+	<div style="margin-top: 24px;">
+		<p style="margin-bottom: 4px;">Warm regards,</p>
+		<p style="margin: 0; font-weight: 600;">{sender_name}</p>
+		<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+	</div>
+</div>
+""",
 		},
-		"Pending Response Sent": {
-			"subject": "Reminder: Awaiting Your Response on {designation} Position | {company_name}",
+		"Compensation Alignment Sent": {
+			"subject": "Dua's Knowledge Potli: Discussion on Compensation Alignment \u2013 {designation}",
 			"body": """
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-    <p>Dear Team,</p>
+<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+	<p>Dear {hiring_manager_name},</p>
 
-    <p>This is a gentle reminder regarding the following position:</p>
+	<p>We wanted to share a quick update regarding the <strong>{designation}</strong> requirement.</p>
 
-    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0;">
-        <tr style="background: #f8fafc;">
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0; width: 40%;">Company</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{company_name}</td>
-        </tr>
-        <tr>
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Position</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{designation}</td>
-        </tr>
-        <tr style="background: #f8fafc;">
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Location</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">{location}</td>
-        </tr>
-        <tr>
-            <td style="padding: 10px 14px; font-weight: 600; border: 1px solid #e2e8f0;">Days Since Created</td>
-            <td style="padding: 10px 14px; border: 1px solid #e2e8f0;"><strong style="color: #dc2626;">{ageing_days} days</strong></td>
-        </tr>
-    </table>
+	<p>While exploring the candidate market for this role, we have observed that most suitable candidates fall within a compensation range higher than the currently proposed budget. As a result, it has been challenging to identify profiles that match the role requirements within the current salary bracket.</p>
 
-    <p>We have been awaiting your response on this requirement. Our records show that this position has been on hold and we have not yet received any update from your end.</p>
+	<p>We would request your guidance on whether there is any flexibility in the compensation range, or if we should explore candidates with slightly different experience levels who may fit within the current budget.</p>
 
-    <p><strong>We request you to kindly share:</strong></p>
-    <ol style="margin: 8px 0; padding-left: 20px;">
-        <li>Current status of this requirement</li>
-        <li>Any feedback on profiles shared (if applicable)</li>
-        <li>Next steps from your side</li>
-    </ol>
+	<p>Your inputs will help us align the search strategy and move the hiring process forward more effectively.</p>
 
-    <p>Your prompt response will help us serve you better.</p>
+	<p>Looking forward to your guidance.</p>
 
-    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0;">Regards,</p>
-        <p style="margin: 4px 0; font-weight: 600;">{sender_name}</p>
-        <p style="margin: 0; color: #64748b; font-size: 13px;">{sender_email}</p>
-    </div>
-</div>""",
+	<div style="margin-top: 24px;">
+		<p style="margin-bottom: 4px;">Warm regards,</p>
+		<p style="margin: 0; font-weight: 600;">{sender_name}</p>
+		<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+	</div>
+</div>
+""",
 		},
 	}
 
@@ -1503,11 +1706,10 @@ def send_bulk_followup(job_names=None, template_type=None):
 
 	for job_name in job_names:
 		try:
-			# Fetch job details
 			job = frappe.get_doc("DKP_Job_Opening", job_name)
 			ageing_days = date_diff(nowdate(), job.creation)
 
-			# ── Get recipient emails (all contacts of customer) ──
+			# To emails
 			recipient_emails = get_customer_emails(job.company_name)
 
 			if not recipient_emails:
@@ -1516,23 +1718,31 @@ def send_bulk_followup(job_names=None, template_type=None):
 				)
 				continue
 
-			# ── Get CC emails (assigned recruiters) ──
+			# CC emails
 			cc_emails = get_recruiter_emails(job_name)
 
-			# ── Build dynamic email content ──
-			format_data = {
-				"company_name": job.company_name or "",
+			# Greeting name fallback order:
+			# Contact name -> Address title -> Email
+			hiring_manager_name = get_hiring_manager_name(
+				customer_name=job.company_name,
+				recipient_emails=recipient_emails,
+			)
+
+			subject_format_data = {
 				"designation": job.designation or "",
-				"location": job.location or "",
-				"ageing_days": ageing_days,
-				"sender_name": sender_name,
-				"sender_email": sender_email,
 			}
 
-			subject = template["subject"].format(**format_data)
-			body = template["body"].format(**format_data)
+			body_format_data = {
+				"hiring_manager_name": frappe.utils.escape_html(hiring_manager_name or ""),
+				"designation": frappe.utils.escape_html(job.designation or ""),
+				"ageing_days": ageing_days,
+				"sender_name": frappe.utils.escape_html(sender_name or ""),
+				"sender_email": frappe.utils.escape_html(sender_email or ""),
+			}
 
-			# ── Send email via Frappe ──
+			subject = template["subject"].format(**subject_format_data)
+			body = template["body"].format(**body_format_data)
+
 			frappe.sendmail(
 				recipients=recipient_emails,
 				cc=cc_emails if cc_emails else None,
@@ -1544,7 +1754,6 @@ def send_bulk_followup(job_names=None, template_type=None):
 				now=True,
 			)
 
-			# ── Log to child table ──
 			job.append(
 				"ageing_mail_log",
 				{
@@ -1556,7 +1765,6 @@ def send_bulk_followup(job_names=None, template_type=None):
 				},
 			)
 
-			# ── Update status fields ──
 			job.last_followup_status = template_type
 			job.last_followup_date = frappe.utils.now_datetime()
 			job.flags.ignore_permissions = True
@@ -1573,38 +1781,101 @@ def send_bulk_followup(job_names=None, template_type=None):
 
 		except Exception as e:
 			results["failed"].append({"job": job_name, "reason": str(e)})
-			frappe.log_error(title=f"Follow-up Email Failed: {job_name}", message=frappe.get_traceback())
+			frappe.log_error(
+				title=f"On Hold Job Email Failed: {job_name}",
+				message=frappe.get_traceback(),
+			)
 
 	frappe.db.commit()
-
 	return results
 
 
-# def get_customer_emails(customer_name):
-# 	"""Get all contact email IDs linked to a Customer"""
+def get_hiring_manager_name(customer_name, recipient_emails=None):
+	"""Return contact name, else address title, else first email"""
 
-# 	if not customer_name:
-# 		return []
+	if not customer_name:
+		return recipient_emails[0] if recipient_emails else "Hiring Manager"
 
-# 	emails = frappe.db.sql(
-# 		"""
-# 		SELECT
-# 			c.email_id
-# 		FROM `tabContact` c
-# 		INNER JOIN `tabDynamic Link` dl
-# 			ON dl.parent = c.name
-# 			AND dl.parenttype = 'Contact'
-# 		WHERE dl.link_doctype = 'Customer'
-# 		AND dl.link_name = %(customer_name)s
-# 		AND c.email_id IS NOT NULL
-# 		AND c.email_id != ''
-# 		""",
-# 		{"customer_name": customer_name},
-# 		as_list=True,
-# 	)
+	email_fallbacks = []
+
+	# 1) Contact name
+	contact_rows = frappe.db.sql(
+		"""
+		SELECT
+			c.first_name,
+			c.middle_name,
+			c.last_name,
+			c.email_id,
+			c.user,
+			c.is_primary_contact
+		FROM `tabContact` c
+		INNER JOIN `tabDynamic Link` dl
+			ON dl.parent = c.name
+			AND dl.parenttype = 'Contact'
+		WHERE dl.link_doctype = 'Customer'
+		  AND dl.link_name = %(customer_name)s
+		ORDER BY c.is_primary_contact DESC, c.modified DESC
+		""",
+		{"customer_name": customer_name},
+		as_dict=True,
+	)
+
+	for row in contact_rows:
+		full_name = " ".join(
+			[
+				part.strip()
+				for part in [row.first_name, row.middle_name, row.last_name]
+				if part and str(part).strip()
+			]
+		)
+		if full_name:
+			return full_name
+
+		if row.email_id and row.email_id.strip():
+			email_fallbacks.append(row.email_id.strip())
+
+		if row.user and row.user.strip():
+			email_fallbacks.append(row.user.strip())
+
+	# 2) Address title
+	address_rows = frappe.db.sql(
+		"""
+		SELECT
+			a.address_title,
+			a.email_id,
+			a.is_primary_address
+		FROM `tabAddress` a
+		INNER JOIN `tabDynamic Link` dl
+			ON dl.parent = a.name
+			AND dl.parenttype = 'Address'
+		WHERE dl.link_doctype = 'Customer'
+		  AND dl.link_name = %(customer_name)s
+		ORDER BY a.is_primary_address DESC, a.modified DESC
+		""",
+		{"customer_name": customer_name},
+		as_dict=True,
+	)
+
+	for row in address_rows:
+		if row.address_title and row.address_title.strip():
+			return row.address_title.strip()
+
+		if row.email_id and row.email_id.strip():
+			email_fallbacks.append(row.email_id.strip())
+
+	# 3) Email fallback
+	if recipient_emails:
+		for email in recipient_emails:
+			if email and email.strip():
+				return email.strip()
+
+	for email in email_fallbacks:
+		if email and email.strip():
+			return email.strip()
+
+	return "Hiring Manager"
 
 
-# 	return [e[0] for e in emails if e[0]]
 def get_customer_emails(customer_name):
 	"""Get all contact/address email IDs linked to a Customer"""
 
@@ -1699,39 +1970,7 @@ def get_customer_emails(customer_name):
 		if e[0]:
 			emails.add(e[0].strip())
 
-	return list(emails)
-
-
-# def get_recruiter_emails(job_name):
-# 	"""Get email IDs of assigned recruiters for a job opening"""
-
-# 	if not job_name:
-# 		return []
-
-# 	# Get recruiter names from child table
-# 	recruiter_names = frappe.db.get_all(
-# 		"DKP_JobOpeningRecruiter_Child",
-# 		filters={"parent": job_name},
-# 		pluck="recruiter_name",
-# 	)
-
-# 	if not recruiter_names:
-# 		return []
-
-# 	# Get email IDs from User doctype
-# 	emails = []
-# 	for rec_name in recruiter_names:
-# 		if rec_name:
-# 			# Try finding user by full_name
-# 			user_email = frappe.db.get_value(
-# 				"User",
-# 				{"full_name": rec_name, "enabled": 1},
-# 				"email",
-# 			)
-# 			if user_email:
-# 				emails.append(user_email)
-
-# 	return emails
+	return sorted(emails)
 
 
 def get_recruiter_emails(job_name):

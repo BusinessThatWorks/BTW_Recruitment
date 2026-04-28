@@ -2013,16 +2013,49 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 			{ name: "Interview", width: 90 },
 			{ name: "Status", width: 110 },
 			{ name: "Recruiter(s)", width: 170 },
+			// {
+			// 	name: "Last Follow-up",
+			// 	width: 150,
+			// 	format: (value) => {
+			// 		if (!value || value === "—")
+			// 			return `<span style="color:#94a3b8;">—</span>`;
+			// 		let color = "#f59e0b";
+			// 		if (value === "Follow-up Sent") color = "#3b82f6";
+			// 		if (value === "Closing Query Sent") color = "#ef4444";
+			// 		if (value === "Pending Response Sent") color = "#f59e0b";
+			// 		return `<span style="color:${color};font-weight:600;font-size:11px;">${value}</span>`;
+			// 	},
+			// },
 			{
 				name: "Last Follow-up",
-				width: 150,
+				width: 180,
 				format: (value) => {
-					if (!value || value === "—")
+					if (!value || value === "—") {
 						return `<span style="color:#94a3b8;">—</span>`;
-					let color = "#f59e0b";
-					if (value === "Follow-up Sent") color = "#3b82f6";
-					if (value === "Closing Query Sent") color = "#ef4444";
-					if (value === "Pending Response Sent") color = "#f59e0b";
+					}
+
+					let color = "#64748b";
+
+					// Old statuses kept for historical records
+					if (
+						value === "Follow-up Sent" ||
+						value === "No Update from Client Sent"
+					) {
+						color = "#3b82f6";
+					}
+					if (
+						value === "Pending Response Sent" ||
+						value === "Nearby Profiles Alignment Sent"
+					) {
+						color = "#f59e0b";
+					}
+					if (
+						value === "Closing Query Sent" ||
+						value === "Compensation Alignment Sent"
+					) {
+						color = "#ef4444";
+					}
+
 					return `<span style="color:${color};font-weight:600;font-size:11px;">${value}</span>`;
 				},
 			},
@@ -2129,8 +2162,110 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 	// FOLLOW-UP TEMPLATE DIALOG
 	// ═══════════════════════════════════════════════════════════════════════
 
+	// function open_followup_template_dialog(selectedJobs) {
+	// 	// First fetch templates from backend
+	// 	frappe.call({
+	// 		method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_mail_templates",
+	// 		callback(r) {
+	// 			const templates = r.message || [];
+
+	// 			if (!templates.length) {
+	// 				frappe.msgprint(__("No templates found"));
+	// 				return;
+	// 			}
+
+	// 			// Build template options HTML
+	// 			let templateHTML = `
+	// 			<div style="margin-bottom:16px;">
+	// 				<p style="font-weight:600;color:#334155;margin-bottom:12px;">
+	// 					Sending follow-up for <strong>${selectedJobs.length}</strong> job(s)
+	// 				</p>
+	// 				<p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+	// 					Select a template below. Same template will be sent to all selected jobs with dynamic content.
+	// 				</p>
+	// 			</div>
+	// 		`;
+
+	// 			templates.forEach((t, index) => {
+	// 				templateHTML += `
+	// 				<div class="template-option" style="
+	// 					padding: 14px 16px;
+	// 					margin-bottom: 10px;
+	// 					border: 2px solid #e2e8f0;
+	// 					border-radius: 10px;
+	// 					cursor: pointer;
+	// 					transition: all 0.2s;
+	// 				" data-template="${t.status_value}" onclick="select_template(this, '${t.status_value}')">
+	// 					<div style="display:flex;align-items:center;gap:10px;">
+	// 						<input type="radio" name="template_choice" value="${t.status_value}"
+	// 							style="width:16px;height:16px;" ${index === 0 ? "checked" : ""} />
+	// 						<div>
+	// 							<div style="font-weight:600;font-size:14px;color:#1e293b;">
+	// 								${t.label}
+	// 							</div>
+	// 							<div style="font-size:12px;color:#64748b;margin-top:2px;">
+	// 								${t.description}
+	// 							</div>
+	// 						</div>
+	// 					</div>
+	// 				</div>
+	// 			`;
+	// 			});
+
+	// 			const dialog = new frappe.ui.Dialog({
+	// 				title: "Send Follow-up Email",
+	// 				size: "large",
+	// 				fields: [
+	// 					{
+	// 						fieldtype: "HTML",
+	// 						fieldname: "template_html",
+	// 						options: templateHTML,
+	// 					},
+	// 				],
+	// 				primary_action_label: "Send Emails",
+	// 				primary_action() {
+	// 					const selected = dialog.$wrapper
+	// 						.find("input[name='template_choice']:checked")
+	// 						.val();
+
+	// 					if (!selected) {
+	// 						frappe.msgprint(__("Please select a template"));
+	// 						return;
+	// 					}
+
+	// 					dialog.hide();
+
+	// 					// Confirm before sending
+	// 					frappe.confirm(
+	// 						`Are you sure you want to send <strong>"${selected}"</strong> email to <strong>${selectedJobs.length}</strong> job(s)?`,
+	// 						() => {
+	// 							send_followup_emails(selectedJobs, selected);
+	// 						},
+	// 					);
+	// 				},
+	// 			});
+
+	// 			dialog.show();
+
+	// 			// Style: highlight selected template
+	// 			dialog.$wrapper.on("click", ".template-option", function () {
+	// 				dialog.$wrapper.find(".template-option").css({
+	// 					"border-color": "#e2e8f0",
+	// 					background: "white",
+	// 				});
+	// 				$(this).css({
+	// 					"border-color": "#3b82f6",
+	// 					background: "#eff6ff",
+	// 				});
+	// 				$(this).find("input[type=radio]").prop("checked", true);
+	// 			});
+
+	// 			// Auto highlight first
+	// 			dialog.$wrapper.find(".template-option").first().click();
+	// 		},
+	// 	});
+	// }
 	function open_followup_template_dialog(selectedJobs) {
-		// First fetch templates from backend
 		frappe.call({
 			method: "btw_recruitment.btw_recruitment.page.master_report.master_report.get_mail_templates",
 			callback(r) {
@@ -2141,14 +2276,13 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					return;
 				}
 
-				// Build template options HTML
 				let templateHTML = `
 				<div style="margin-bottom:16px;">
 					<p style="font-weight:600;color:#334155;margin-bottom:12px;">
-						Sending follow-up for <strong>${selectedJobs.length}</strong> job(s)
+						Sending email for <strong>${selectedJobs.length}</strong> job(s)
 					</p>
 					<p style="color:#64748b;font-size:13px;margin-bottom:16px;">
-						Select a template below. Same template will be sent to all selected jobs with dynamic content.
+						Select one template below. The same template will be sent to all selected jobs with dynamic content.
 					</p>
 				</div>
 			`;
@@ -2162,10 +2296,16 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 						border-radius: 10px;
 						cursor: pointer;
 						transition: all 0.2s;
-					" data-template="${t.status_value}" onclick="select_template(this, '${t.status_value}')">
-						<div style="display:flex;align-items:center;gap:10px;">
-							<input type="radio" name="template_choice" value="${t.status_value}"
-								style="width:16px;height:16px;" ${index === 0 ? "checked" : ""} />
+					" data-template="${t.status_value}" data-label="${t.label}">
+						<div style="display:flex;align-items:flex-start;gap:10px;">
+							<input
+								type="radio"
+								name="template_choice"
+								value="${t.status_value}"
+								data-label="${t.label}"
+								style="width:16px;height:16px;margin-top:2px;"
+								${index === 0 ? "checked" : ""}
+							/>
 							<div>
 								<div style="font-weight:600;font-size:14px;color:#1e293b;">
 									${t.label}
@@ -2180,7 +2320,7 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 				});
 
 				const dialog = new frappe.ui.Dialog({
-					title: "Send Follow-up Email",
+					title: "Send On Hold Job Email",
 					size: "large",
 					fields: [
 						{
@@ -2191,9 +2331,12 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 					],
 					primary_action_label: "Send Emails",
 					primary_action() {
-						const selected = dialog.$wrapper
-							.find("input[name='template_choice']:checked")
-							.val();
+						const $selectedRadio = dialog.$wrapper.find(
+							"input[name='template_choice']:checked",
+						);
+						const selected = $selectedRadio.val();
+						const selectedLabel =
+							$selectedRadio.data("label") || selected;
 
 						if (!selected) {
 							frappe.msgprint(__("Please select a template"));
@@ -2202,9 +2345,8 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 
 						dialog.hide();
 
-						// Confirm before sending
 						frappe.confirm(
-							`Are you sure you want to send <strong>"${selected}"</strong> email to <strong>${selectedJobs.length}</strong> job(s)?`,
+							`Are you sure you want to send <strong>${selectedLabel}</strong> email to <strong>${selectedJobs.length}</strong> job(s)?`,
 							() => {
 								send_followup_emails(selectedJobs, selected);
 							},
@@ -2214,20 +2356,20 @@ frappe.pages["master-report"].on_page_load = function (wrapper) {
 
 				dialog.show();
 
-				// Style: highlight selected template
 				dialog.$wrapper.on("click", ".template-option", function () {
 					dialog.$wrapper.find(".template-option").css({
 						"border-color": "#e2e8f0",
 						background: "white",
 					});
+
 					$(this).css({
 						"border-color": "#3b82f6",
 						background: "#eff6ff",
 					});
+
 					$(this).find("input[type=radio]").prop("checked", true);
 				});
 
-				// Auto highlight first
 				dialog.$wrapper.find(".template-option").first().click();
 			},
 		});

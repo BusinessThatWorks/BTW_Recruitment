@@ -22,7 +22,7 @@
    "fieldname": "template_type",
    "fieldtype": "Select",
    "label": "Template Type",
-   "options": "\nFollow-up Sent\nClosing Query Sent\nPending Response Sent"
+   "options": "\nFollow-up Sent\nClosing Query Sent\nPending Response Sent\nNo Update from Client Sent\nNearby Profiles Alignment Sent\nCompensation Alignment Sent"
   },
   {
    "fieldname": "sent_by",
@@ -45,7 +45,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-20 16:56:44.501989",
+ "modified": "2026-04-28 16:17:27.055369",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Ageing_Mail_Log",

@@ -353,7 +353,7 @@
    "fieldname": "last_followup_status",
    "fieldtype": "Select",
    "label": "Last Follow up Status",
-   "options": "\nFollow-up Sent\nClosing Query Sent\nPending Response Sent"
+   "options": "\nFollow-up Sent\nClosing Query Sent\nPending Response Sent\nNo Update from Client Sent\nNearby Profiles Alignment Sent\nCompensation Alignment Sent"
   },
   {
    "fieldname": "ageing_mail_log",
@@ -370,7 +370,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-04-20 16:57:20.444079",
+ "modified": "2026-04-28 16:18:02.411445",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
