@@ -1,5 +1,8 @@
+from decimal import Decimal, InvalidOperation
+
 import frappe
 from frappe.model.document import Document
+from frappe.utils import cint, cstr
 
 
 class DKP_Job_Opening(Document):
@@ -14,81 +17,103 @@ class DKP_Job_Opening(Document):
 	def on_trash(self):
 		self.remove_from_all_candidates()
 
+	def after_insert(self):
+		self.send_new_job_opening_email()
+
+	# //helpers
+	def normalize_change_value(self, fieldname, value):
+		"""Normalize values before comparison so 2.0 and 2 are treated same"""
+
+		if value is None or value == "":
+			return ""
+
+		df = self.meta.get_field(fieldname)
+		fieldtype = df.fieldtype if df else ""
+
+		if fieldtype in ("Float", "Currency", "Percent"):
+			try:
+				return Decimal(str(value)).normalize()
+			except (InvalidOperation, TypeError, ValueError):
+				return cstr(value).strip()
+
+		if fieldtype in ("Int", "Check"):
+			return cint(value)
+
+		return cstr(value).strip()
+
+	def format_change_value_for_display(self, value):
+		"""Format values for email display"""
+		if value is None or value == "":
+			return "-"
+		return str(value)
+
+	def values_are_same(self, fieldname, old_value, new_value):
+		return self.normalize_change_value(fieldname, old_value) == self.normalize_change_value(
+			fieldname, new_value
+		)
+
 	def send_change_notification_email(self):
 		"""Send email to assigned recruiters ONLY when actual changes are made"""
 
 		if not self.assign_recruiter:
 			return
 
-		# ✅ Get previous state of document
 		previous_doc = self.get_doc_before_save()
 
-		# ✅ If new document (first save) — send "New Job Opening" email
 		if not previous_doc:
-			self.send_new_job_opening_email()
 			return
 
-		# ✅ Track main field changes
 		main_changes = self.get_field_changes(previous_doc)
-
-		# ✅ Track child table (candidates) changes
 		candidate_changes = self.get_candidate_table_changes(previous_doc)
-
-		# ✅ Track recruiter changes
 		recruiter_change = self.get_recruiter_changes(previous_doc)
 
 		all_changes = main_changes.copy()
 		if recruiter_change:
 			all_changes.append(recruiter_change)
 
-		# ✅ If nothing changed at all, don't send email
 		if not all_changes and not candidate_changes:
 			return
 
-		# ✅ Get recruiter emails
 		recruiter_emails = [row.recruiter_name for row in self.assign_recruiter if row.recruiter_name]
 
 		if not recruiter_emails:
 			return
 
-		# ✅ Build email content
-		subject = f"Job Opening Updated – {self.name}"  # noqa: RUF001
+		subject = f"Job Opening Updated - {self.name}"
 
 		html_content = f"""
-        <p>Hello,</p>
+		<p>Hello,</p>
 
-        <p>Changes have been made to a job opening assigned to you:</p>
+		<p>Changes have been made to a job opening assigned to you:</p>
 
-        <p><b>Job Opening:</b> {self.name} | <b>Company:</b> {self.company_name} | <b>Designation:</b> {self.designation}</p>
-        """
+		<p><b>Job Opening:</b> {self.name} | <b>Company:</b> {self.company_name} | <b>Designation:</b> {self.designation}</p>
+		"""
 
-		# ✅ Add main field changes table
 		if all_changes:
 			changes_html = self.build_changes_html(all_changes)
 			html_content += f"""
-            <h3 style="color: #333; margin-top: 20px;">Field Changes:</h3>
-            <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 700px;">
-                <tr style="background-color: #4CAF50; color: white;">
-                    <th style="text-align: left;">Field</th>
-                    <th style="text-align: left;">Old Value</th>
-                    <th style="text-align: left;">New Value</th>
-                </tr>
-                {changes_html}
-            </table>
-            """
+			<h3 style="color: #333; margin-top: 20px;">Field Changes:</h3>
+			<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 700px;">
+				<tr style="background-color: #4CAF50; color: white;">
+					<th style="text-align: left;">Field</th>
+					<th style="text-align: left;">Old Value</th>
+					<th style="text-align: left;">New Value</th>
+				</tr>
+				{changes_html}
+			</table>
+			"""
 
-		# ✅ Add candidate changes
 		if candidate_changes:
 			candidate_html = self.build_candidate_changes_html(candidate_changes)
 			html_content += f"""
-            <h3 style="color: #333; margin-top: 20px;">Candidate Changes:</h3>
-            {candidate_html}
-            """
+			<h3 style="color: #333; margin-top: 20px;">Candidate Changes:</h3>
+			{candidate_html}
+			"""
 
 		html_content += """
-        <br>
-        <p>Regards,<br>HR Team</p>
-        """
+		<br>
+		<p>Regards,<br>HR Team</p>
+		"""
 
 		frappe.sendmail(
 			recipients=recruiter_emails,
@@ -97,9 +122,8 @@ class DKP_Job_Opening(Document):
 		)
 
 	def get_field_changes(self, previous_doc):
-		"""Compare previous and current doc, return list of changes"""
+		"""Compare previous and current doc, return list of actual changes"""
 
-		# ✅ Fields to track — apne doctype ke hisaab se
 		fields_to_track = {
 			"company_name": "Company",
 			"designation": "Designation",
@@ -126,15 +150,22 @@ class DKP_Job_Opening(Document):
 		changes = []
 
 		for fieldname, label in fields_to_track.items():
-			old_value = previous_doc.get(fieldname)
-			new_value = self.get(fieldname)
+			old_raw = previous_doc.get(fieldname)
+			new_raw = self.get(fieldname)
 
-			# ✅ Normalize None/"" for comparison
-			old_value = old_value if old_value else "-"
-			new_value = new_value if new_value else "-"
+			if self.values_are_same(fieldname, old_raw, new_raw):
+				continue
 
-			if str(old_value).strip() != str(new_value).strip():
-				changes.append({"field": label, "old_value": old_value, "new_value": new_value})
+			old_value = self.format_change_value_for_display(self.normalize_change_value(fieldname, old_raw))
+			new_value = self.format_change_value_for_display(self.normalize_change_value(fieldname, new_raw))
+
+			changes.append(
+				{
+					"field": label,
+					"old_value": old_value,
+					"new_value": new_value,
+				}
+			)
 
 		return changes
 
