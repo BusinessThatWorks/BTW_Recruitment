@@ -2,7 +2,6 @@ from decimal import Decimal, InvalidOperation
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import cint, cstr
 
 
 class DKP_Job_Opening(Document):
@@ -19,38 +18,6 @@ class DKP_Job_Opening(Document):
 
 	def after_insert(self):
 		self.send_new_job_opening_email()
-
-	# //helpers
-	def normalize_change_value(self, fieldname, value):
-		"""Normalize values before comparison so 2.0 and 2 are treated same"""
-
-		if value is None or value == "":
-			return ""
-
-		df = self.meta.get_field(fieldname)
-		fieldtype = df.fieldtype if df else ""
-
-		if fieldtype in ("Float", "Currency", "Percent"):
-			try:
-				return Decimal(str(value)).normalize()
-			except (InvalidOperation, TypeError, ValueError):
-				return cstr(value).strip()
-
-		if fieldtype in ("Int", "Check"):
-			return cint(value)
-
-		return cstr(value).strip()
-
-	def format_change_value_for_display(self, value):
-		"""Format values for email display"""
-		if value is None or value == "":
-			return "-"
-		return str(value)
-
-	def values_are_same(self, fieldname, old_value, new_value):
-		return self.normalize_change_value(fieldname, old_value) == self.normalize_change_value(
-			fieldname, new_value
-		)
 
 	def send_change_notification_email(self):
 		"""Send email to assigned recruiters ONLY when actual changes are made"""
@@ -131,8 +98,6 @@ class DKP_Job_Opening(Document):
 			"location": "Location",
 			"status": "Status",
 			"number_of_positions": "Number of Positions",
-			"min_experience_years": "Min Experience (Years)",
-			"max_experience_years": "Max Experience (Years)",
 			"min_ctc": "Min CTC Monthly",
 			"max_ctc": "Max CTC Monthly",
 			"gender_preference": "Gender Preference",
@@ -150,22 +115,20 @@ class DKP_Job_Opening(Document):
 		changes = []
 
 		for fieldname, label in fields_to_track.items():
-			old_raw = previous_doc.get(fieldname)
-			new_raw = self.get(fieldname)
+			old_value = previous_doc.get(fieldname)
+			new_value = self.get(fieldname)
 
-			if self.values_are_same(fieldname, old_raw, new_raw):
-				continue
+			old_value = str(old_value).strip() if old_value else "-"
+			new_value = str(new_value).strip() if new_value else "-"
 
-			old_value = self.format_change_value_for_display(self.normalize_change_value(fieldname, old_raw))
-			new_value = self.format_change_value_for_display(self.normalize_change_value(fieldname, new_raw))
-
-			changes.append(
-				{
-					"field": label,
-					"old_value": old_value,
-					"new_value": new_value,
-				}
-			)
+			if old_value != new_value:
+				changes.append(
+					{
+						"field": label,
+						"old_value": old_value,
+						"new_value": new_value,
+					}
+				)
 
 		return changes
 

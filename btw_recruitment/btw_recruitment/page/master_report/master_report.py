@@ -1625,74 +1625,74 @@ def send_bulk_followup(job_names=None, template_type=None):
 		"No Update from Client Sent": {
 			"subject": "Dua's Knowledge Potli: Update on Requirement Status \u2013 Pending Feedback",
 			"body": """
-<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
-	<p>Dear {hiring_manager_name},</p>
+	<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+		<p>Dear {hiring_manager_name},</p>
 
-	<p>I hope you are doing well.</p>
+		<p>I hope you are doing well.</p>
 
-	<p>We would like to check in regarding the status of the requirement for <strong>{designation}</strong>, for which several profiles were shared earlier. As the requirement has now been open for over <strong>{ageing_days} days</strong>, and we have not received further feedback or follow-ups on the resumes shared, we wanted to confirm the current status from your end.</p>
+		<p>We would like to check in regarding the status of the requirement for <strong>{designation}</strong>, for which several profiles were shared earlier. As the requirement has now been open for over <strong>{ageing_days} days</strong>, and we have not received further feedback or follow-ups on the resumes shared, we wanted to confirm the current status from your end.</p>
 
-	<p>In case the requirement is no longer active or has been put on hold, please let us know so that we may consider the position closed from our end.</p>
+		<p>In case the requirement is <strong>no longer active or has been put on hold</strong>, please let us know so that we may consider the position <strong>closed from our end</strong>.</p>
 
-	<p>If the requirement is still active, we would be happy to continue supporting the hiring process and align on the next steps.</p>
+		<p>If the requirement is still active, we would be happy to continue supporting the hiring process and align on the next steps.</p>
 
-	<p>Looking forward to your guidance.</p>
+		<p>Looking forward to your guidance.</p>
 
-	<div style="margin-top: 24px;">
-		<p style="margin-bottom: 4px;">Warm regards,</p>
-		<p style="margin: 0; font-weight: 600;">{sender_name}</p>
-		<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+		<div style="margin-top: 24px;">
+			<p style="margin-bottom: 4px;">Warm regards,</p>
+			<p style="margin: 0; font-weight: 600;">{sender_name}</p>
+			<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+		</div>
 	</div>
-</div>
-""",
+	""",
 		},
 		"Nearby Profiles Alignment Sent": {
 			"subject": "Dua's Knowledge Potli: Alignment on Candidate Profiles \u2013 {designation}",
 			"body": """
-<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
-	<p>Dear {hiring_manager_name},</p>
+	<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+		<p>Dear {hiring_manager_name},</p>
 
-	<p>With reference to the <strong>{designation}</strong> requirement, we wanted to share a quick update.</p>
+		<p>With reference to the <strong>{designation}</strong> requirement, we wanted to share a quick update.</p>
 
-	<p>Over the past few weeks, we have been actively exploring relevant profiles in the market. However, candidates who match the exact combination of skills and experience as outlined in the requirement appear to be limited at the moment.</p>
+		<p>Over the past few weeks, we have been actively exploring relevant profiles in the market. However, candidates who match the <strong>exact combination of skills and experience</strong> as outlined in the requirement appear to be limited at the moment.</p>
 
-	<p>In view of this, we wanted to check if we could expand the search scope slightly and consider nearby profiles, who may not match the requirement 100% but have closely relevant experience and the potential to fit the role with minimal ramp-up time.</p>
+		<p>In view of this, we wanted to check if we could <strong>expand the search scope slightly and consider nearby profiles</strong>, who may not match the requirement 100% but <strong>have closely relevant experience and the potential to fit the role with minimal ramp-up time</strong>.</p>
 
-	<p>Your guidance on this will help us broaden the search and move the hiring process forward more effectively.</p>
+		<p>Your guidance on this will help us broaden the search and move the hiring process forward more effectively.</p>
 
-	<p>Looking forward to your thoughts.</p>
+		<p>Looking forward to your thoughts.</p>
 
-	<div style="margin-top: 24px;">
-		<p style="margin-bottom: 4px;">Warm regards,</p>
-		<p style="margin: 0; font-weight: 600;">{sender_name}</p>
-		<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+		<div style="margin-top: 24px;">
+			<p style="margin-bottom: 4px;">Warm regards,</p>
+			<p style="margin: 0; font-weight: 600;">{sender_name}</p>
+			<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+		</div>
 	</div>
-</div>
-""",
+	""",
 		},
 		"Compensation Alignment Sent": {
 			"subject": "Dua's Knowledge Potli: Discussion on Compensation Alignment \u2013 {designation}",
 			"body": """
-<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
-	<p>Dear {hiring_manager_name},</p>
+	<div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+		<p>Dear {hiring_manager_name},</p>
 
-	<p>We wanted to share a quick update regarding the <strong>{designation}</strong> requirement.</p>
+		<p>We wanted to share a quick update regarding the <strong>{designation}</strong> requirement.</p>
 
-	<p>While exploring the candidate market for this role, we have observed that most suitable candidates fall within a compensation range higher than the currently proposed budget. As a result, it has been challenging to identify profiles that match the role requirements within the current salary bracket.</p>
+		<p>While exploring the candidate market for this role, we have observed that <strong>most suitable candidates fall within a compensation range higher than the currently proposed budget</strong>. As a result, it has been challenging to identify profiles that match the role requirements within the current salary bracket.</p>
 
-	<p>We would request your guidance on whether there is any flexibility in the compensation range, or if we should explore candidates with slightly different experience levels who may fit within the current budget.</p>
+		<p>We would request your guidance on whether there is <strong>any flexibility in the compensation range</strong>, or if we should explore <strong>candidates with slightly different experience levels</strong> who may fit within the current budget.</p>
 
-	<p>Your inputs will help us align the search strategy and move the hiring process forward more effectively.</p>
+		<p>Your inputs will help us align the search strategy and move the hiring process forward more effectively.</p>
 
-	<p>Looking forward to your guidance.</p>
+		<p>Looking forward to your guidance.</p>
 
-	<div style="margin-top: 24px;">
-		<p style="margin-bottom: 4px;">Warm regards,</p>
-		<p style="margin: 0; font-weight: 600;">{sender_name}</p>
-		<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+		<div style="margin-top: 24px;">
+			<p style="margin-bottom: 4px;">Warm regards,</p>
+			<p style="margin: 0; font-weight: 600;">{sender_name}</p>
+			<p style="margin: 2px 0 0 0; color: #64748b; font-size: 13px;">{sender_email}</p>
+		</div>
 	</div>
-</div>
-""",
+	""",
 		},
 	}
 
