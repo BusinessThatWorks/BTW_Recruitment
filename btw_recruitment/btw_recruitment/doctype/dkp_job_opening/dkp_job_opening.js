@@ -1,42 +1,3 @@
-// --------- RECRUITER PERMISSION CHECK ---------
-
-// frappe.ui.form.on('DKP_JobApplication_Child', {
-
-//     candidate_name: function(frm, cdt, cdn) {
-//         let row = locals[cdt][cdn];
-
-//         // Agar candidate name empty hai to skip
-//         if (!row.candidate_name) return;
-
-//         // Get assigned recruiters list
-//         let assigned_recruiters = [];
-//         if (frm.doc.assign_recruiter && frm.doc.assign_recruiter.length > 0) {
-//             frm.doc.assign_recruiter.forEach(function(r) {
-//                 if (r.recruiter_name) {
-//                     assigned_recruiters.push(r.recruiter_name);
-//                 }
-//             });
-//         }
-
-//         // Check if current user is assigned
-//         if (!assigned_recruiters.includes(frappe.session.user)) {
-
-//             // Clear candidate name
-//             frappe.model.set_value(cdt, cdn, 'candidate_name', '');
-
-//             frappe.msgprint({
-//                 title: __('Permission Denied'),
-//                 indicator: 'red',
-//                 message: __('You are not an assigned recruiter for this Job Opening. Only assigned recruiters can map candidates.')
-//             });
-
-//             return false;
-//         }
-
-//         // Set added_by field automatically
-//         frappe.model.set_value(cdt, cdn, 'added_by', frappe.session.user);
-//     }
-// });
 frappe.ui.form.on("DKP_JobApplication_Child", {
 	async before_candidates_table_remove(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
@@ -58,32 +19,42 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 		}
 	},
 });
+// frappe.ui.form.on("DKP_Job_Opening", {
+// 	refresh(frm) {
+// 		frm.set_query(
+// 			"assign_recruiter",
+// 			"candidates_table",
+// 			function (doc, cdt, cdn) {
+// 				// Get already assigned recruiters
+// 				let assigned = (frm.doc.candidates_table || [])
+// 					.map((row) => row.assign_recruiter)
+// 					.filter((r) => r);
+
+// 				return {
+// 					filters: {
+// 						role_profile_name: [
+// 							"in",
+// 							[
+// 								"DKP Recruiter",
+// 								"DKP Recruiter - Exclusive",
+// 								"Admin",
+// 							],
+// 						],
+// 						name: ["not in", assigned],
+// 					},
+// 				};
+// 			},
+// 		);
+// 	},
+
+// 	// Button on Job Opening: Suggest Candidates
+// 	suggest_candidates(frm) {
+// 		show_opening_candidate_suggestions(frm);
+// 	},
+// });
 frappe.ui.form.on("DKP_Job_Opening", {
 	refresh(frm) {
-		frm.set_query(
-			"assign_recruiter",
-			"candidates_table",
-			function (doc, cdt, cdn) {
-				// Get already assigned recruiters
-				let assigned = (frm.doc.candidates_table || [])
-					.map((row) => row.assign_recruiter)
-					.filter((r) => r);
-
-				return {
-					filters: {
-						role_profile_name: [
-							"in",
-							[
-								"DKP Recruiter",
-								"DKP Recruiter - Exclusive",
-								"Admin",
-							],
-						],
-						name: ["not in", assigned],
-					},
-				};
-			},
-		);
+		// old stale assign_recruiter query removed
 	},
 
 	// Button on Job Opening: Suggest Candidates

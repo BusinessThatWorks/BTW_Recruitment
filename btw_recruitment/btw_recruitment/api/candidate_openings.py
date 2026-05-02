@@ -71,6 +71,7 @@ def get_job_openings_for_candidate_dialog(
             max_experience_years,
             min_ctc,
             max_ctc,
+			recruiter,
             creation
         FROM `tabDKP_Job_Opening`
         {where_clause}

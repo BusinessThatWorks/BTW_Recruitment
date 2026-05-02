@@ -22,7 +22,7 @@ class DKP_Job_Opening(Document):
 	def send_change_notification_email(self):
 		"""Send email to assigned recruiters ONLY when actual changes are made"""
 
-		if not self.assign_recruiter:
+		if not self.recruiter:
 			return
 
 		previous_doc = self.get_doc_before_save()
@@ -41,7 +41,7 @@ class DKP_Job_Opening(Document):
 		if not all_changes and not candidate_changes:
 			return
 
-		recruiter_emails = [row.recruiter_name for row in self.assign_recruiter if row.recruiter_name]
+		recruiter_emails = [self.recruiter] if self.recruiter else []
 
 		if not recruiter_emails:
 			return
@@ -210,25 +210,39 @@ class DKP_Job_Opening(Document):
 
 		return changes
 
+	# def get_recruiter_changes(self, previous_doc):
+	# 	"""Track changes in assigned recruiters"""
+
+	# 	old_recruiters = set()
+	# 	new_recruiters = set()
+
+	# 	if previous_doc.assign_recruiter:
+	# 		old_recruiters = {r.recruiter_name for r in previous_doc.assign_recruiter if r.recruiter_name}
+
+	# 	if self.assign_recruiter:
+	# 		new_recruiters = {r.recruiter_name for r in self.assign_recruiter if r.recruiter_name}
+
+	# 	if old_recruiters == new_recruiters:
+	# 		return None
+
+	# 	return {
+	# 		"field": "Assigned Recruiters",
+	# 		"old_value": ", ".join(sorted(old_recruiters)) if old_recruiters else "-",
+	# 		"new_value": ", ".join(sorted(new_recruiters)) if new_recruiters else "-",
+	# 	}
 	def get_recruiter_changes(self, previous_doc):
-		"""Track changes in assigned recruiters"""
+		"""Track changes in assigned recruiter"""
 
-		old_recruiters = set()
-		new_recruiters = set()
+		old_recruiter = previous_doc.recruiter or ""
+		new_recruiter = self.recruiter or ""
 
-		if previous_doc.assign_recruiter:
-			old_recruiters = {r.recruiter_name for r in previous_doc.assign_recruiter if r.recruiter_name}
-
-		if self.assign_recruiter:
-			new_recruiters = {r.recruiter_name for r in self.assign_recruiter if r.recruiter_name}
-
-		if old_recruiters == new_recruiters:
+		if old_recruiter == new_recruiter:
 			return None
 
 		return {
-			"field": "Assigned Recruiters",
-			"old_value": ", ".join(sorted(old_recruiters)) if old_recruiters else "-",
-			"new_value": ", ".join(sorted(new_recruiters)) if new_recruiters else "-",
+			"field": "Assigned Recruiter",
+			"old_value": old_recruiter or "-",
+			"new_value": new_recruiter or "-",
 		}
 
 	def build_changes_html(self, changes):
@@ -321,7 +335,7 @@ class DKP_Job_Opening(Document):
 	def send_new_job_opening_email(self):
 		"""Send email when new job opening is created"""
 
-		recruiter_emails = [row.recruiter_name for row in self.assign_recruiter if row.recruiter_name]
+		recruiter_emails = [self.recruiter] if self.recruiter else []
 
 		if not recruiter_emails:
 			return
@@ -343,7 +357,7 @@ class DKP_Job_Opening(Document):
             <tr><td><b>Experience</b></td><td>{self.min_experience_years or 0} - {self.max_experience_years or 0} Years</td></tr>
             <tr><td><b>CTC Range</b></td><td>₹{self.min_ctc or 0} - ₹{self.max_ctc or 0} Monthly</td></tr>
             <tr><td><b>Priority</b></td><td>{self.priority or "-"}</td></tr>
-            <tr><td><b>Assigned Recruiters</b></td><td>{", ".join(recruiter_emails)}</td></tr>
+            <tr><td><b>Assigned Recruiter</b></td><td>{self.recruiter or "-"}</td></tr>
         </table>
 
         <p>Regards,<br>HR Team</p>

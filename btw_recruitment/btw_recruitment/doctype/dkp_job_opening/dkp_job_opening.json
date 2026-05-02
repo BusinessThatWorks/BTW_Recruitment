@@ -22,6 +22,7 @@
   "variableincentive",
   "shift",
   "hold_reminder_sent",
+  "recruiter",
   "column_break_ttxn",
   "job_description",
   "priority",
@@ -360,6 +361,12 @@
    "fieldtype": "Table",
    "label": "Follow up Email Log",
    "options": "DKP_Ageing_Mail_Log"
+  },
+  {
+   "fieldname": "recruiter",
+   "fieldtype": "Link",
+   "label": "Recruiter",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
@@ -370,7 +377,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-04-28 16:18:02.411445",
+ "modified": "2026-05-02 12:46:14.727356",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",

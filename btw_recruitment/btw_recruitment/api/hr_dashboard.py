@@ -419,17 +419,21 @@ def get_jobs_table(
 		values.append(cint(ageing))
 
 	# ---------------- Recruiter Filter (Multi-Select) ----------------
+	# if recruiter:
+	# 	recruiter_list = frappe.parse_json(recruiter)
+	# 	if recruiter_list:
+	# 		placeholders = ", ".join(["%s"] * len(recruiter_list))
+	# 		conditions.append(f"""
+	#             EXISTS (
+	#                 SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
+	#                 WHERE r.parent = jo.name AND r.recruiter_name IN ({placeholders})
+	#             )
+	#         """)
+	# 		values.extend(recruiter_list)
+	# ---------------- Recruiter Filter ----------------
 	if recruiter:
-		recruiter_list = frappe.parse_json(recruiter)
-		if recruiter_list:
-			placeholders = ", ".join(["%s"] * len(recruiter_list))
-			conditions.append(f"""
-                EXISTS (
-                    SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
-                    WHERE r.parent = jo.name AND r.recruiter_name IN ({placeholders})
-                )
-            """)
-			values.extend(recruiter_list)
+		conditions.append("jo.recruiter = %s")
+		values.append(recruiter)
 
 	# ============================================
 	# INLINE FILTER MAPPING
@@ -463,15 +467,19 @@ def get_jobs_table(
 	# ============================================
 	# 👇 FIX: Recruiters INLINE filter - Move to SQL
 	# ============================================
+	# if parsed_filters.get("Recruiters"):
+	# 	recruiter_search = parsed_filters["Recruiters"]
+	# 	conditions.append("""
+	#         EXISTS (
+	#             SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
+	#             WHERE r.parent = jo.name
+	#             AND r.recruiter_name LIKE %s
+	#         )
+	#     """)
+	# 	values.append(f"%{recruiter_search}%")
 	if parsed_filters.get("Recruiters"):
 		recruiter_search = parsed_filters["Recruiters"]
-		conditions.append("""
-            EXISTS (
-                SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
-                WHERE r.parent = jo.name
-                AND r.recruiter_name LIKE %s
-            )
-        """)
+		conditions.append("jo.recruiter LIKE %s")
 		values.append(f"%{recruiter_search}%")
 
 	# ---------------- WHERE Clause ----------------
@@ -503,6 +511,7 @@ def get_jobs_table(
                 jo.status,
                 jo.priority,
                 jo.number_of_positions,
+				jo.recruiter AS recruiters,
                 jo.creation
             FROM `tabDKP_Job_Opening` jo
             {where_clause}
@@ -522,6 +531,7 @@ def get_jobs_table(
                 jo.status,
                 jo.priority,
                 jo.number_of_positions,
+				jo.recruiter AS recruiters,
                 jo.creation
             FROM `tabDKP_Job_Opening` jo
             {where_clause}
@@ -533,23 +543,17 @@ def get_jobs_table(
 		)
 
 	# Fetch recruiters for display
-	for job in data:
-		recruiters = frappe.db.sql(
-			"""
-            SELECT recruiter_name
-            FROM `tabDKP_JobOpeningRecruiter_Child`
-            WHERE parent = %s
-        """,
-			job.name,
-			as_dict=1,
-		)
-		job["recruiters"] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
-
-	# ❌ REMOVE THIS BLOCK - No more post-filtering!
-	# if parsed_filters.get("Recruiters"):
-	#     recruiter_filter = parsed_filters["Recruiters"].lower()
-	#     data = [d for d in data if ...]
-	#     total = len(data)
+	# for job in data:
+	# 	recruiters = frappe.db.sql(
+	# 		"""
+	#         SELECT recruiter_name
+	#         FROM `tabDKP_JobOpeningRecruiter_Child`
+	#         WHERE parent = %s
+	#     """,
+	# 		job.name,
+	# 		as_dict=1,
+	# 	)
+	# 	job["recruiters"] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
 
 	return {"data": data, "total": total}
 

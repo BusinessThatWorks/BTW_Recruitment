@@ -75,12 +75,7 @@ def get_data(filters):
 
 	# ---------------- Recruiter Filter ----------------
 	if filters.get("recruiter"):
-		conditions.append("""
-            EXISTS (
-                SELECT 1 FROM `tabDKP_JobOpeningRecruiter_Child` r
-                WHERE r.parent = jo.name AND r.recruiter_name = %(recruiter)s
-            )
-        """)
+		conditions.append("jo.recruiter = %(recruiter)s")
 		values["recruiter"] = filters.get("recruiter")
 
 	# ---------------- Build WHERE Clause ----------------
@@ -93,15 +88,16 @@ def get_data(filters):
 	data = frappe.db.sql(
 		f"""
         SELECT
-            jo.name,
-            jo.company_name,
-            jo.designation,
-            jo.department,
-            jo.status,
-            jo.priority,
-            jo.number_of_positions,
-            DATE(jo.creation) as creation,
-            DATEDIFF(CURDATE(), jo.creation) as ageing
+		jo.name,
+		jo.company_name,
+		jo.designation,
+		jo.department,
+		jo.status,
+		jo.priority,
+		jo.number_of_positions,
+		jo.recruiter as recruiters,
+		DATE(jo.creation) as creation,
+		DATEDIFF(CURDATE(), jo.creation) as ageing
         FROM `tabDKP_Job_Opening` jo
         {where_clause}
         ORDER BY {order_by}
@@ -111,17 +107,17 @@ def get_data(filters):
 	)
 
 	# ---------------- Fetch Recruiters ----------------
-	for job in data:
-		recruiters = frappe.db.sql(
-			"""
-            SELECT recruiter_name
-            FROM `tabDKP_JobOpeningRecruiter_Child`
-            WHERE parent = %s
-            """,
-			job.name,
-			as_dict=1,
-		)
-		job["recruiters"] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
+	# for job in data:
+	# 	recruiters = frappe.db.sql(
+	# 		"""
+	#         SELECT recruiter_name
+	#         FROM `tabDKP_JobOpeningRecruiter_Child`
+	#         WHERE parent = %s
+	#         """,
+	# 		job.name,
+	# 		as_dict=1,
+	# 	)
+	# 	job["recruiters"] = ", ".join([r.recruiter_name for r in recruiters]) if recruiters else "-"
 
 	return data
 

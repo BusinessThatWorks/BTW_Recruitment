@@ -416,8 +416,8 @@ function open_job_opening_dialog(selected_candidates) {
 										: ""
 								}
 								${
-									opening.assign_recruiter
-										? `<div><strong>Recruiter:</strong> ${opening.assign_recruiter}</div>`
+									opening.recruiter
+										? `<div><strong>Recruiter:</strong> ${opening.recruiter}</div>`
 										: ""
 								}
 							</div>
