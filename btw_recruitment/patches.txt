@@ -4,7 +4,9 @@
 btw_recruitment.patches.v15_0.normalize_resume_parsed_column
 btw_recruitment.patches.sync_existing_candidate_openings
 
+
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+btw_recruitment.patches.backfill_recruiter_from_child_table
 
 
