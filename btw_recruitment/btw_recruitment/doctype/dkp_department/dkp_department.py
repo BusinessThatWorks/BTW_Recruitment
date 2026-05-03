@@ -1,19 +1,60 @@
-# Copyright (c) 2025, Sarim and contributors
-# For license information, please see license.txt
-
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
 class DKP_Department(Document):
-	pass
-	# def before_insert(self):
-	# 	if self.department:
+	def validate(self):
+		self.department = " ".join((self.department or "").split()).strip()
 
-	# 			dept_name = self.department.strip()
+		if not self.department:
+			frappe.throw(_("Department name is required."))
 
-	# 			if frappe.db.exists("DKP_Department", dept_name):
-	# 				frappe.throw(f"Department '{dept_name}' already exists.")
+		duplicate = frappe.db.sql(
+			"""
+			SELECT name
+			FROM `tabDKP_Department`
+			WHERE LOWER(TRIM(department)) = LOWER(TRIM(%s))
+			  AND name != %s
+			LIMIT 1
+			""",
+			(self.department, self.name or ""),
+			as_dict=True,
+		)
 
-	# 			# 4) Set docname = department field
-	# 			self.name = dept_name
+		if duplicate:
+			frappe.throw(
+				_("Department <b>{0}</b> already exists.").format(self.department),
+				title=_("Duplicate Department"),
+			)
+
+	def on_update(self):
+		if getattr(frappe.flags, "in_department_auto_rename", False):
+			return
+
+		if self.is_new():
+			return
+
+		new_name = (self.department or "").strip()
+		if not new_name or self.name == new_name:
+			return
+
+		if frappe.db.exists("DKP_Department", new_name):
+			frappe.throw(
+				_("Cannot rename. Department ID <b>{0}</b> already exists.").format(new_name),
+				title=_("Duplicate Department"),
+			)
+
+		old_name = self.name
+
+		frappe.flags.in_department_auto_rename = True
+		try:
+			frappe.rename_doc(
+				"DKP_Department",
+				old_name,
+				new_name,
+				merge=False,
+				force=True,
+			)
+		finally:
+			frappe.flags.in_department_auto_rename = False

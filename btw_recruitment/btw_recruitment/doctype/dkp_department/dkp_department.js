@@ -1,8 +1,7 @@
-// Copyright (c) 2025, Sarim and contributors
-// For license information, please see license.txt
-
-// frappe.ui.form.on("DKP_Department", {
-// 	refresh(frm) {
-
-// 	},
-// });
+frappe.ui.form.on("DKP_Department", {
+	after_save(frm) {
+		if (frm.doc.department && frm.doc.name !== frm.doc.department) {
+			frappe.set_route("Form", "DKP_Department", frm.doc.department);
+		}
+	},
+});
