@@ -22,7 +22,6 @@
   "variableincentive",
   "shift",
   "hold_reminder_sent",
-  "recruiter",
   "column_break_ttxn",
   "job_description",
   "priority",
@@ -30,6 +29,7 @@
   "closed_reason",
   "required_qualification",
   "must_have_skills",
+  "recruiter",
   "assign_recruiter",
   "cc",
   "notes",
@@ -248,11 +248,12 @@
   {
    "fieldname": "assign_recruiter",
    "fieldtype": "Table MultiSelect",
+   "hidden": 1,
    "in_filter": 1,
    "in_standard_filter": 1,
-   "label": "Assign Recruiter",
+   "label": "Assign Recruiter Old",
    "options": "DKP_JobOpeningRecruiter_Child",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "job_description",
@@ -365,7 +366,7 @@
   {
    "fieldname": "recruiter",
    "fieldtype": "Link",
-   "label": "Recruiter",
+   "label": "Assign Recruiter",
    "options": "User"
   }
  ],
@@ -377,7 +378,7 @@
    "link_fieldname": "job_opening"
   }
  ],
- "modified": "2026-05-02 12:46:14.727356",
+ "modified": "2026-05-03 11:31:19.574355",
  "modified_by": "Administrator",
  "module": "BTW Recruitment",
  "name": "DKP_Job_Opening",
