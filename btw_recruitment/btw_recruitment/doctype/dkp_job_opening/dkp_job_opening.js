@@ -19,39 +19,7 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 		}
 	},
 });
-// frappe.ui.form.on("DKP_Job_Opening", {
-// 	refresh(frm) {
-// 		frm.set_query(
-// 			"assign_recruiter",
-// 			"candidates_table",
-// 			function (doc, cdt, cdn) {
-// 				// Get already assigned recruiters
-// 				let assigned = (frm.doc.candidates_table || [])
-// 					.map((row) => row.assign_recruiter)
-// 					.filter((r) => r);
 
-// 				return {
-// 					filters: {
-// 						role_profile_name: [
-// 							"in",
-// 							[
-// 								"DKP Recruiter",
-// 								"DKP Recruiter - Exclusive",
-// 								"Admin",
-// 							],
-// 						],
-// 						name: ["not in", assigned],
-// 					},
-// 				};
-// 			},
-// 		);
-// 	},
-
-// 	// Button on Job Opening: Suggest Candidates
-// 	suggest_candidates(frm) {
-// 		show_opening_candidate_suggestions(frm);
-// 	},
-// });
 frappe.ui.form.on("DKP_Job_Opening", {
 	refresh(frm) {
 		// old stale assign_recruiter query removed
@@ -1224,12 +1192,40 @@ frappe.ui.form.on("DKP_JobApplication_Child", {
 				if (r.message && r.message.name) {
 					// If interview exists, redirect to the existing record
 					frappe.set_route("Form", "DKP_Interview", r.message.name);
+					// } else {
+					// 	// If no interview exists, initialize a new document
+					// 	frappe.new_doc("DKP_Interview", {
+					// 		job_opening: frm.doc.name,
+					// 		candidate_name: row.candidate_name,
+					// 	});
+					// }
 				} else {
-					// If no interview exists, initialize a new document
-					frappe.new_doc("DKP_Interview", {
-						job_opening: frm.doc.name,
-						candidate_name: row.candidate_name,
-					});
+					// Interview nahi hai - form save karo
+					// Python before_save automatically interview create karega
+					frappe.confirm(
+						"Interview not created yet, please save the form to create the interview",
+						function () {
+							frm.save().then(() => {
+								// Save ke baad row me interview link check karo
+								const updated_row = locals[cdt][cdn];
+								if (updated_row.interview) {
+									frappe.set_route(
+										"Form",
+										"DKP_Interview",
+										updated_row.interview,
+									);
+								}
+								// else {
+								// 	frappe.msgprint({
+								// 		title: "Interview Create Nahi Hua",
+								// 		message:
+								// 			"Interview create nahi ho saka. Candidate aur stage check karein.",
+								// 		indicator: "orange",
+								// 	});
+								// }
+							});
+						},
+					);
 				}
 			});
 	},

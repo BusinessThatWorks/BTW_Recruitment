@@ -375,6 +375,53 @@ class DKP_Job_Opening(Document):
 				row.added_by = frappe.session.user
 
 		# self.delete_interviews_for_removed_candidates()
+		self.auto_create_interviews()
+
+	def auto_create_interviews(self):
+		"""
+		Jab bhi kisi child row ka stage 'Schedule Interview' ho,
+		aur us row me interview link na ho,
+		to automatically DKP_Interview create karo aur link karo.
+		"""
+		for row in self.candidates_table:
+			# Sirf 'Schedule Interview' stage wali rows pe kaam karo
+			if row.stage != "Schedule Interview":
+				continue
+
+			# Candidate hona chahiye
+			if not row.candidate_name:
+				continue
+
+			# Agar interview pehle se linked hai to kuch mat karo
+			if row.interview:
+				continue
+
+			# DB me check karo - koi interview already exist karta hai kya
+			# iss candidate + job opening combination ka
+			existing_interview = frappe.db.get_value(
+				"DKP_Interview",
+				{
+					"job_opening": self.name,
+					"candidate_name": row.candidate_name,
+				},
+				"name",
+			)
+
+			if existing_interview:
+				# Interview DB me hai but row me link nahi tha - link kar do
+				row.interview = existing_interview
+
+			else:
+				# Bilkul naya interview create karo
+				interview_doc = frappe.new_doc("DKP_Interview")
+				interview_doc.candidate_name = row.candidate_name
+				interview_doc.job_opening = self.name
+				interview_doc.added_by = row.added_by or frappe.session.user
+				interview_doc.stage = "Interview Scheduled"
+				interview_doc.insert(ignore_permissions=True)
+
+				# Child row me naye interview ka link set karo
+				row.interview = interview_doc.name
 
 	def sync_candidate_openings(self):
 		"""
@@ -511,81 +558,6 @@ class DKP_Job_Opening(Document):
 			self.name,
 		)
 		frappe.db.commit()
-
-	# def before_save(self):
-
-	# def delete_interviews_for_removed_candidates(self):
-	# 	"""Delete linked interviews when candidate row is removed from opening,
-	# 	but block deletion if interview has a Joining Tracker linked.
-	# 	"""
-
-	# 	old_doc = self.get_doc_before_save()
-	# 	if not old_doc:
-	# 		return
-
-	# 	old_rows = {
-	# 		row.name: row.interview
-	# 		for row in old_doc.candidates_table
-	# 		if row.interview
-	# 	}
-
-	# 	current_row_names = {row.name for row in self.candidates_table}
-	# 	deleted_row_names = set(old_rows.keys()) - current_row_names
-
-	# 	# Pehle check kar lo kahin joining tracker linked to nahi
-	# 	for row_name in deleted_row_names:
-	# 		interview_name = old_rows[row_name]
-
-	# 		if not interview_name or not frappe.db.exists("DKP_Interview", interview_name):
-	# 			continue
-
-	# 		candidate_name, joining_tracker = frappe.db.get_value(
-	# 			"DKP_Interview",
-	# 			interview_name,
-	# 			["candidate_name", "invoice_ref"]
-	# 		)
-
-	# 		if joining_tracker:
-	# 			frappe.throw(
-	# 				f"Cannot remove candidate <b>{candidate_name or ''}</b> because "
-	# 				f"Interview <b>{interview_name}</b> is linked with Joining Tracker "
-	# 				f"<b>{joining_tracker}</b>.",
-	# 				title="Deletion Not Allowed"
-	# 			)
-
-	# 	# Agar kahin joining tracker nahi mila, to safe delete
-	# 	deleted_interviews = []
-
-	# 	for row_name in deleted_row_names:
-	# 		interview_name = old_rows[row_name]
-
-	# 		if not interview_name or not frappe.db.exists("DKP_Interview", interview_name):
-	# 			continue
-
-	# 		try:
-	# 			frappe.delete_doc(
-	# 				"DKP_Interview",
-	# 				interview_name,
-	# 				ignore_permissions=True,
-	# 				force=True,
-	# 			)
-	# 			deleted_interviews.append(interview_name)
-
-	# 		except Exception as e:
-	# 			frappe.log_error(
-	# 				f"Failed to delete interview {interview_name}: {e}",
-	# 				"Interview Delete Error"
-	# 			)
-	# 			frappe.msgprint(
-	# 				f"Could not delete interview <b>{interview_name}</b>: {str(e)}",
-	# 				alert=True
-	# 			)
-
-	# 	if deleted_interviews:
-	# 		frappe.msgprint(
-	# 			f"Interview deleted successfully: <b>{', '.join(deleted_interviews)}</b>",
-	# 			alert=True
-	# 		)
 
 	def validate_removed_candidates(self):
 		old_doc = self.get_doc_before_save()
