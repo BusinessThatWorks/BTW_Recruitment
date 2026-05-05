@@ -216,23 +216,60 @@ frappe.pages["recruiter-dashboard"].on_page_load = function (wrapper) {
 		},
 		render_input: true,
 	});
+	// setTimeout(() => {
+	// 	from_date_control.set_value(frappe.datetime.get_today());
+	// 	to_date_control.set_value(frappe.datetime.get_today());
+	// }, 100);
 	setTimeout(() => {
-		from_date_control.set_value(frappe.datetime.get_today());
-		to_date_control.set_value(frappe.datetime.get_today());
+		// Get current year's January 1st
+		const today = frappe.datetime.get_today(); // "YYYY-MM-DD"
+		const currentYear = today.split("-")[0]; // "YYYY"
+		const jan_first = `${currentYear}-01-01`; // "YYYY-01-01"
+
+		// Set state
+		state.from_date = jan_first;
+		state.to_date = today;
+
+		// Set controls (UI)
+		from_date_control.set_value(jan_first);
+		to_date_control.set_value(today);
 	}, 100);
 	// =============================
 	// CLEAR BUTTON
 	// =============================
+	// $body.find(".recruiter-clear").on("click", function () {
+	// 	recruiter_control.set_value("");
+	// 	from_date_control.set_value("");
+	// 	to_date_control.set_value("");
+	// 	status_control.set_value("");
+
+	// 	state = {
+	// 		recruiter: null,
+	// 		from_date: null,
+	// 		to_date: null,
+	// 		status: null,
+	// 	};
+
+	// 	refresh_dashboard();
+	// 	frappe.show_alert({
+	// 		message: "Filters cleared",
+	// 		indicator: "blue",
+	// 	});
+	// });
 	$body.find(".recruiter-clear").on("click", function () {
+		const today = frappe.datetime.get_today();
+		const currentYear = today.split("-")[0];
+		const jan_first = `${currentYear}-01-01`;
+
 		recruiter_control.set_value("");
-		from_date_control.set_value("");
-		to_date_control.set_value("");
+		from_date_control.set_value(jan_first);
+		to_date_control.set_value(today);
 		status_control.set_value("");
 
 		state = {
 			recruiter: null,
-			from_date: null,
-			to_date: null,
+			from_date: jan_first,
+			to_date: today,
 			status: null,
 		};
 
